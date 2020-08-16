@@ -1,0 +1,6 @@
+numpy>=1.19.0
+scipy>=1.5.0
+pytorch>=2020.1
+
+# exputils is a custom package
+exputils
