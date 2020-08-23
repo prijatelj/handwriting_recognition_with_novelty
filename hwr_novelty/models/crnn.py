@@ -68,22 +68,22 @@ class CRNN(nn.Module):
         self.softmax = nn.LogSoftmax(dim=-1)
 
     def forward(self, input):
-        # print()
+        # conv features
         conv = self.cnn(input)
+        # batch, classes, height, width?
         b, c, h, w = conv.size()
-        conv = torch.flatten(conv, start_dim=1,end_dim=2)
+        conv = torch.flatten(conv, start_dim=1, end_dim=2)
         conv = conv.view(b, -1, w)
         conv = conv.permute(2, 0, 1)  # [w, b, c]
+
         # rnn features
         rnn = self.rnn(conv)
         output = self.softmax(rnn)
 
-        return output
+        return output, rnn
 
 def create_model(config):
-    # print(config)
     # nh = ((config['num_of_outputs']/32)+1)*512*(config['input_height']/4)
     nh = 80 * (config['input_height']/4)
-    # print(nh)
     crnn = CRNN(int(nh), config['num_of_channels'], config['num_of_outputs'], 256)
     return crnn
