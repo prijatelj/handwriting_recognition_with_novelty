@@ -4,7 +4,7 @@ data:
     test: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/data_splits/test_5fold-1.json',
     image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/',
     labels:
-      label_encoding: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/IAM_aachen/IAM_char_set.json'
+      label_encoding: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/hwr_v1_char_set.json'
 model:
   crnn:
     metric: CER
