@@ -1,89 +1,182 @@
 import torch
 from torch import nn
 
-class BidirectionalLSTM(nn.Module):
 
-    def __init__(self, nIn, nHidden, nOut):
+class BidirectionalLSTM(nn.Module):
+    """Wraps Pytorch's bidirectional LSTM to allow ease of extracting the final
+    hidden layer of the LSTM as an embedding.
+    """
+    def __init__(
+        self,
+        input_dim,
+        hidden_size,
+        output_size,
+        dropout=0.5,
+        num_layers=5,
+    ):
         super(BidirectionalLSTM, self).__init__()
 
-        self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True, dropout=0.5, num_layers=5)
-        self.embedding = nn.Linear(nHidden * 2, nOut)
+        self.rnn = nn.LSTM(
+            input_dim,
+            hidden_size,
+            bidirectional=True,
+            dropout=dropout,
+            num_layers=num_layers,
+        )
 
+        self.embedding = nn.Linear(hidden_size * 2, output_size)
 
-    def forward(self, input):
+    def forward(self, input, return_pen_ult=False):
         recurrent, _ = self.rnn(input)
-        T, b, h = recurrent.size()
-        t_rec = recurrent.view(T * b, h)
+        timesteps, batches, height = recurrent.size()
+        t_rec = recurrent.view(timesteps * batches, height)
 
-        output = self.embedding(t_rec) # [T * b, nOut]
-        output = output.view(T, b, -1)
+        output = self.embedding(t_rec) # [timesteps * batches, output_size]
+        output = output.view(timesteps, batches, -1)
 
+        if return_pen_ult:
+            return output, t_rec
         return output
 
-class CRNN(nn.Module):
 
-    def __init__(self, cnnOutSize, nc, nclass, nh, n_rnn=2, leakyRelu=True):
+class CRNN(nn.Module):
+    """Implementation of the Convolutional Recurrent Neural Network (CRNN),
+    which is sequentially a CNN with a RNN and a CTC loss for image-based
+    sequence recognition tasks, e.g. scene text recognition and OCR.
+
+    Notes
+    -----
+        This is the CRNN as specified in the paper at
+            https://arxiv.org/abs/1507.05717
+    """
+    def __init__(
+        self,
+        cnn_output_size,
+        num_channels,
+        num_classes,
+        hidden_size,
+        num_hidden=5,
+        leakyRelu=True,
+        batch_norm=True,
+    ):
         super(CRNN, self).__init__()
 
+        # TODO figureout what these vars are and what they stand for.
+        # TODO Also clarify varnames and simplify initialization
+        # Conv Relu Architecture Parameters
         ks = [3, 3, 3, 3, 3, 3]
         ps = [1, 1, 1, 1, 1, 1]
         ss = [1, 1, 1, 1, 1, 1]
-        # nm = [64, 128, 256, 256, 512, 512, 512]
-        nm = [16, 32, 48, 64, 80]
+        nm = [16, 32, 48, 64, 80]  # [64, 128, 256, 256, 512, 512, 512]
+
         cnn = nn.Sequential()
 
-        def convRelu(i, batchNormalization=False):
-            nIn = nc if i == 0 else nm[i - 1]
-            nOut = nm[i]
-            cnn.add_module('conv{0}'.format(i),
-                           nn.Conv2d(nIn, nOut, ks[i], ss[i], ps[i]))
-            if batchNormalization:
-                cnn.add_module('batchnorm{0}'.format(i), nn.BatchNorm2d(nOut))
-            if leakyRelu:
-                cnn.add_module('relu{0}'.format(i),
-                               nn.LeakyReLU(0.2, inplace=True))
-            else:
-                cnn.add_module('relu{0}'.format(i), nn.ReLU(True))
+        # CNN sequential architecture parameters
+        # TODO consider replacing dicts w/ another ** expandable object that
+        # can only take the values of some set of arguments. Perhaps a config
+        # object for the CRNN.
+        maxpool2d_args = [
+            {'kernel_size': 2, 'stride': 2},
+            {'kernel_size': 2, 'stride': 2},
+            {'kernel_size': 2, 'stride': 2},
+            None, # *[(2, 2), (2, 1), (0, 1)]
+            None, # *[(2, 2), (2, 1), (0, 0)]
+        ]
+        dropout_probs = [0, 0, 0.2, 0.2, 0.2]
 
-        convRelu(0, True)
-        cnn.add_module('pooling{0}'.format(0), nn.MaxPool2d(2, 2))  # 64x16x64
-        convRelu(1, True)
-        cnn.add_module('pooling{0}'.format(1), nn.MaxPool2d(2, 2))  # 128x8x32
-        convRelu(2, True)
-        cnn.add_module('pooling{0}'.format(1), nn.MaxPool2d(2, 2))  # 128x8x32
-        cnn.add_module('dropout{0}', nn.Dropout2d(p=0.2))
-        convRelu(3, True)
-        cnn.add_module('dropout{0}', nn.Dropout2d(p=0.2))
-        # cnn.add_module('pooling{0}'.format(2),
-        #                nn.MaxPool2d((2, 2), (2, 1), (0, 1)))  # 256x4x16
-        convRelu(4, True)
-        cnn.add_module('dropout{0}', nn.Dropout2d(p=0.2))
-        # cnn.add_module('pooling{0}'.format(3),
-        #                nn.MaxPool2d((2, 2), (2, 1), (0, 0)))  # 512x2x16
-        # convRelu(6, True)  # 512x1x16
+        # Construct the CRNN given architecture specification
+        for i in range(maxpool2d_args):
+            input_dim = num_channels if i == 0 else nm[i - 1]
+            output_size = nm[i]
+
+            cnn.add_module(
+                f'conv{i}',
+                nn.Conv2d(input_dim, output_size, ks[i], ss[i], ps[i]),
+            )
+
+            if batch_norm:
+                cnn.add_module(f'batch_norm{i}', nn.BatchNorm2d(output_size))
+
+            if leakyRelu:
+                cnn.add_module(f'relu{i}', nn.LeakyReLU(0.2, inplace=True))
+            else:
+                cnn.add_module(f'relu{i}', nn.ReLU(True))
+
+            if isinstance(maxpool2d_args[i], dict):
+                cnn.add_module(
+                    f'pooling{i}',
+                    nn.MaxPool2d(**maxpool2d_args[i]),
+                )
+
+            if dropout_probs[i] >= 0:
+                cnn.add_module('dropout{0}', nn.Dropout2d(p=dropout_probs[i]))
+
+        # Original conv shapes (from pytorch version by meijieru)
+        # 64x16x64 -> 128x8x32 -> 256x4x16 -> 512x2x16
+        # Current conv shapes post max pool:
+        # 64x16x64 -> 128x8x32 -> 128x8x32
 
         self.cnn = cnn
-        self.rnn = BidirectionalLSTM(cnnOutSize, nh, nclass)
-        self.softmaxLayer = nn.Linear(nclass,nclass)
+        self.rnn = BidirectionalLSTM(
+            cnn_output_size,
+            hidden_size,
+            num_classes,
+            num_layers=num_hidden,
+        )
+        # TODO determine if softmaxLayer is to be removed or renamed
+        self.softmaxLayer = nn.Linear(num_classes, num_classes)
         self.softmax = nn.LogSoftmax(dim=-1)
 
-    def forward(self, input):
+    def forward(self, input, return_conv=False, return_rnn=False):
+        """Forward pass of CRNN.
+
+        Parameters
+        ----------
+        input :
+            Input to the CRNN
+        return_conv : bool
+            Returns the output of the final convolutional layer of the CRNN if
+            True.
+        return_rnn : bool
+            Returns the output of the final recurrent layer of the CRNN if
+            True.
+        """
         # conv features
         conv = self.cnn(input)
+
         # batch, classes, height, width?
-        b, c, h, w = conv.size()
+        batches, classes, height, width = conv.size()  # TODO consider a slice
         conv = torch.flatten(conv, start_dim=1, end_dim=2)
-        conv = conv.view(b, -1, w)
+        conv = conv.view(batches, -1, width)
         conv = conv.permute(2, 0, 1)  # [w, b, c]
 
         # rnn features
-        rnn = self.rnn(conv)
+        if return_rnn:
+            rnn, rnn_emb = self.rnn(conv)
+        else:
+            rnn = self.rnn(conv)
         output = self.softmax(rnn)
 
-        return output, rnn
+        if return_conv and return_rnn:
+            return output, conv, rnn_emb
+        if return_conv and not return_rnn:
+            return output, conv
+        if not return_conv and return_rnn:
+            return output, rnn_emb
+        return output
+
 
 def create_model(config):
-    # nh = ((config['num_of_outputs']/32)+1)*512*(config['input_height']/4)
-    nh = 80 * (config['input_height']/4)
-    crnn = CRNN(int(nh), config['num_of_channels'], config['num_of_outputs'], 256)
+    # TODO remove this function and place it whereever it best belongs,
+    # probably in experiments, cuz it just affects the cnn_output_size and num
+    # number of hidden layers.
+    cnn_output_size = 80 * (config['input_height']/4)
+
+    crnn = CRNN(
+        int(cnn_output_size),
+        config['num_of_channels'],
+        config['num_of_outputs'],
+        256,
+    )
+
     return crnn
