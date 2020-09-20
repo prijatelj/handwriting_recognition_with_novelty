@@ -18,7 +18,7 @@ def parse_args():
 
     parser.add_argument(
         '-t',
-        '--transcripts',
+        '--transcripts_filepath',
         default=None,
         help='The filepath to the transcript text CSV.',
     )
@@ -35,6 +35,13 @@ def parse_args():
         '--append_filepath',
         default=None,
         help='The filepath prefix to be appended to all image filepaths.',
+    )
+
+    parser.add_argument(
+        '-S',
+        '--append_transcript_suffix',
+        default=None,
+        help='Adds the suffix to the image filename in the transcript file.',
     )
 
     parser.add_argument(
@@ -56,7 +63,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        'c',
+        '-c',
         '--create_char_set',
         action='store_true',
         help='Create the label encoding csv from unique chars in transcript',
@@ -93,10 +100,10 @@ args = parse_args()
 
 # Load the given files: labels, transcripts
 # Load labels
-labels = pd.read_csv(args.labels_filepath, sep=args.delimiter, header=True)
+labels = pd.read_csv(args.labels_filepath, sep=args.delimiter)
 
 unique_files = len(set(labels['file']))
-if len(set(labels['file'])) == len(labels.index):
+if len(set(labels['file'])) != len(labels.index):
     raise KeyError(' '.join([
         'The number of unique files does not equal the number of lines in the',
         f'labels CSV! CSV lines = {len(labels.index)}; Unique filenames =',
@@ -117,14 +124,17 @@ if os.path.isfile(args.transcripts_filepath):
         labels.index = labels['file']
 
         # Add the transcript column to the labels
-        labels['transcription'] = pd.NA
+        labels['transcript'] = pd.NA
 
         # Parse the PAR transcripts file, forming the transcript text as 1 str
-        file_set = dict()
+        file_set = set()
         if args.create_char_set:
             unique_characters = set()
 
         for row in csv_reader:
+            if args.append_transcript_suffix is not None:
+                row[0] = row[0] + args.append_transcript_suffix
+
             if row[0] in file_set:
                 raise KeyError('Duplicate filename exists in transcripts csv!')
 
@@ -162,7 +172,8 @@ if os.path.isfile(args.transcripts_filepath):
     na_transcript = pd.isna(labels['transcript'])
     if na_transcript.any():
         raise KeyError(' '.join([
-            'Missing transcriptions for some images! The following do not',
+            'Missing transcriptions for some images! Total:',
+            f'{na_transcript.sum()}.The following do not',
             f'have a provided transcript:\n{labels["file"][na_transcript]}',
         ]))
     del na_transcript
@@ -184,13 +195,13 @@ if os.path.isfile(args.transcripts_filepath):
             # Create a simple "csv" file where all unique characters are on
             # their own line. The idx is then able to be inferred by their
             # order.
-            for character in unique_characters:
+            for character in sorted(unique_characters):
                 f.write(f'{character}\n')
 
 # Append to image filepaths if necessary, after adding the transcriptions
 if args.append_filepath is not None:
-    for i in range(len(labels)):
-        labels['file'] = args.append_filepath + labels['file']
+    #for i in range(len(labels)):
+    labels['file'] = args.append_filepath + labels['file']
 
 # Save the resulting labels TSV, handling csv quoting appropriately
 labels.to_csv(
