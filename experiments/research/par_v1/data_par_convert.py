@@ -34,7 +34,7 @@ def parse_args():
         '-a',
         '--append_filepath',
         default=None,
-        help='The filepath to be appended to all of the image filepaths.',
+        help='The filepath prefix to be appended to all image filepaths.',
     )
 
     parser.add_argument(
@@ -69,6 +69,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--recover_whitespace',
+        action='store_true',
+        help='Replace word delimiter with by inferring whitespace.',
+    )
+
+    parser.add_argument(
         '--save_delimiter',
         default='\t',
         help='The delimiter used in resulting TSV, default being tabs.',
@@ -79,8 +85,8 @@ def parse_args():
     if args.output_filepath is None:
         args.output_filepath = './PAR_converted_labels.csv'
 
-
     return args
+
 
 # arg parser to load the PAR files from given filepaths
 args = parse_args()
@@ -89,10 +95,14 @@ args = parse_args()
 # Load labels
 labels = pd.read_csv(args.labels_filepath, sep=args.delimiter, header=True)
 
-# Append to image filepaths if necessary
-if args.append_filepath is not None:
-    for i in range(len(labels)):
-        labels['file'] = os.path.join(args.append_filepath, labels['file'])
+unique_files = len(set(labels['file']))
+if len(set(labels['file'])) == len(labels.index):
+    raise KeyError(' '.join([
+        'The number of unique files does not equal the number of lines in the',
+        f'labels CSV! CSV lines = {len(labels.index)}; Unique filenames =',
+        f'{unique_files}',
+    ]))
+del unique_files
 
 if os.path.isfile(args.transcripts_filepath):
     # Load the PAR transcripts file
@@ -103,41 +113,59 @@ if os.path.isfile(args.transcripts_filepath):
             quoting=csv.QUOTE_NONE,
         )
 
+        # Set the index to the unique image filenames for ease of mapping transcripts
+        labels.index = labels['file']
+
+        # Add the transcript column to the labels
+        labels['transcription'] = pd.NA
+
         # Parse the PAR transcripts file, forming the transcript text as 1 str
-        transcript_map = dict()
+        file_set = dict()
         if args.create_char_set:
             unique_characters = set()
 
         for row in csv_reader:
-            if row[0] in transcript_map:
-                raise KeyError('Duplicate key exists in transcripts csv!')
+            if row[0] in file_set:
+                raise KeyError('Duplicate filename exists in transcripts csv!')
 
-            # Attempt to recover the acutal sentence string where possible
-            if ',' in row[1]:
-                row[1] = row[1].replace('|,', ',')
-            if '.' in row[1]:
-                row[1] = row[1].replace('|.', '.')
-            if '?' in row[1]:
-                row[1] = row[1].replace('|?', '?')
-            if '!' in row[1]:
-                row[1] = row[1].replace('|!', '!')
-            if ':' in row[1]:
-                row[1] = row[1].replace('|:', ':')
+            if args.recover_whitespace:
+                # Attempt to recover the acutal sentence string where possible
+                if ',' in row[1]:
+                    row[1] = row[1].replace('|,', ',')
+                if '.' in row[1]:
+                    row[1] = row[1].replace('|.', '.')
+                if '?' in row[1]:
+                    row[1] = row[1].replace('|?', '?')
+                if '!' in row[1]:
+                    row[1] = row[1].replace('|!', '!')
+                if ':' in row[1]:
+                    row[1] = row[1].replace('|:', ':')
 
-            # Handle the ambiguous cases by not allowing any white space to
-            # surround them because white space is a character in itself.
-            # NOTE currently i let ' and " and - as separate words, meaning
-            # that white space will surround them.
+                # Handle the ambiguous cases by not allowing any white space to
+                # surround them because white space is a character in itself.
+                # NOTE currently i let ' and " and - as separate words, meaning
+                # that white space will surround them.
 
-            transcript_map[row[0]] = row[1].replace('|', ' ')
+                # Final reintroduction of whitespace into the given transcription
+                row[1] = row[1].replace('|', ' ')
+
+            file_set.add(row[0])
 
             # Obtain the unique characters
             if args.create_char_set:
-                unique_characters |= set(transcript_map[row[0]])
+                unique_characters |= set(row[1])
 
-            # Add transcript line to the labels csv
+            # Find row index in labels given the filename & add transcript
+            labels['transcript'][row[0]] = row[1]
 
     # Check if any image in labels is missing a transcript
+    na_transcript = pd.isna(labels['transcript'])
+    if na_transcript.any():
+        raise KeyError(' '.join([
+            'Missing transcriptions for some images! The following do not',
+            f'have a provided transcript:\n{labels["file"][na_transcript]}',
+        ]))
+    del na_transcript
 
     # Save the resulting char set as a CSV
     if args.create_char_set:
@@ -159,6 +187,10 @@ if os.path.isfile(args.transcripts_filepath):
             for character in unique_characters:
                 f.write(f'{character}\n')
 
+# Append to image filepaths if necessary, after adding the transcriptions
+if args.append_filepath is not None:
+    for i in range(len(labels)):
+        labels['file'] = args.append_filepath + labels['file']
 
 # Save the resulting labels TSV, handling csv quoting appropriately
 labels.to_csv(
