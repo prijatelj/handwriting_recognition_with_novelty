@@ -44,6 +44,164 @@ def email_update(message, jobID=""):
         return False
 
 
+def train_crnn():
+    """Streamline the training of the CRNN."""
+    # TODO
+
+    return
+
+
+def eval_crnn(
+    hw_crnn,
+    dataloader,
+    idx_to_char,
+    dtype,
+    output_crnn_eval=True,
+    layer=None,
+    return_logits=True,
+):
+    """Evaluates CRNN and returns the CRNN output. Optionally, this is also
+    used to obtain certain layer's outputs such as the penultimate RNN or CNN
+    layers of the CRNN.
+
+    Parameters
+    ----------
+    hw_crnn :
+        The
+    dataloader :
+        Pytorch dataloader for input to CRNN
+    dtype : type
+        Pytorch type of a the handwritten line image data. Used to handle CPU
+        or GPU use.
+    output_crnn_eval : bool, optional
+        Outputs the CRNNs performance without the EVM.
+    layer : str, optional
+        If 'rnn', uses the CRNN's final RNN output as input to the MultipleEVM.
+        If 'conv', uses the final convolutional layer's output. If 'concat',
+        then returns both concatenated together (Concat is to be implemented).
+        Defaults to None, and thus only evaluates the CRNN itself.
+
+    Returns
+    -------
+    list(np.ndarray)
+        Returns a list of the selected layer's output for each input sample.
+        `layer` determines which layer of the CRNN is used. The shape of each
+        np.ndarray is [glyph_window, classes]. This assumes batch size is
+        always 1.
+    """
+    # Initialize metrics
+    if output_crnn_eval:
+        tot_ce = 0.0
+        tot_we = 0.0
+        sum_loss = 0.0
+        sum_wer = 0.0
+        steps = 0.0
+
+    hw_crnn.eval()
+
+    layer_outs = []
+
+    if return_logits:
+        logits_list = []
+
+    for x in dataloader:
+        if x is None:
+            continue
+        with torch.no_grad():
+            line_imgs = Variable(
+                x['line_imgs'].type(dtype),
+                requires_grad=False,
+            )
+
+            if layer.lower() == 'rnn':
+                preds, layer_out = hw_crnn(line_imgs, return_rnn=True)
+
+                # Shape is then [timesteps, hidden layer width]
+                layer_outs.append(layer_out.data.cpu().numpy())
+
+            elif layer.lower() in {'conv', 'cnn'}:
+                # Last Convolution Layer
+                preds, layer_out = hw_crnn(line_imgs, return_conv=True)
+
+                # Shape is then [timesteps, conv layer flat: height * width]
+                layer_outs.append(layer_out.data.cpu().numpy())
+                layer_outs.append(np.squeeze(
+                    layer_out.permute(1, 0, 2).data.cpu().numpy()
+                ))
+            else:
+                raise NotImplementedError('Concat/both RNN and Conv of CRNN.')
+
+            """
+            print(f'line_imgs.shape = {line_imgs.shape}')
+            print(f'line_imgs = {line_imgs}')
+            print(f'Preds shape: {preds.shape}')
+            print(f'RNN Out: {layer_out}')
+            print(f'RNN Out: {layer_out.shape}')
+            print(f'x["gt"] = {x["gt"]}')
+            print(f'x["gt"] len = {len(x["gt"][0])}')
+            """
+            # Swap 0 and 1 indices to have:
+            #   batch sample, "character window", classes
+            # Except, since batch sample is always 1 here, that dim is removed:
+            #   "character windows", classes
+
+            if layer is None or output_crnn_eval:
+                # TODO save CRNN output for ease of eval and comparison
+                output_batch = preds.permute(1, 0, 2)
+                out = output_batch.data.cpu().numpy()
+
+                # Consider MEVM input here after enough obtained to do batch
+                # training Or save the layer_outs to be used in training the
+                # MEVM
+
+                for i, gt_line in enumerate(x['gt']):
+                    logits = out[i, ...]
+
+                    pred, raw_pred = string_utils.naive_decode(logits)
+                    pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+                    wer = error_rates.wer(gt_line, pred_str)
+                    sum_wer += wer
+
+                    cer = error_rates.cer(gt_line, pred_str)
+
+                    tot_we += wer * len(gt_line.split())
+                    tot_ce += cer * len(u' '.join(gt_line.split()))
+
+                    sum_loss += cer
+
+                    steps += 1
+
+                if return_logits:
+                    logits_list.append(out)
+
+
+    if layer is None or output_crnn_eval:
+        message = ''
+        message = message + "\nTest CER: " + str(sum_loss / steps)
+        message = message + "\nTest WER: " + str(sum_wer / steps)
+
+        print('CRNN results:')
+        print("Validation CER", sum_loss / steps)
+        print("Validation WER", sum_wer / steps)
+
+        print("Total character Errors:", tot_ce)
+        print("Total word errors", tot_we)
+
+        tot_ce = 0.0
+        tot_we = 0.0
+        sum_loss = 0.0
+        sum_wer = 0.0
+        steps = 0.0
+
+    if return_logits and layer is not None:
+        return logits_list, layer_outs
+    if return_logits and layer is None:
+        return logits_list
+    if not return_logits and layer is not None:
+        return layer_outs
+
+
 def main():
     config_path = sys.argv[1]
     try:
