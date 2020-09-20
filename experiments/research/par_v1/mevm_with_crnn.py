@@ -347,53 +347,9 @@ def main():
     with open(config_path) as f:
         paramList = f.readlines()
 
-    baseMessage = ""
-
-    for line in paramList:
-        baseMessage = baseMessage + line
-
-    # Load Data
-    datasets = {}
-    if 'iam' in config:
-        iam_dset = load_data(config, 'iam')
-    else:
-        raise NotImplementedError('Need to have IAM dataset in config.')
-
-    if 'rimes' in config:
-        datasets['rimes'] = load_data(config, 'rimes')
-    if 'manuscript' in config:
-        datasets['manuscript'] = load_data(config, 'manuscript')
-
-    # Combine the char to idx and idx to chars iam_dset = datasets.pop('iam')
-    all_dsets = deepcopy(iam_dset)
-    inc = len(all_dsets.char_to_idx) + 1
-    for dset in datasets:
-        # Remove all char keys that already exist in char to idx
-        for key in (
-            all_dsets.char_to_idx.keys() & datasets[dset].char_to_idx.keys()
-        ):
-            datasets[dset].char_to_idx.pop(key, None)
-
-        # Recreate indices based on remaining chars to indices
-        for key in datasets[dset].char_to_idx:
-            datasets[dset].char_to_idx[key] = inc
-            inc += 1
-
-        all_dsets.char_to_idx.update(datasets[dset].char_to_idx)
-
-    datasets['iam'] = iam_dset
-
-    # Create idx_to_char from char_to_idx
-    all_dsets.idx_to_char = {v: k for k, v in all_dsets.char_to_idx.items()}
-
-    # NOTE possiblity of these needing to be from iam_dset
+    iam_dset, all_dsets = load_prepare_data(config)
     char_to_idx = all_dsets.char_to_idx
     idx_to_char = all_dsets.idx_to_char
-
-    # ??? combine train, val, and test to form knowns and unknowns
-    # datasets, dataloaders
-    # The datasets could be as simple as a map to the filepaths and just stack
-    # the 3 datasets lists together
 
     # Load Model (CRNN)
     if config['model'] == "crnn":
@@ -415,16 +371,17 @@ def main():
         dtype = torch.FloatTensor
         print("No GPU detected")
 
-    print(all_dsets.char_to_idx)
-    voc = " "
-    for x in range(1, len(all_dsets.idx_to_char) + 1):
-        voc = voc + all_dsets.idx_to_char[x]
-    print(voc)
-    print(all_dsets.idx_to_char)
+    #print(all_dsets.char_to_idx)
+    #voc = " "
+    #for x in range(1, len(all_dsets.idx_to_char) + 1):
+    #    voc = voc + all_dsets.idx_to_char[x]
+    #print(voc)
+    #print(all_dsets.idx_to_char)
 
-    # NOTE train loop is the CRNN's validation loop, but saving the layer_out
-    # results only and then padding as necessary and feeding to the MEVM for
-    # training where iam classes is positive (idx 1-79) and rest is negative.
+    # NOTE MEVM train loop is the CRNN's validation loop, but saving the
+    # layer_out results only and then padding as necessary and feeding to the
+    # MEVM for training where iam classes is positive (idx 1-79) and rest is
+    # negative.
 
     # Init MEVM from config
     mevm = MEVM(**config['mevm']['init'])
