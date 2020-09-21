@@ -10,7 +10,6 @@ model:
     metric: CER
     network:
       input_height: 64
-      cnn_out_size: 1024
       learning_rate: 0.01
       bridge_width: 5
     augmentation: True
