@@ -61,13 +61,12 @@ class CRNN(nn.Module):
     ):
         super(CRNN, self).__init__()
 
-        # TODO figureout what these vars are and what they stand for.
-        # TODO Also clarify varnames and simplify initialization
         # Conv Relu Architecture Parameters
-        ks = [3, 3, 3, 3, 3, 3]
-        ps = [1, 1, 1, 1, 1, 1]
-        ss = [1, 1, 1, 1, 1, 1]
-        nm = [16, 32, 48, 64, 80]  # [64, 128, 256, 256, 512, 512, 512]
+        kernel_sizes = [3] * 5
+        strides = [1] * 5
+        paddings = [1] * 5
+        cnn_input_dims = [16, 32, 48, 64, 80]
+        # [64, 128, 256, 256, 512, 512, 512]
 
         cnn = nn.Sequential()
 
@@ -86,12 +85,18 @@ class CRNN(nn.Module):
 
         # Construct the CRNN given architecture specification
         for i in range(maxpool2d_args):
-            input_dim = num_channels if i == 0 else nm[i - 1]
-            output_size = nm[i]
+            input_dim = num_channels if i == 0 else cnn_input_dims[i - 1]
+            output_size = cnn_input_dims[i]
 
             cnn.add_module(
                 f'conv{i}',
-                nn.Conv2d(input_dim, output_size, ks[i], ss[i], ps[i]),
+                nn.Conv2d(
+                    input_dim,
+                    output_size,
+                    kernel_sizes[i],
+                    strides[i],
+                    paddings[i],
+                ),
             )
 
             if batch_norm:
@@ -169,7 +174,7 @@ class CRNN(nn.Module):
 def create_model(config):
     # TODO remove this function and place it whereever it best belongs,
     # probably in experiments, cuz it just affects the cnn_output_size and num
-    # number of hidden layers.
+    # number of hidden layers. Probably crnn_data.py
     cnn_output_size = 80 * (config['input_height']/4)
 
     crnn = CRNN(
