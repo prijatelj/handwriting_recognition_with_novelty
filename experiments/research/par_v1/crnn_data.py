@@ -9,8 +9,7 @@ from dataclasses import dataclass
 from torch.utils.data import DataLoader, Subset
 
 # Internal package modules
-import character_set
-import hw_dataset
+from experiments.research.par_v1.grieggs import character_set, hw_dataset
 
 
 @dataclass
