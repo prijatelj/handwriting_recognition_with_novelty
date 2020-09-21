@@ -255,9 +255,11 @@ def main():
     optimizer = torch.optim.Adadelta(hw.parameters(), lr=config['network']['learning_rate'])
     criterion = CTCLoss(reduction='sum', zero_infinity=True)
 
+    # Variables for training loop
     lowest_loss = float('inf')
     best_distance = 0
 
+    # Training Loop
     for epoch in range(1000):
         torch.enable_grad()
         startTime = time.time()
@@ -358,7 +360,6 @@ def main():
                 print("Saving Best")
                 message = message + "\nBest Result :)"
                 torch.save(hw.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                #email_update(message, jobID)
                 best_distance = 0
             if best_distance > 800:
                 break
@@ -368,7 +369,6 @@ def main():
                 print("Saving Best")
                 message = message + "\nBest Result :)"
                 torch.save(hw.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                #email_update(message, jobID)
                 best_distance = 0
             if best_distance > 80:
                 break
