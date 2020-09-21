@@ -175,13 +175,13 @@ def eval_crnn(
 
 
 def main():
+    # Handle argrument parsing
     config_path = sys.argv[1]
     try:
         jobID = sys.argv[2]
     except:
         jobID = ""
     print(jobID)
-
 
     with open(config_path) as f:
         config = json.load(f)
@@ -205,13 +205,10 @@ def main():
         print(x[:-1])
 
     baseMessage = ""
-
     for line in paramList:
         baseMessage = baseMessage + line
 
-
-    # print(baseMessage)
-
+    # Prepare data and labels
     idx_to_char, char_to_idx = character_set.load_char_set(config['character_set_path'])
 
     train_dataset = HwDataset(
@@ -244,15 +241,8 @@ def main():
     print("Train Dataset Length: " + str(len(train_dataset)))
     print("Test Dataset Length: " + str(len(test_dataset)))
 
-
+    # Create Model (CRNN)
     hw = model.create_model(len(idx_to_char))
-    # hw = model.create_model({
-    #     'input_height': config['network']['input_height'],
-    #     'cnn_out_size': config['network']['cnn_out_size'],
-    #     'num_of_channels': 3,
-    #     'num_of_outputs': len(idx_to_char) + 1,
-    #     'bridge_width': config['network']['bridge_width']
-    # })
 
     if torch.cuda.is_available():
         hw.cuda()
@@ -263,9 +253,11 @@ def main():
         print("No GPU detected")
 
     optimizer = torch.optim.Adadelta(hw.parameters(), lr=config['network']['learning_rate'])
-    criterion = CTCLoss(reduction='sum',zero_infinity=True)
+    criterion = CTCLoss(reduction='sum', zero_infinity=True)
+
     lowest_loss = float('inf')
     best_distance = 0
+
     for epoch in range(1000):
         torch.enable_grad()
         startTime = time.time()
