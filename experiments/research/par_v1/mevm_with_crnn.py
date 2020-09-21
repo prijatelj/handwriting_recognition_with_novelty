@@ -22,17 +22,18 @@ from torch.utils.data import DataLoader
 from evm_based_novelty_detector.MultipleEVM import MEVM
 
 # Internal package modules
-import character_set
-import ctcdecode
-import error_rates
-import grid_distortion
-import hw_dataset
-from hw_dataset import HwDataset
-import model.crnn as crnn
-import string_utils
+from hwr_novelty.models import crnn
 
-import crnn_data
-import crnn_script
+from experiments.research.par_v1.grieggs import (
+    character_set,
+    #ctcdecode,
+    error_rates,
+    grid_distortion,
+    hw_dataset,
+    string_utils,
+)
+
+from experiments.research.par_v1 import crnn_data, crnn_script
 
 
 def train_mevm(hw_crnn, mevm, dsets, dtype, positive='iam', cpus=None):
