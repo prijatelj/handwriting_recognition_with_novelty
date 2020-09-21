@@ -60,7 +60,8 @@ if __name__ == '__main__':
     labels = pd.read_csv(args.labels_filepath, sep=args.delimiter)
 
     # Data index splitting: Use kfold (stratified if told to) to split the data
-    if args.kfold_cv.stratified:
+    #if args.kfold_cv.stratified:
+    if False:
         # If there are writers with less samples than folds, temporarily remove
         # them and randomly add them to a fold.
         idx, counts = np.unique(
