@@ -3,6 +3,39 @@ import json
 import os
 from collections import defaultdict
 
+def load_label_set(filepath, delimiter=None, increment_enc=None):
+    """Loads the given file and reads the labels in. Expects label per line.
+
+    Parameters
+    ----------
+    filepath : str
+        The filepath to the file containing the labels
+    delmiter : str, optional
+        The delimiter character if the file contains provided encodings per
+        label. Always assumes one label per line. Will assume first column is
+        the original label to be encoded to the provided encoding when
+        delimiter is not None.
+    increment_enc : int, optional
+        Optional incrementation to the encoding values
+    """
+    if increment_inc is not None:
+        raise NotImplementedError('incrementing the encoding integer values.')
+
+    if delimiter is None:
+        with open(filepath, 'r') as openf:
+            nd_enc = openf.read().splitlines()
+
+        idx_to_char = {}
+        char_to_idx = {}
+        for i, label in enumerate(nd_enc)
+            idx_to_char[label] = i
+            char_to_idx[i] = label
+
+        return idx_to_char, char_to_idx
+
+    # TODO load as csv or tsv. And actually finish in exputils
+
+
 def load_char_set(char_set_path):
     with open(char_set_path) as f:
         char_set = json.load(f)

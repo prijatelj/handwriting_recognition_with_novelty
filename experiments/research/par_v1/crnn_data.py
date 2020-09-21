@@ -26,8 +26,8 @@ class DataSet:
 
 
 def load_data(config, dataset, RIMES=False):
-    idx_to_char, char_to_idx = character_set.load_char_set(
-        config[dataset]['character_set_path'],
+    idx_to_char, char_to_idx = character_set.load_label_set(
+        config[dataset]['labels'],
     )
 
     train_dataset = hw_dataset.HwDataset(
