@@ -1,15 +1,17 @@
 """Script for Training and Evaluating the CRNN by itself."""
-import json
 import os
 import sys
 import time
 
 import numpy as np
+from ruamel.yaml import YAML
 import torch
 from torch.autograd import Variable
 from torch.nn.modules.loss import CTCLoss
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
+
+import exputils.io
 
 from hwr_novelty.models.crnn import create_model
 
@@ -36,7 +38,11 @@ def train_crnn(
     base_message='',
 ):
     """Streamline the training of the CRNN."""
-    # TODO
+    # Variables for training loop
+    lowest_loss = float('inf')
+    best_distance = 0
+
+    # Training Epoch Loop
     for epoch in range(epochs):
         torch.enable_grad()
 
@@ -57,6 +63,7 @@ def train_crnn(
 
         print("Train Set Size = " + str(len(train_dataloader)))
 
+        # Training Batch Loop
         prog_bar = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
         for i, x in prog_bar:
             prog_bar.set_description(' '.join([
@@ -93,6 +100,7 @@ def train_crnn(
             loss.backward()
             optimizer.step()
 
+            # Training Eval loop on training data
             for j in range(out.shape[0]):
                 logits = out[j, ...]
                 pred, raw_pred = string_utils.naive_decode(logits)
@@ -161,7 +169,10 @@ def train_crnn(
                     message = message + "\nBest Result :)"
                     torch.save(
                         hw_crnn.state_dict(),
-                        os.path.join(f'{model_save_path}{str(epoch)}.pt'),
+                        os.path.join(
+                            model_save_path,
+                            f'crnn_ep{str(epoch)}.pt',
+                        ),
                     )
                     best_distance = 0
                 if best_distance > 800:
@@ -180,7 +191,6 @@ def train_crnn(
                     break
             else:
                 print("This is actually very bad")
-
     return
 
 
@@ -344,19 +354,22 @@ def main():
         jobID = ""
     print(jobID)
 
-    with open(config_path) as f:
-        config = json.load(f)
+    with open(config_path) as openf:
+        #config = json.load(openf)
+        config = YAML(typ='safe').load(openf)
 
     try:
         model_save_path = sys.argv[3]
         if model_save_path[-1] != os.path.sep:
             model_save_path = model_save_path + os.path.sep
     except:
-        model_save_path = config['model_save_path']
+        model_save_path = config['model']['save_path']
+
     dirname = os.path.dirname(model_save_path)
-    print(dirname)
-    if len(dirname) > 0 and not os.path.exists(dirname):
-        os.makedirs(dirname)
+    #print(dirname)
+    #if len(dirname) > 0 and not os.path.exists(dirname):
+    #    os.makedirs(dirname)
+    model_save_path = exputils.io.create_dirs(model_save_path)
 
 
     with open(config_path) as f:
@@ -369,25 +382,25 @@ def main():
     for line in paramList:
         base_message = base_message + line
 
-    # Prepare data and labels
-    idx_to_char, char_to_idx = character_set.load_char_set(
-        config['character_set_path'],
+    # Load and Prepare the data and labels
+    idx_to_char, char_to_idx = character_set.load_label_set(
+        config['data']['iam']['labels'],
     )
 
     train_dataset = hw_dataset.HwDataset(
-        config['training_set_path'],
+        config['data']['iam']['train'],
         char_to_idx,
-        img_height=config['network']['input_height'],
-        root_path=config['image_root_directory'],
-        augmentation=config['augmentation'],
+        img_height=config['model']['crnn']['network']['input_height'],
+        root_path=config['data']['iam']['image_root_dir'],
+        augmentation=config['model']['crnn']['augmentation'],
     )
 
     try:
         test_dataset = hw_dataset.HwDataset(
-            config['validation_set_path'],
+            config['data']['iam']['val'],
             char_to_idx,
-            img_height=config['network']['input_height'],
-            root_path=config['image_root_directory'],
+            img_height=config['model']['crnn']['network']['input_height'],
+            root_path=config['data']['iam']['image_root_dir'],
         )
     except KeyError as e:
         print("No validation set found, generating one")
@@ -409,7 +422,7 @@ def main():
 
     train_dataloader = DataLoader(
         train_dataset,
-        batch_size=config['batch_size'],
+        batch_size=config['model']['crnn']['batch_size'],
         shuffle=False,
         num_workers=1,
         collate_fn=hw_dataset.collate,
@@ -417,7 +430,7 @@ def main():
 
     test_dataloader = DataLoader(
         test_dataset,
-        batch_size=config['batch_size'],
+        batch_size=config['model']['crnn']['batch_size'],
         shuffle=False,
         num_workers=1,
         collate_fn=hw_dataset.collate,
@@ -439,13 +452,9 @@ def main():
 
     optimizer = torch.optim.Adadelta(
         hw_crnn.parameters(),
-        lr=config['network']['learning_rate'],
+        lr=config['model']['crnn']['network']['learning_rate'],
     )
     criterion = CTCLoss(reduction='sum', zero_infinity=True)
-
-    # Variables for training loop
-    lowest_loss = float('inf')
-    best_distance = 0
 
     # Training Loop
     train_crnn(
