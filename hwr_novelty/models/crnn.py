@@ -179,9 +179,9 @@ def create_model(config):
 
     crnn = CRNN(
         int(cnn_output_size),
-        config['num_of_channels'],
-        config['num_of_outputs'],
-        256,
+        config['num_channels'],
+        config['num_classes'],
+        config['hidden_size'],  # 256,
     )
 
     return crnn
