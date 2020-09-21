@@ -184,13 +184,16 @@ def train_crnn(
                     message = message + "\nBest Result :)"
                     torch.save(
                         hw_crnn.state_dict(),
-                        os.path.join(model_save_path + str(epoch) + ".pt"),
+                        os.path.join(
+                            model_save_path,
+                            f'crnn_ep{str(epoch)}.pt',
+                        ),
                     )
                     best_distance = 0
                 if best_distance > 80:
                     break
             else:
-                print("This is actually very bad")
+                raise ValueError("This is actually very bad")
     return
 
 
