@@ -10,7 +10,8 @@ model:
     network:
       input_height: 64
       learning_rate: 0.01
+      hidden_size: 256
       bridge_width: 5
     augmentation: True
     batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1.pt'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1/'
