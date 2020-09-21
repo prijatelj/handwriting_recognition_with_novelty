@@ -16,34 +16,6 @@ import time
 from tqdm import tqdm
 
 
-def email_update(message, jobID=""):
-    import smtplib
-    # If you include a username and password for a gmail account, you can send yourself email updates.
-    # Obviously this is hilariously insecure, so I have an account just for sending these emails.
-    # gmail_user = "sample@gmail.com"
-    gmail_user = ""
-    gmail_password = ""
-
-    sent_from = gmail_user
-    to = ["sample@gmail.com"]
-    subject = 'Job update!(: ' + jobID
-
-    email_text = 'Subject: {}\n\n{}'.format(subject, message)
-
-    try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.ehlo()
-        server.login(gmail_user, gmail_password)
-        server.sendmail(sent_from, to, email_text)
-        server.close()
-        print('Results emailed to ' + to[0])
-        return True
-    except Exception as e:
-        print(e)
-        print('Email failure, but this isn\'t important enough to stop everything')
-        return False
-
-
 def train_crnn():
     """Streamline the training of the CRNN."""
     # TODO
@@ -394,7 +366,7 @@ def main():
                 print("Saving Best")
                 message = message + "\nBest Result :)"
                 torch.save(hw.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                email_update(message, jobID)
+                #email_update(message, jobID)
                 best_distance = 0
             if best_distance > 800:
                 break
@@ -404,7 +376,7 @@ def main():
                 print("Saving Best")
                 message = message + "\nBest Result :)"
                 torch.save(hw.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                email_update(message, jobID)
+                #email_update(message, jobID)
                 best_distance = 0
             if best_distance > 80:
                 break
