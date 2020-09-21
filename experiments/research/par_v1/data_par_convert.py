@@ -120,7 +120,8 @@ if os.path.isfile(args.transcripts_filepath):
             quoting=csv.QUOTE_NONE,
         )
 
-        # Set the index to the unique image filenames for ease of mapping transcripts
+        # Set the index to the unique image filenames for ease of mapping
+        # transcripts
         labels.index = labels['file']
 
         # Add the transcript column to the labels
