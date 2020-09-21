@@ -1,51 +1,83 @@
+"""Script for Training and Evaluating the CRNN by itself."""
 import json
-import character_set
-import sys
-import hw_dataset
-from hw_dataset import HwDataset
-import model.mdlstm_hwr as model
 import os
+import sys
+import time
+
+import numpy as np
 import torch
-from torch.utils import data
-from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torch.nn.modules.loss import CTCLoss
-import error_rates
-import string_utils
-import time
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
+from hwr_novelty.models.crnn import create_model
 
-def train_crnn(hw_crnn, optimizer, criterion, epochs=1000):
+from experiments.research.par_v1.grieggs import (
+    character_set,
+    error_rates,
+    hw_dataset,
+    string_utils,
+)
+#from experiments.research.par_v1.grieggs import mdlstm_hwr as model
+
+
+def train_crnn(
+    hw_crnn,
+    optimizer,
+    criterion,
+    idx_to_char,
+    train_dataloader,
+    dtype,
+    model_save_path=None,
+    test_dataloader=None,
+    epochs=1000,
+    metric='CER',
+    base_message='',
+):
     """Streamline the training of the CRNN."""
     # TODO
     for epoch in range(epochs):
         torch.enable_grad()
+
         startTime = time.time()
-        message = baseMessage
+        message = base_message
+
         sum_loss = 0.0
         sum_wer_loss = 0.0
         steps = 0.0
+
         hw_crnn.train()
+
         disp_ctc_loss = 0.0
         disp_loss = 0.0
         gt = ""
         ot = ""
         loss = 0.0
+
         print("Train Set Size = " + str(len(train_dataloader)))
+
         prog_bar = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
         for i, x in prog_bar:
-            # message = str("CER: " + str(disp_loss) +"\nGT: " +gt +"\nex: "+out+"\nProgress")
-            prog_bar.set_description(f'CER: {disp_loss} CTC: {loss} Ground Truth: |{gt}| Network Output: |{ot}|')
+            prog_bar.set_description(' '.join([
+                f'CER: {disp_loss} CTC: {loss} Ground Truth: |{gt}| Network',
+                f'Output: |{ot}|',
+            ]))
+
             line_imgs = x['line_imgs']
             rem = line_imgs.shape[3] % 32
             if rem != 0:
                 imgshape = line_imgs.shape
-                temp = torch.zeros(imgshape[0], imgshape[1], imgshape[2], imgshape[3] + (32 - rem))
+                temp = torch.zeros(
+                    imgshape[0],
+                    imgshape[1],
+                    imgshape[2],
+                    imgshape[3] + (32 - rem),
+                )
                 temp[:, :, :, :imgshape[3]] = line_imgs
                 line_imgs = temp
                 del temp
-            line_imgs = Variable(line_imgs.type(dtype), requires_grad = False)
+            line_imgs = Variable(line_imgs.type(dtype), requires_grad=False)
 
             labels = Variable(x['labels'], requires_grad=False)
             label_lengths = Variable(x['label_lengths'], requires_grad=False)
@@ -53,18 +85,13 @@ def train_crnn(hw_crnn, optimizer, criterion, epochs=1000):
             preds = hw_crnn(line_imgs).cpu()
             preds_size = Variable(torch.IntTensor([preds.size(0)] * preds.size(1)))
 
-            output_batch = preds.permute(1,0,2)
+            output_batch = preds.permute(1, 0, 2)
             out = output_batch.data.cpu().numpy()
             loss = criterion(preds, labels, preds_size, label_lengths)
-            # print(loss)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            # if i == 0:
-            #    for i in xrange(out.shape[0]):
-            #        pred, pred_raw = string_utils.naive_decode(out[i,...])
-            #        pred_str = string_utils.label2str(pred_raw, idx_to_char, True)
-            #        print(pred_str)
 
             for j in range(out.shape[0]):
                 logits = out[j, ...]
@@ -80,59 +107,79 @@ def train_crnn(hw_crnn, optimizer, criterion, epochs=1000):
                 steps += 1
             disp_loss = sum_loss/steps
         eTime = time.time()- startTime
-        message = message + "\n" + "Epoch: " + str(epoch) + " Training CER: " + str(sum_loss / steps)+ " Training WER: " + str(sum_wer_loss / steps) + "\n"+"Time: " + str(eTime) + " Seconds"
+
+        message = (
+            message + "\n" + "Epoch: " + str(epoch) + " Training CER: "
+            + str(sum_loss / steps)+ " Training WER: " + str(sum_wer_loss /
+            steps) + "\n"+"Time: " + str(eTime) + " Seconds"
+        )
+
         print("Epoch: " + str(epoch) + " Training CER", sum_loss / steps)
         print("Training WER: " + str(sum_wer_loss / steps))
         print("Time: " + str(eTime) + " Seconds")
+
         sum_loss = 0.0
         sum_wer_loss = 0.0
         steps = 0.0
         hw_crnn.eval()
-        print("Validation Set Size = " + str(len(test_dataloader)))
-        for x in tqdm(test_dataloader):
-            torch.no_grad()
-            line_imgs = Variable(x['line_imgs'].type(dtype), requires_grad=False)
-            # labels =  Variable(x['labels'], requires_grad=False, volatile=True)
-            # label_lengths = Variable(x['label_lengths'], requires_grad=False, volatile=True)
-            preds = hw_crnn(line_imgs).cpu()
-            output_batch = preds.permute(1, 0, 2)
-            out = output_batch.data.cpu().numpy()
-            for i, gt_line in enumerate(x['gt']):
-                logits = out[i, ...]
-                pred, raw_pred = string_utils.naive_decode(logits)
-                pred_str = string_utils.label2str(pred, idx_to_char, False)
-                cer = error_rates.cer(gt_line, pred_str)
-                wer = error_rates.wer(gt_line, pred_str)
-                sum_wer_loss += wer
-                sum_loss += cer
-                steps += 1
 
-        message = message + "\nTest CER: " + str(sum_loss / steps)
-        message = message + "\nTest WER: " + str(sum_wer_loss / steps)
-        print("Test CER", sum_loss / steps)
-        print("Test WER", sum_wer_loss / steps)
-        best_distance += 1
-        metric="CER"
-        if(metric == "CER"):
-            if lowest_loss > sum_loss / steps:
-                lowest_loss = sum_loss / steps
-                print("Saving Best")
-                message = message + "\nBest Result :)"
-                torch.save(hw_crnn.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                best_distance = 0
-            if best_distance > 800:
-                break
-        elif(metric == "WER"):
-            if lowest_loss > sum_wer_loss / steps:
-                lowest_loss = sum_wer_loss / steps
-                print("Saving Best")
-                message = message + "\nBest Result :)"
-                torch.save(hw_crnn.state_dict(), os.path.join(model_save_path+str(epoch) + ".pt"))
-                best_distance = 0
-            if best_distance > 80:
-                break
-        else:
-            print("This is actually very bad")
+        # Validation loop per epoch
+        if test_dataloader is not None:
+            print("Validation Set Size = " + str(len(test_dataloader)))
+
+            for x in tqdm(test_dataloader):
+                torch.no_grad()
+                line_imgs = Variable(
+                    x['line_imgs'].type(dtype),
+                    requires_grad=False,
+                )
+
+                preds = hw_crnn(line_imgs).cpu()
+                output_batch = preds.permute(1, 0, 2)
+                out = output_batch.data.cpu().numpy()
+                for i, gt_line in enumerate(x['gt']):
+                    logits = out[i, ...]
+                    pred, raw_pred = string_utils.naive_decode(logits)
+                    pred_str = string_utils.label2str(pred, idx_to_char, False)
+                    cer = error_rates.cer(gt_line, pred_str)
+                    wer = error_rates.wer(gt_line, pred_str)
+                    sum_wer_loss += wer
+                    sum_loss += cer
+                    steps += 1
+
+            message = message + "\nTest CER: " + str(sum_loss / steps)
+            message = message + "\nTest WER: " + str(sum_wer_loss / steps)
+            print("Test CER", sum_loss / steps)
+            print("Test WER", sum_wer_loss / steps)
+            best_distance += 1
+
+            # Repeatedly saves the best performing model so-far based on Val.
+            if metric == "CER":
+                if lowest_loss > sum_loss / steps:
+                    lowest_loss = sum_loss / steps
+                    print("Saving Best")
+                    message = message + "\nBest Result :)"
+                    torch.save(
+                        hw_crnn.state_dict(),
+                        os.path.join(f'{model_save_path}{str(epoch)}.pt'),
+                    )
+                    best_distance = 0
+                if best_distance > 800:
+                    break
+            elif metric == "WER":
+                if lowest_loss > sum_wer_loss / steps:
+                    lowest_loss = sum_wer_loss / steps
+                    print("Saving Best")
+                    message = message + "\nBest Result :)"
+                    torch.save(
+                        hw_crnn.state_dict(),
+                        os.path.join(model_save_path + str(epoch) + ".pt"),
+                    )
+                    best_distance = 0
+                if best_distance > 80:
+                    break
+            else:
+                print("This is actually very bad")
 
     return
 
@@ -318,16 +365,16 @@ def main():
     for x in paramList:
         print(x[:-1])
 
-    baseMessage = ""
+    base_message = ""
     for line in paramList:
-        baseMessage = baseMessage + line
+        base_message = base_message + line
 
     # Prepare data and labels
     idx_to_char, char_to_idx = character_set.load_char_set(
         config['character_set_path'],
     )
 
-    train_dataset = HwDataset(
+    train_dataset = hw_dataset.HwDataset(
         config['training_set_path'],
         char_to_idx,
         img_height=config['network']['input_height'],
@@ -336,7 +383,7 @@ def main():
     )
 
     try:
-        test_dataset = HwDataset(
+        test_dataset = hw_dataset.HwDataset(
             config['validation_set_path'],
             char_to_idx,
             img_height=config['network']['input_height'],
@@ -357,8 +404,8 @@ def main():
         train_idx = idx[:n_train]
         test_idx = idx[n_train:]
 
-        test_dataset = data.Subset(master, test_idx)
-        train_dataset = data.Subset(master, train_idx)
+        test_dataset = Subset(master, test_idx)
+        train_dataset = Subset(master, train_idx)
 
     train_dataloader = DataLoader(
         train_dataset,
@@ -380,7 +427,7 @@ def main():
     print("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
-    hw_crnn = model.create_model(len(idx_to_char))
+    hw_crnn = create_model(len(idx_to_char))
 
     if torch.cuda.is_available():
         hw_crnn.cuda()
@@ -401,7 +448,17 @@ def main():
     best_distance = 0
 
     # Training Loop
-    train_crnn(hw_crnn, optimizer, criterion)
+    train_crnn(
+        hw_crnn,
+        optimizer,
+        criterion,
+        idx_to_char,
+        train_dataloader,
+        dtype,
+        model_save_path,
+        test_dataloader,
+        base_message=base_message,
+    )
 
 if __name__ == "__main__":
     main()
