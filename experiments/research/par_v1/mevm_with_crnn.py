@@ -117,8 +117,8 @@ def main():
         hw_crnn = crnn.create_model({
             'input_height': config['network']['input_height'],
             'cnn_out_size': config['network']['cnn_out_size'],
-            'num_of_channels': 3,
-            'num_of_outputs': len(iam_dset.idx_to_char) + 1
+            'num_channels': 3,
+            'num_classes': len(iam_dset.idx_to_char) + 1
         })
 
     hw_crnn.load_state_dict(torch.load(config['model_load_path']))
