@@ -369,7 +369,7 @@ def main():
         if model_save_path[-1] != os.path.sep:
             model_save_path = model_save_path + os.path.sep
     except:
-        model_save_path = config['model']['save_path']
+        model_save_path = config['model']['crnn']['save_path']
 
     dirname = os.path.dirname(model_save_path)
     #print(dirname)
