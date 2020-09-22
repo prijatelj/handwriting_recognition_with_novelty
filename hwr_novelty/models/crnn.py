@@ -62,15 +62,6 @@ class CRNN(nn.Module):
     ):
         super(CRNN, self).__init__()
 
-        # Set the cnn_output_size if not given explicitly
-        if cnn_output_size is None and input_height is None:
-            raise ValueError(' '.join([
-            'Must provide either cnn_output_size or input_height. Both were',
-            'unchanged from None.',
-            ]))
-        elif cnn_output_size is None and input_height is not None:
-            cnn_output_size = int(num_classes * input_height / 4)
-
         # TODO have these be adjustable params or CRNN_Network_Param class
         # Conv Relu Architecture Parameters
         kernel_sizes = [3] * 5
@@ -78,6 +69,15 @@ class CRNN(nn.Module):
         paddings = [1] * 5
         cnn_input_dims = [16, 32, 48, 64, 80]
         # [64, 128, 256, 256, 512, 512, 512]
+
+        # Set the cnn_output_size if not given explicitly
+        if cnn_output_size is None and input_height is None:
+            raise ValueError(' '.join([
+            'Must provide either cnn_output_size or input_height. Both were',
+            'unchanged from None.',
+            ]))
+        elif cnn_output_size is None and input_height is not None:
+            cnn_output_size = int(cnn_input_dims[-1] * input_height / 4)
 
         cnn = nn.Sequential()
 
@@ -161,7 +161,8 @@ class CRNN(nn.Module):
         conv = self.cnn(input)
 
         # batch, classes, height, width?
-        batches, classes, height, width = conv.size()  # TODO consider a slice
+        batches, classes, height, width = conv.size()
+        #batches, width = conv.size()[[0, 3]]  # TODO consider a slice
         conv = torch.flatten(conv, start_dim=1, end_dim=2)
         conv = conv.view(batches, -1, width)
         conv = conv.permute(2, 0, 1)  # [w, b, c]
