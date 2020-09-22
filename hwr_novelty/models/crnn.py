@@ -95,7 +95,7 @@ class CRNN(nn.Module):
         dropout_probs = [0, 0, 0.2, 0.2, 0.2]
 
         # Construct the CRNN given architecture specification
-        for i in range(maxpool2d_args):
+        for i in range(len(maxpool2d_args)):
             input_dim = num_channels if i == 0 else cnn_input_dims[i - 1]
             output_size = cnn_input_dims[i]
 

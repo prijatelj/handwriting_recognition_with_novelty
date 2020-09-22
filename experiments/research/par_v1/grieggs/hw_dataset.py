@@ -72,8 +72,11 @@ class HwDataset(Dataset):
      ):
         with open(json_path) as f:
             #data = json.load(f)
-            reader = csv.csvreader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
-            [{'gt': row[-1], 'image_path': row[0]} for row in reader]
+            reader = csv.reader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
+
+            # remove headers
+            next(reader)
+            data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
 
         self.root_path = root_path
         self.img_height = img_height
