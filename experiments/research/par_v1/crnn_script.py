@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 import exputils.io
 
-from hwr_novelty.models.crnn import create_model
+from hwr_novelty.models.crnn import CRNN
 
 from experiments.research.par_v1.grieggs import (
     character_set,
@@ -396,7 +396,7 @@ def main():
     train_dataset = hw_dataset.HwDataset(
         config['data']['iam']['train'],
         char_to_idx,
-        img_height=config['model']['crnn']['network']['input_height'],
+        img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
         augmentation=config['model']['crnn']['augmentation'],
     )
@@ -405,7 +405,7 @@ def main():
         test_dataset = hw_dataset.HwDataset(
             config['data']['iam']['val'],
             char_to_idx,
-            img_height=config['model']['crnn']['network']['input_height'],
+            img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
         )
     except KeyError as e:
@@ -446,7 +446,7 @@ def main():
     print("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
-    hw_crnn = create_model(config['model']['crnn']['network'])
+    hw_crnn = CRNN(**config['model']['crnn']['init'])
 
     if torch.cuda.is_available():
         hw_crnn.cuda()
@@ -458,7 +458,7 @@ def main():
 
     optimizer = torch.optim.Adadelta(
         hw_crnn.parameters(),
-        lr=config['model']['crnn']['network']['learning_rate'],
+        lr=config['model']['crnn']['train']['learning_rate'],
     )
     criterion = CTCLoss(reduction='sum', zero_infinity=True)
 

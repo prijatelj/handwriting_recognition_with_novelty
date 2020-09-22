@@ -51,15 +51,25 @@ class CRNN(nn.Module):
     """
     def __init__(
         self,
-        cnn_output_size,
         num_channels,
         num_classes,
         hidden_size,
         num_hidden=5,
+        cnn_output_size=None,
+        input_height=None,
         leakyRelu=True,
         batch_norm=True,
     ):
         super(CRNN, self).__init__()
+
+        # Set the cnn_output_size if not given explicitly
+        if cnn_output_size is None and input_height is None:
+            raise ValueError(' '.join([
+            'Must provide either cnn_output_size or input_height. Both were',
+            'unchanged from None.',
+            ]))
+        elif cnn_output_size is None and input_height is not None:
+            cnn_output_size = int(num_classes * input_height / 4)
 
         # Conv Relu Architecture Parameters
         kernel_sizes = [3] * 5
@@ -169,19 +179,3 @@ class CRNN(nn.Module):
         if not return_conv and return_rnn:
             return output, rnn_emb
         return output
-
-
-def create_model(config):
-    # TODO remove this function and place it whereever it best belongs,
-    # probably in experiments, cuz it just affects the cnn_output_size and num
-    # number of hidden layers. Probably crnn_data.py
-    cnn_output_size = 80 * (config['input_height']/4)
-
-    crnn = CRNN(
-        int(cnn_output_size),
-        config['num_channels'],
-        config['num_classes'],
-        config['hidden_size'],  # 256,
-    )
-
-    return crnn
