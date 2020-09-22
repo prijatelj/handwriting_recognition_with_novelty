@@ -28,8 +28,8 @@ def load_label_set(filepath, delimiter=None, increment_enc=None):
         idx_to_char = {}
         char_to_idx = {}
         for i, label in enumerate(nd_enc):
-            idx_to_char[label] = i
-            char_to_idx[i] = label
+            idx_to_char[i] = label
+            char_to_idx[label] = i
 
         return idx_to_char, char_to_idx
 
