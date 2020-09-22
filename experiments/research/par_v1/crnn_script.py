@@ -64,7 +64,10 @@ def train_crnn(
         print("Train Set Size = " + str(len(train_dataloader)))
 
         # Training Batch Loop
-        prog_bar = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
+        prog_bar = tqdm(
+            enumerate(train_dataloader),
+            total=len(train_dataloader),
+        )
         for i, x in prog_bar:
             prog_bar.set_description(' '.join([
                 f'CER: {disp_loss} CTC: {loss} Ground Truth: |{gt}| Network',
