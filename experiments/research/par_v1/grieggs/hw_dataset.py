@@ -1,18 +1,16 @@
-import json
-import torch
-
-from torch.utils.data import Dataset
-from torch.autograd import Variable
-
 from collections import defaultdict
+import csv
+import json
 import os
-import cv2
-import numpy as np
-
 import random
 
-from experiments.research.par_v1.grieggs import string_utils
-from experiments.research.par_v1.grieggs import grid_distortion
+import cv2
+import numpy as np
+import torch
+from torch.autograd import Variable
+from torch.utils.data import Dataset
+
+from experiments.research.par_v1.grieggs import grid_distortion, string_utils
 
 PADDING_CONSTANT = 1
 
@@ -70,9 +68,12 @@ class HwDataset(Dataset):
         root_path=".",
         augmentation=False,
         remove_errors=False,
+        sep='\t',
      ):
         with open(json_path) as f:
-            data = json.load(f)
+            #data = json.load(f)
+            reader = csv.csvreader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
+            [{'gt': row[-1], 'image_path': row[0]} for row in reader]
 
         self.root_path = root_path
         self.img_height = img_height
