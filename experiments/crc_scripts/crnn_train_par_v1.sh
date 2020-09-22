@@ -4,8 +4,8 @@
 #$ -N crnn_parv1
 #$ -q gpu
 #$ -l gpu=1
-#$ -o $HOME/scratch_22/open_set/hwr/grieggs_hwr/logs/crnnEvm/logs/
-#$ -e $HOME/scratch_22/open_set/hwr/grieggs_hwr/logs/crnnEvm/logs/
+#$ -o $HOME/scratch_22/open_set/hwr/hwr_novelty/logs/crnnEvm/logs/
+#$ -e $HOME/scratch_22/open_set/hwr/hwr_novelty/logs/crnnEvm/logs/
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty/"
 #DATA_PATH="$HOME/scratch_22/open_set/data/image_net"
