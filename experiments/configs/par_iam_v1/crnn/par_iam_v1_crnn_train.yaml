@@ -1,7 +1,7 @@
 data:
   iam:
-    train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fol_0/5folds_train-0.tsv'
-    val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fol_0/5folds_test-0.tsv'
+    train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_train-0.tsv'
+    val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_test-0.tsv'
     image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
     labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_char_set.tsv'
 model:
