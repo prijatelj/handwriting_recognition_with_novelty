@@ -71,6 +71,7 @@ class CRNN(nn.Module):
         elif cnn_output_size is None and input_height is not None:
             cnn_output_size = int(num_classes * input_height / 4)
 
+        # TODO have these be adjustable params or CRNN_Network_Param class
         # Conv Relu Architecture Parameters
         kernel_sizes = [3] * 5
         strides = [1] * 5
