@@ -443,7 +443,7 @@ def main():
     print("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
-    hw_crnn = create_model(len(idx_to_char))
+    hw_crnn = create_model(config['model']['crnn']['network'])
 
     if torch.cuda.is_available():
         hw_crnn.cuda()
