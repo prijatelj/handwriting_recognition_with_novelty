@@ -1,3 +1,4 @@
+#!/bin/bash
 conda activate osr_torch
 
 python3 setup.py install
