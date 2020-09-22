@@ -18,7 +18,7 @@ def load_label_set(filepath, delimiter=None, increment_enc=None):
     increment_enc : int, optional
         Optional incrementation to the encoding values
     """
-    if increment_inc is not None:
+    if increment_enc is not None:
         raise NotImplementedError('incrementing the encoding integer values.')
 
     if delimiter is None:
@@ -27,7 +27,7 @@ def load_label_set(filepath, delimiter=None, increment_enc=None):
 
         idx_to_char = {}
         char_to_idx = {}
-        for i, label in enumerate(nd_enc)
+        for i, label in enumerate(nd_enc):
             idx_to_char[label] = i
             char_to_idx[i] = label
 
