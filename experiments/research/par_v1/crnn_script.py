@@ -441,19 +441,30 @@ def character_slices(
 
 def io_args(parser):
     parser.add_argument(
-        '--action',
-        choices=['train', 'eval', 'slice', 'train_eval', 'train_slice', 'all'],
-        help=' '.join([
-            'The actions to be taken by this script including: training the',
-            'CRNN, evaluating an already trained CRNN, or obtaining an',
-            'already trained CRNN\'s perfect slices of a representative layer',
-            'in the CRNN.'
-        ]),
+        '--config_path',
+        help='YAML experiment configuration file defining the ANN and data.',
     )
 
     parser.add_argument(
-        '--config_path',
-        help='YAML experiment configuration file defining the ANN and data.',
+        '--train',
+        action='store_true',
+        help='Expect to train model if given.',
+    )
+
+    parser.add_argument(
+        '--eval',
+        default=None,
+        nargs='+',
+        help='The data splits to be evaluated.',
+        choices=['train', 'val', 'test'],
+    )
+
+    parser.add_argument(
+        '--slice',
+        default=None,
+        nargs='+',
+        choices=['rnn', 'cnn', 'conv'],
+        help='Slice the given layers of the CRNN.',
     )
 
 
@@ -545,33 +556,53 @@ def main():
         dtype = torch.FloatTensor
         logging.info("No GPU detected")
 
-    optimizer = torch.optim.Adadelta(
-        hw_crnn.parameters(),
-        lr=config['model']['crnn']['train']['learning_rate'],
-    )
-    criterion = CTCLoss(reduction='sum', zero_infinity=True)
+    if args.train:
+        optimizer = torch.optim.Adadelta(
+            hw_crnn.parameters(),
+            lr=config['model']['crnn']['train']['learning_rate'],
+        )
+        criterion = CTCLoss(reduction='sum', zero_infinity=True)
 
-    # Training Loop
-    # TODO save CRNN output for ease of eval and comparison
-    train_crnn(
-        hw_crnn,
-        optimizer,
-        criterion,
-        idx_to_char,
-        train_dataloader,
-        dtype,
-        model_save_path,
-        test_dataloader,
-        base_message=base_message,
-    )
+        # Training Loop
+        # TODO save CRNN output for ease of eval and comparison
+        train_crnn(
+            hw_crnn,
+            optimizer,
+            criterion,
+            idx_to_char,
+            train_dataloader,
+            dtype,
+            model_save_path,
+            test_dataloader,
+            base_message=base_message,
+        )
+    else:
+        pass
+        # TODO if not train, then load model
 
-    # TODO include arg for train, eval, layer slice
+    if args.eval is not None:
     #   TODO train and eval, or train and layer slice, or
-
-    # TODO eval
+        for data_split in args.eval:
+            eval_crnn(
+                hw_crnn,
+                dataloader,
+                idx_to_char,
+                dtype,
+                output_crnn_eval=True,
+                layer=None,
+                return_logits=True,
+            )
 
     # TODO obtain perfect RNN slices
-
+    if args.action == 'all' or 'slice' in args.action:
+        character_slices(
+            layer,
+            logits,
+            target_transcript,
+            idx_to_char,
+            add_idx=False,
+            mask_out=False,
+        )
 
 
 if __name__ == "__main__":
