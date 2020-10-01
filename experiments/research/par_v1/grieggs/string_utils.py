@@ -59,7 +59,10 @@ def naive_decode(output):
     rawPredData = np.argmax(output, axis=1)
     predData = []
     for i in range(len(output)):
-        if rawPredData[i] != 0 and not ( i > 0 and rawPredData[i] == rawPredData[i-1] ):
+        if (
+            rawPredData[i] != 0
+            and not ( i > 0 and rawPredData[i] == rawPredData[i - 1] )
+        ):
             predData.append(rawPredData[i])
     return predData, list(rawPredData)
 
