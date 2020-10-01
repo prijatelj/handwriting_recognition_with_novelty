@@ -1,0 +1,91 @@
+# The following is an example or template YAML config file with explainations
+# for the expected parts of the configuration. The config file is the main
+# method of specifying an experiment as it is easy to create, read, share, and
+# version control. However, if so desired, the config's values may be
+# overloaded by passing the appropriate arguments to overload certain values of
+# the configuration file. All scripts to run the experiments are provided so
+# the overloaded values are observable and documented by the script calls.
+
+# The configuration is designed to be modular to allow for nested configuration
+# of the different parts. This means that a single configuration file may
+# contain all of the configuration information, or may link to another config
+# file that is specific to that part of the configuration. This configuration
+# linking is common for data splits and datasets
+
+data:
+  # `data` contains the configuration for multiple `datasets`. This informs the
+  # data loaders where to load the data, and provides informaiton on how to
+  # load the data. The datasets are dictionaries where the key is their name
+  # and their content is their configuration.
+  iam:
+    # The datasets contain that data split configs: train, val, and test. All
+    # of the data splits are used for their respective role, e.g. train to
+    # train models, val to validate the models during training, and test to
+    # only evaluate the performance of those models once finished training.
+    train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_train-0.tsv'
+    val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_test-0.tsv'
+
+    # `image_root_dir` is to be appended to the file paths within the data
+    # splits. This is for simplifying the contents within the data split
+    # configs and to allow users to change the dataset filepaths as needed for
+    # their system
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
+
+    # Included in every dataset is the `labels` configuration. Most commonly,
+    # this will just be the encoding of labels to indices in the nominal case,
+    # and for traditional classification tasks. In more complicated
+    # classification tasks, such as open set or open world recognition or
+    # hierarchical or structured classification, this configuration is more
+    # complicated and defines the intricacies of the labels.
+    labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_char_set.tsv'
+
+model:
+  # `model` includes the details of the model's components. Every experiment
+  # involves only one model, but that model may involve multiple components.
+  # The reason for limitation to one model is because having multiple models
+  # tends to be a larger scale experiment which would involve performing the
+  # same experiment or task with different models and then comparing them. For
+  # the sake of simplicity, modularization, and efficient use of resources, one
+  # model per experiment config ensures that the one model is the only thing
+  # being run, to ensure the trivial parallelism. Basically, forcing you to
+  # parallize your different model runs for the overarching experiment. Given
+  # the config files may link to other config files, this allows for  simply
+  # replacing the model portion of the config file to test different models in
+  # the same experimental setup.
+  crnn:
+    # Each key within model is a part of the model to be defined. All of this
+    # is specific to the model, but we detail the expected format here. The
+    # trend is that where ever there are method specific args, such as for
+    # initializing, loading, training, or using a model then they are stored
+    # here and are to be passed to their respective method of the model's
+    # python class.
+    init:
+      # `init` is the configuration for initializing this model. These are the
+      # expected arguments for passing to `Model.__init__()`.
+      num_channels: 3
+      num_classes: 81 # May be just 80, but iirc Grieggs' added by 1
+      hidden_size: 256
+      input_height: 64
+    train:
+      # `train` is the config for training this model, as expected of machine
+      # learning models. These are the expected arguments for passing to
+      # `Model.train()`.
+      learning_rate: 0.01
+    predict:
+      # `predict` is the configuration for initializing this model. These are
+      # the expected arguments for passing to `Model.predict()`. In the case of
+      # the CRNN, there are no prediction specific args. predict may be
+      # replaced with eval if the args only pertain to evaluation, not anytime
+      # predictions are made.
+
+    # `save_path` is the directory where the model's state is saved. In the
+    # case of the CRNN, this is its weights.
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1/'
+
+    # There may be higher level config args that pertain to multiple parts of
+    # the model, such as `batch_size` carries over to both training and
+    # prediction. And `metric` may be recorded both during training and
+    # predictions or during eval.
+    metric: CER
+    augmentation: True
+    batch_size: 1
