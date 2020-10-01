@@ -36,7 +36,15 @@ from experiments.research.par_v1.grieggs import (
 from experiments.research.par_v1 import crnn_data, crnn_script
 
 
-def train_mevm(hw_crnn, mevm, dsets, dtype, positive='iam', cpus=None):
+def train_mevm(
+    hw_crnn,
+    mevm,
+    dsets,
+    dtype,
+    positive='iam',
+    layer='rnn',
+    cpus=None,
+):
     """Given CRNN model and data, train the mevm on the data."""
 
     #print('Set Sizes including Nones:')
@@ -50,11 +58,14 @@ def train_mevm(hw_crnn, mevm, dsets, dtype, positive='iam', cpus=None):
             v.train_dataloader,
             v.idx_to_char,
             dtype,
+            layer='rnn',
+            return_logits=False,
         )
         for k, v in dsets.items()
     }
 
-    # Organize the layer_outs and dsets into positives and negatives
+    # Organize the layer_outs and dsets into lists of points per class
+    # TODO list of target labels (characters)
 
     # Order into [# classes, data pt dim] to form multiple classes' positives
     # and negatives
