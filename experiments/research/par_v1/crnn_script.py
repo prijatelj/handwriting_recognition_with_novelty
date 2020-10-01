@@ -229,6 +229,7 @@ def eval_crnn(
         If 'conv', uses the final convolutional layer's output. If 'concat',
         then returns both concatenated together (Concat is to be implemented).
         Defaults to None, and thus only evaluates the CRNN itself.
+    return_logits : bool, optional
 
     Returns
     -------
@@ -295,7 +296,6 @@ def eval_crnn(
             #   "character windows", classes
 
             if layer is None or output_crnn_eval:
-                # TODO save CRNN output for ease of eval and comparison
                 output_batch = preds.permute(1, 0, 2)
                 out = output_batch.data.cpu().numpy()
 
@@ -349,6 +349,94 @@ def eval_crnn(
         return logits_list
     if not return_logits and layer is not None:
         return layer_outs
+
+
+def find_perfect_indices(logits, target_transcript, idx_to_char):
+    """Given the logits and expected transcript labels, find the pairs with
+    perfect prediction from the logits.
+    """
+    perfect_indices = []
+    for i, gt_line in enumerate(target_transcript):
+        line_encoded = logits[i, ...]
+
+        pred = string_utils.naive_decode(line_encoded)[0]
+        pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+        if error_rates.cer(gt_line, pred_str) <= 0:
+            perfect_indices.append(i)
+
+    # TODO find the indicies within the logits that have perf predictions
+    #   currently, only find indices of logits w/ correct line predictions,
+    #   but must confirm that means that every character pred is correct within
+    #   the logits. Note naive decode does not add char from rawPredData to
+    #   pred if that char is the same as the prior, this means that if the cer
+    #   is zero, then every character within the logits is correct and so all
+    #   char indices of the logits, and their respective layer may be used to
+    #   train the MEVM.
+
+    return perfect_indices
+
+
+def character_slices(
+    layer,
+    logits,
+    target_transcript,
+    idx_to_char,
+    add_idx=False,
+    mask_out=False,
+):
+    """Given the logits and their corresponding text, match the corresponding
+    slices of the given representative feature layer of the transcript to the
+    corresponding characters.
+
+    Parameters
+    ----------
+    layer : np.ndarray(samples, timesteps, height)
+    logits : np.ndarray(samples, timesteps, classes)
+    target_transcript : list(str)
+    idx_to_char : dict(int: str)
+    append_idx : bool
+        Appends the index of the character in the layer to the beginning of the
+        prediction output representation.
+    mask_out : bool
+        Masks out the layer encoding of the logits with zeros where the perfect
+        character does not occur and flattens the layer to represent the
+        prediction.
+
+    Returns
+    -------
+    np.ndarray, np.ndarray
+        The layer encoding of the character as a np.ndarray of shape (samples,
+        encoding_dim), paired with the character label.
+    """
+
+    perfect_lines = find_perfect_indices(
+        logits,
+        target_transcript,
+        idx_to_char,
+    )
+
+    if add_idx:
+        return np.concatenate((
+            np.array(perfect_lines).reshape(-1, 1),
+            layer[perfect_lines, ...],
+        ))
+
+    if mask_out:
+        # This expands the resulting output greatly
+        raise NotImplementedError('mask_out is not implemented yet.')
+
+    # NOTE if layer_type == 'rnn':
+    return (
+        layer[perfect_lines, ...].reshape(
+            len(perfect_lines) * layer.shape[1],
+            -1,
+        ),
+        logits[perfect_lines, ...].reshape(
+            len(perfect_lines) * layer.shape[1],
+            -1,
+        ),
+    )
 
 
 def main():
@@ -463,6 +551,7 @@ def main():
     criterion = CTCLoss(reduction='sum', zero_infinity=True)
 
     # Training Loop
+    # TODO save CRNN output for ease of eval and comparison
     train_crnn(
         hw_crnn,
         optimizer,
@@ -474,6 +563,15 @@ def main():
         test_dataloader,
         base_message=base_message,
     )
+
+    # TODO include arg for train, eval, layer slice
+    #   TODO train and eval, or train and layer slice, or
+
+    # TODO eval
+
+    # TODO obtain perfect RNN slices
+
+
 
 if __name__ == "__main__":
     main()
