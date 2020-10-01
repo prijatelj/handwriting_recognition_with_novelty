@@ -1,6 +1,6 @@
 """Script for Training and Evaluating the CRNN by itself."""
+import logging
 import os
-import sys
 import time
 
 import numpy as np
@@ -61,7 +61,7 @@ def train_crnn(
         ot = ""
         loss = 0.0
 
-        print("Train Set Size = " + str(len(train_dataloader)))
+        logging.info("Train Set Size = {0}", str(len(train_dataloader)))
 
         # Training Batch Loop
         prog_bar = tqdm(
@@ -125,9 +125,9 @@ def train_crnn(
             steps) + "\n"+"Time: " + str(eTime) + " Seconds"
         )
 
-        print("Epoch: " + str(epoch) + " Training CER", sum_loss / steps)
-        print("Training WER: " + str(sum_wer_loss / steps))
-        print("Time: " + str(eTime) + " Seconds")
+        logging.info("Epoch: " + str(epoch) + " Training CER", sum_loss / steps)
+        logging.info("Training WER: " + str(sum_wer_loss / steps))
+        logging.info("Time: " + str(eTime) + " Seconds")
 
         sum_loss = 0.0
         sum_wer_loss = 0.0
@@ -136,7 +136,7 @@ def train_crnn(
 
         # Validation loop per epoch
         if test_dataloader is not None:
-            print("Validation Set Size = " + str(len(test_dataloader)))
+            logging.info("Validation Set Size = " + str(len(test_dataloader)))
 
             for x in tqdm(test_dataloader):
                 torch.no_grad()
@@ -160,15 +160,15 @@ def train_crnn(
 
             message = message + "\nTest CER: " + str(sum_loss / steps)
             message = message + "\nTest WER: " + str(sum_wer_loss / steps)
-            print("Test CER", sum_loss / steps)
-            print("Test WER", sum_wer_loss / steps)
+            logging.info("Test CER", sum_loss / steps)
+            logging.info("Test WER", sum_wer_loss / steps)
             best_distance += 1
 
             # Repeatedly saves the best performing model so-far based on Val.
             if metric == "CER":
                 if lowest_loss > sum_loss / steps:
                     lowest_loss = sum_loss / steps
-                    print("Saving Best")
+                    logging.info("Saving Best")
                     message = message + "\nBest Result :)"
                     torch.save(
                         hw_crnn.state_dict(),
@@ -183,7 +183,7 @@ def train_crnn(
             elif metric == "WER":
                 if lowest_loss > sum_wer_loss / steps:
                     lowest_loss = sum_wer_loss / steps
-                    print("Saving Best")
+                    logging.info("Saving Best")
                     message = message + "\nBest Result :)"
                     torch.save(
                         hw_crnn.state_dict(),
@@ -282,13 +282,13 @@ def eval_crnn(
                 raise NotImplementedError('Concat/both RNN and Conv of CRNN.')
 
             """
-            print(f'line_imgs.shape = {line_imgs.shape}')
-            print(f'line_imgs = {line_imgs}')
-            print(f'Preds shape: {preds.shape}')
-            print(f'RNN Out: {layer_out}')
-            print(f'RNN Out: {layer_out.shape}')
-            print(f'x["gt"] = {x["gt"]}')
-            print(f'x["gt"] len = {len(x["gt"][0])}')
+            logging.info(f'line_imgs.shape = {line_imgs.shape}')
+            logging.info(f'line_imgs = {line_imgs}')
+            logging.info(f'Preds shape: {preds.shape}')
+            logging.info(f'RNN Out: {layer_out}')
+            logging.info(f'RNN Out: {layer_out.shape}')
+            logging.info(f'x["gt"] = {x["gt"]}')
+            logging.info(f'x["gt"] len = {len(x["gt"][0])}')
             """
             # Swap 0 and 1 indices to have:
             #   batch sample, "character window", classes
@@ -330,12 +330,12 @@ def eval_crnn(
         message = message + "\nTest CER: " + str(sum_loss / steps)
         message = message + "\nTest WER: " + str(sum_wer / steps)
 
-        print('CRNN results:')
-        print("Validation CER", sum_loss / steps)
-        print("Validation WER", sum_wer / steps)
+        logging.info('CRNN results:')
+        logging.info("Validation CER", sum_loss / steps)
+        logging.info("Validation WER", sum_wer / steps)
 
-        print("Total character Errors:", tot_ce)
-        print("Total word errors", tot_we)
+        logging.info("Total character Errors:", tot_ce)
+        logging.info("Total word errors", tot_we)
 
         tot_ce = 0.0
         tot_we = 0.0
@@ -433,44 +433,45 @@ def character_slices(
             -1,
         ),
         logits[perfect_lines, ...].reshape(
-            len(perfect_lines) * layer.shape[1],
+            len(perfect_lines) * logits.shape[1],
             -1,
         ),
     )
 
 
+def io_args(parser):
+    parser.add_argument(
+        '--action',
+        choices=['train', 'eval', 'slice', 'train_eval', 'train_slice', 'all'],
+        help=' '.join([
+            'The actions to be taken by this script including: training the',
+            'CRNN, evaluating an already trained CRNN, or obtaining an',
+            'already trained CRNN\'s perfect slices of a representative layer',
+            'in the CRNN.'
+        ]),
+    )
+
+    parser.add_argument(
+        '--config_path',
+        help='YAML experiment configuration file defining the ANN and data.',
+    )
+
+
 def main():
     # Handle argrument parsing
-    config_path = sys.argv[1]
-    try:
-        jobID = sys.argv[2]
-    except:
-        jobID = ""
-    print(jobID)
+    args = exputils.io.parse_args(io_args)
 
-    with open(config_path) as openf:
+    with open(args.io.config_path) as openf:
         #config = json.load(openf)
         config = YAML(typ='safe').load(openf)
 
-    try:
-        model_save_path = sys.argv[3]
-        if model_save_path[-1] != os.path.sep:
-            model_save_path = model_save_path + os.path.sep
-    except:
-        model_save_path = config['model']['crnn']['save_path']
-
-    dirname = os.path.dirname(model_save_path)
-    #print(dirname)
-    #if len(dirname) > 0 and not os.path.exists(dirname):
-    #    os.makedirs(dirname)
     model_save_path = exputils.io.create_dirs(model_save_path)
 
-
-    with open(config_path) as f:
+    with open(args.io.config_path) as f:
         paramList = f.readlines()
 
     for x in paramList:
-        print(x[:-1])
+        logging.info(x[:-1])
 
     base_message = ""
     for line in paramList:
@@ -497,11 +498,11 @@ def main():
             root_path=config['data']['iam']['image_root_dir'],
         )
     except KeyError as e:
-        print("No validation set found, generating one")
+        logging.info("No validation set found, generating one")
 
         master = train_dataset
 
-        print("Total of " +str(len(master)) +" Training Examples")
+        logging.info("Total of " +str(len(master)) +" Training Examples")
 
         n = len(master)  # how many total elements you have
         n_test = int(n * .1)
@@ -530,8 +531,8 @@ def main():
         collate_fn=hw_dataset.collate,
     )
 
-    print("Train Dataset Length: " + str(len(train_dataset)))
-    print("Test Dataset Length: " + str(len(test_dataset)))
+    logging.info("Train Dataset Length: " + str(len(train_dataset)))
+    logging.info("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
     hw_crnn = CRNN(**config['model']['crnn']['init'])
@@ -539,10 +540,10 @@ def main():
     if torch.cuda.is_available():
         hw_crnn.cuda()
         dtype = torch.cuda.FloatTensor
-        print("Using GPU")
+        logging.info("Using GPU")
     else:
         dtype = torch.FloatTensor
-        print("No GPU detected")
+        logging.info("No GPU detected")
 
     optimizer = torch.optim.Adadelta(
         hw_crnn.parameters(),
