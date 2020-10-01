@@ -24,8 +24,17 @@ class DataSet:
     test_dataset: hw_dataset.HwDataset
     test_dataloader: DataLoader
 
+def load_data(data_config):
+    """Loads all datasets contained within the given data config.
 
-def load_data(config, dataset, RIMES=False):
+    Parameters
+    ----------
+
+    """
+    return
+
+def old_load_dataset(config, dataset, RIMES=False, always_val=False):
+    """Loads the datasets from the given dataset config."""
     idx_to_char, char_to_idx = character_set.load_label_set(
         config[dataset]['labels'],
     )
@@ -109,14 +118,14 @@ def load_prepare_data(config):
     # Load Data
     datasets = {}
     if 'iam' in config:
-        iam_dset = load_data(config, 'iam')
+        iam_dset = old_load_dataset(config, 'iam')
     else:
         raise NotImplementedError('Need to have IAM dataset in config.')
 
     if 'rimes' in config:
-        datasets['rimes'] = load_data(config, 'rimes')
+        datasets['rimes'] = old_load_dataset(config, 'rimes')
     if 'manuscript' in config:
-        datasets['manuscript'] = load_data(config, 'manuscript')
+        datasets['manuscript'] = old_load_dataset(config, 'manuscript')
 
     # Combine the char to idx and idx to chars iam_dset = datasets.pop('iam')
     all_dsets = deepcopy(iam_dset)
