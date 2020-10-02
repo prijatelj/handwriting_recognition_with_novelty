@@ -173,12 +173,17 @@ class CRNN(nn.Module):
             rnn, rnn_emb = self.rnn(conv)
         else:
             rnn = self.rnn(conv)
+
         output = self.softmax(rnn)
 
-        if return_conv and return_rnn:
-            return output, conv, rnn_emb
-        if return_conv and not return_rnn:
-            return output, conv
-        if not return_conv and return_rnn:
-            return output, rnn_emb
-        return output
+        if not (return_conv or return_rnn):
+            return output
+
+        return_list = [output]
+        if return_conv:
+            return_list.append(conv)
+
+        if return_rnn:
+            return_list.append(rnn_emb)
+
+        return tuple(return_list)
