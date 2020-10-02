@@ -12,7 +12,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader
 
 # External packages but within project
-from evm_based_novelty_detector.MultipleEVM import MEVM
+from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
 
 from experiments.research.par_v1 import crnn_data
