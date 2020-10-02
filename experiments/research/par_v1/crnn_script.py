@@ -463,6 +463,11 @@ def character_slices(
 
     # TODO expand logits when each has a different length
 
+    np.concatenate([i.reshape(len(perfect_lines) * logits.shape[1], -1)
+        for i in np.array(logits)[perfect_lines]
+    ])
+
+
 
 def io_args(parser):
     parser.add_argument(

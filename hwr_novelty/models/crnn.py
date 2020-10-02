@@ -186,4 +186,6 @@ class CRNN(nn.Module):
         if return_rnn:
             return_list.append(rnn_emb)
 
-        return tuple(return_list)
+        # TODO correct this return
+        #return tuple(return_list)
+        return return_list
