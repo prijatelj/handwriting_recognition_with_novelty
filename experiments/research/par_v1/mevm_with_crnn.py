@@ -140,7 +140,10 @@ def main():
         mevm.train(labels_repr, labels=unique_labels)
 
         # Save trained mevm
-        mevm.save(config['model']['mevm']['save_path'])
+        mevm.save(exputils.io.create_filepath(os.path.join(
+            config['model']['mevm']['save_path'],
+            'mevm_state.hdf5',
+        )))
 
     elif 'save_path' not in config['mevm'] and 'load_path' in config['mevm']:
         # Load MEVM state from file
