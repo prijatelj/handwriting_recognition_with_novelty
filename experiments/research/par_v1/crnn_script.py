@@ -364,6 +364,10 @@ def eval_crnn(
     if not (return_logits or isinstance(layer, str) or return_slice):
         return None
 
+    logging.debug('logits_list shapes:\n%s', [logit.shape() for logit in logits_list])
+    logging.debug('layer shapes:\n%s', [layer.shape() for layer in layer_out])
+    logging.debug('perfect_indices:\n%s', perfect_indices)
+
     return_list = []
     if return_logits:
         return_list.append(np.concatenate(logits_list, axis=0))
@@ -456,6 +460,8 @@ def character_slices(
             -1,
         ),
     )
+
+    # TODO expand logits when each has a different length
 
 
 def io_args(parser):
