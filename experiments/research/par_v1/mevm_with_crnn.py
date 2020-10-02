@@ -112,7 +112,7 @@ def main():
 
         logging.debug(
             'Torch tensor shape of label %s = %s',
-            label
+            label,
             labels_repr[i].shape,
         )
 
