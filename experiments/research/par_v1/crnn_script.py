@@ -489,13 +489,13 @@ def main():
     # Handle argrument parsing
     args = exputils.io.parse_args(custom_args=io_args)
 
-    with open(args.io.config_path) as openf:
+    with open(args.config_path) as openf:
         #config = json.load(openf)
         config = YAML(typ='safe').load(openf)
 
     model_save_path = exputils.io.create_dirs(config['model']['save_path'])
 
-    with open(args.io.config_path) as f:
+    with open(args.config_path) as f:
         paramList = f.readlines()
 
     for x in paramList:
