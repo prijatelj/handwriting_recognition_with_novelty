@@ -479,7 +479,7 @@ def io_args(parser):
     parser.add_argument(
         '--slice',
         default=None,
-        nargs='+',
+        #nargs='+',
         choices=['rnn', 'cnn', 'conv'],
         help='Slice the given layers of the CRNN.',
     )
@@ -613,7 +613,7 @@ def main():
                 idx_to_char,
                 dtype,
                 output_crnn_eval=True,
-                layer=args.slice[0],
+                layer=args.slice,
                 return_logits=True,
                 return_slice=args.slice is not None,
             )
