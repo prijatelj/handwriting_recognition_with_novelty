@@ -89,6 +89,8 @@ def main():
         len(perf_slices),
     )
 
+    logging.debug('Shape of layers: %s', layers.shape)
+
     # Organize the layers into lists per character class.
     unique_labels, label_index, label_counts = np.unique(
         argmax_logits,
