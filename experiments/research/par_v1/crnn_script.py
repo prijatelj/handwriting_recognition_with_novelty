@@ -348,11 +348,11 @@ def eval_crnn(
         message = message + "\nTest WER: " + str(sum_wer / steps)
 
         logging.info('CRNN results:')
-        logging.info("Validation CER", sum_loss / steps)
-        logging.info("Validation WER", sum_wer / steps)
+        logging.info("Validation CER %d", sum_loss / steps)
+        logging.info("Validation WER %d", sum_wer / steps)
 
-        logging.info("Total character Errors:", tot_ce)
-        logging.info("Total word errors", tot_we)
+        logging.info("Total character Errors: %d", tot_ce)
+        logging.info("Total word errors %d", tot_we)
 
         tot_ce = 0.0
         tot_we = 0.0
@@ -360,14 +360,15 @@ def eval_crnn(
         sum_wer = 0.0
         steps = 0.0
 
-    if not (return_logits or return_layer or return_slice):
+    # NOTE that the way this is setup, it always expects to return the layers
+    if not (return_logits or isinstance(layer, str) or return_slice):
         return None
 
     return_list = []
     if return_logits:
         return_list.append(logits_list)
 
-    if return_layer:
+    if isinstance(layer, str):
         return_list.append(layer_outs)
 
     if return_slice:
