@@ -98,11 +98,7 @@ def main():
         return_index=True,
     )
 
-    logging.debug(
-        'Label `%s`\'s indices = %s',
-        label,
-        label_index,
-    )
+    logging.debug('Label index: %s', label_index)
 
     # Be able to obtain the label from the MEVM's indexing of classes
     label_to_mevm_idx = {}
@@ -117,6 +113,12 @@ def main():
         label_to_mevm_idx[label] = i
         label_to_mevm_idx[i] = label
         labels_repr.append(torch.tensor(layers[label_index[i]]))
+
+        logging.debug(
+            'Label `%s`\'s indices = %s',
+            label,
+            label_index[i],
+        )
 
         logging.debug(
             'Torch tensor shape of label %s = %s',
