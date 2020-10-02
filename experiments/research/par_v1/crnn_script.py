@@ -493,7 +493,7 @@ def main():
         #config = json.load(openf)
         config = YAML(typ='safe').load(openf)
 
-    model_save_path = exputils.io.create_dirs(config['model']['save_path'])
+    model_save_path = exputils.io.create_dirs(config['model']['crnn']['save_path'])
 
     with open(args.config_path) as f:
         paramList = f.readlines()
@@ -595,7 +595,7 @@ def main():
         )
     else:
         # If not train, then load model
-        hw_crnn.load_state_dict(torch.load(config['model']['load_path']))
+        hw_crnn.load_state_dict(torch.load(config['model']['crnn']['load_path']))
 
     if args.eval is not None:
         for data_split in args.eval:
