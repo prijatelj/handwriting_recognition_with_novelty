@@ -24,6 +24,6 @@ model:
     load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-09-22_22-13-51/crnn_ep389.pt'
   mevm:
     init:
-      tail_size: 100
+      tailsize: 100
       cover_threshold: 0.5
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-10-02_10-05-37/mevm/'
