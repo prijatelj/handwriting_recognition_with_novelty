@@ -447,11 +447,11 @@ def character_slices(
 
     # NOTE if layer_type == 'rnn':
     return (
-        layer[perfect_lines, ...].reshape(
+        layer[perfect_lines].reshape(
             len(perfect_lines) * layer.shape[1],
             -1,
         ),
-        logits[perfect_lines, ...].reshape(
+        logits[perfect_lines].reshape(
             len(perfect_lines) * logits.shape[1],
             -1,
         ),
