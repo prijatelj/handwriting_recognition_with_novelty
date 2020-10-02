@@ -454,12 +454,6 @@ def character_slices(
         # This expands the resulting output greatly
         raise NotImplementedError('mask_out is not implemented yet.')
 
-    logging.debug(
-        'logits_list shapes:\n%s',
-        [logit.shape for logit in logits_list],
-    )
-    logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_outs])
-
     # NOTE if layer_type == 'rnn':
     return (
         #layer[perfect_lines].reshape(
@@ -476,9 +470,9 @@ def character_slices(
 
     # TODO expand logits when each has a different length
 
-    np.concatenate([i.reshape(len(perfect_lines) * logits.shape[1], -1)
-        for i in np.array(logits)[perfect_lines]
-    ])
+    #np.concatenate([i.reshape(len(perfect_lines) * logits.shape[1], -1)
+    #    for i in np.array(logits)[perfect_lines]
+    #])
 
 
 
