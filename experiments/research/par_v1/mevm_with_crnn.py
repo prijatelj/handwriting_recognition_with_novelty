@@ -94,11 +94,12 @@ def main():
     # Organize the layers into lists per character class.
     unique_labels, label_index, label_counts = np.unique(
         argmax_logits,
+        return_inverse=True,
         return_counts=True,
-        return_index=True,
     )
 
     logging.debug('Label index: %s', label_index)
+    logging.debug('Label counts: %s', label_counts)
 
     # Be able to obtain the label from the MEVM's indexing of classes
     label_to_mevm_idx = {}
