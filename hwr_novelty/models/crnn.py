@@ -170,7 +170,7 @@ class CRNN(nn.Module):
 
         # rnn features
         if return_rnn:
-            rnn, rnn_emb = self.rnn(conv)
+            rnn, rnn_emb = self.rnn(conv, return_rnn)
         else:
             rnn = self.rnn(conv)
 
