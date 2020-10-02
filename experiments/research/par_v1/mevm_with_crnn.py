@@ -108,7 +108,7 @@ def main():
 
         label_to_mevm_idx[label] = i
         label_to_mevm_idx[i] = label
-        labels_repr.append(layers[label_index[i]])
+        labels_repr.append(torch.tensor(layers[label_index[i]]))
 
     # Init MEVM from config
     mevm = MEVM(**config['model']['mevm']['init'])
