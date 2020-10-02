@@ -1,6 +1,7 @@
 """Script for training the MultipleEVM (MEVM) given a trained CRNN."""
 # Python default packages
 import logging
+import os
 
 # 3rd party packages
 import h5py
@@ -113,16 +114,11 @@ def main():
 
         label_to_mevm_idx[label] = i
         label_to_mevm_idx[i] = label
-        labels_repr.append(torch.tensor(
-            layers[np.where(label_index == label)],
-        ))
 
-        logging.debug(
-            'Label `%s`\'s indices = %s',
-            label,
-            label_index[i],
-        )
+        label_indices = np.where(label_index == label)
+        labels_repr.append(torch.tensor(layers[label_indices]))
 
+        logging.debug('Label `%s`\'s indices = %s', label, label_indices)
         logging.debug(
             'Torch tensor shape of label %s = %s',
             label,
