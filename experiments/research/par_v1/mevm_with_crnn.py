@@ -74,7 +74,7 @@ def main():
         config = YAML(typ='safe').load(openf)
 
     # Load the data
-    iam_dset, all_dsets = crnn_data.load_prepare_data(config)
+    #iam_dset, all_dsets = crnn_data.load_prepare_data(config)
 
     # Load the class data point layer representations
     with h5py.File(config['data']['iam']['encoded']['train'], 'r') as h5f:
