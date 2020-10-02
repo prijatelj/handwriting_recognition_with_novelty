@@ -3,6 +3,7 @@ import logging
 import os
 import time
 
+import h5py
 import numpy as np
 from ruamel.yaml import YAML
 import torch
@@ -61,7 +62,7 @@ def train_crnn(
         ot = ""
         loss = 0.0
 
-        logging.info("Train Set Size = {0}", str(len(train_dataloader)))
+        logging.info("Train Set Size = %d", len(train_dataloader))
 
         # Training Batch Loop
         prog_bar = tqdm(
@@ -160,8 +161,8 @@ def train_crnn(
 
             message = message + "\nTest CER: " + str(sum_loss / steps)
             message = message + "\nTest WER: " + str(sum_wer_loss / steps)
-            logging.info("Test CER", sum_loss / steps)
-            logging.info("Test WER", sum_wer_loss / steps)
+            logging.info("Test CER %d", sum_loss / steps)
+            logging.info("Test WER %d", sum_wer_loss / steps)
             best_distance += 1
 
             # Repeatedly saves the best performing model so-far based on Val.
@@ -208,6 +209,7 @@ def eval_crnn(
     output_crnn_eval=True,
     layer=None,
     return_logits=True,
+    return_slice=False,
 ):
     """Evaluates CRNN and returns the CRNN output. Optionally, this is also
     used to obtain certain layer's outputs such as the penultimate RNN or CNN
@@ -230,6 +232,8 @@ def eval_crnn(
         then returns both concatenated together (Concat is to be implemented).
         Defaults to None, and thus only evaluates the CRNN itself.
     return_logits : bool, optional
+    return_slice : bool, optional
+        Returns the indices of the perfect slices
 
     Returns
     -------
@@ -254,6 +258,11 @@ def eval_crnn(
     if return_logits:
         logits_list = []
 
+    if return_slice:
+        count = 0
+        perfect_indices = []
+
+    # For batch in dataloader
     for x in dataloader:
         if x is None:
             continue
@@ -303,6 +312,7 @@ def eval_crnn(
                 # training Or save the layer_outs to be used in training the
                 # MEVM
 
+                # Loop through the batch
                 for i, gt_line in enumerate(x['gt']):
                     logits = out[i, ...]
 
@@ -321,8 +331,15 @@ def eval_crnn(
 
                     steps += 1
 
+                    if return_slice and cer <= 0:
+                        perfect_indices.append(count)
+
                 if return_logits:
                     logits_list.append(out)
+
+        if return_slice:
+            # NOTE should this only increment when x is not None?
+            count += 1
 
 
     if layer is None or output_crnn_eval:
@@ -343,12 +360,20 @@ def eval_crnn(
         sum_wer = 0.0
         steps = 0.0
 
-    if return_logits and layer is not None:
-        return logits_list, layer_outs
-    if return_logits and layer is None:
-        return logits_list
-    if not return_logits and layer is not None:
-        return layer_outs
+    if not (return_logits or return_layer or return_slice):
+        return None
+
+    return_list = []
+    if return_logits:
+        return_list.append(logits_list)
+
+    if return_layer:
+        return_list.append(layer_outs)
+
+    if return_slice:
+        return_list.append(perfect_indices)
+
+    return tuple(return_list)
 
 
 def find_perfect_indices(logits, target_transcript, idx_to_char):
@@ -380,8 +405,7 @@ def find_perfect_indices(logits, target_transcript, idx_to_char):
 def character_slices(
     layer,
     logits,
-    target_transcript,
-    idx_to_char,
+    perfect_lines,
     add_idx=False,
     mask_out=False,
 ):
@@ -393,8 +417,8 @@ def character_slices(
     ----------
     layer : np.ndarray(samples, timesteps, height)
     logits : np.ndarray(samples, timesteps, classes)
-    target_transcript : list(str)
-    idx_to_char : dict(int: str)
+    perfect_lines:
+        perfect indices
     append_idx : bool
         Appends the index of the character in the layer to the beginning of the
         prediction output representation.
@@ -409,13 +433,6 @@ def character_slices(
         The layer encoding of the character as a np.ndarray of shape (samples,
         encoding_dim), paired with the character label.
     """
-
-    perfect_lines = find_perfect_indices(
-        logits,
-        target_transcript,
-        idx_to_char,
-    )
-
     if add_idx:
         return np.concatenate((
             np.array(perfect_lines).reshape(-1, 1),
@@ -476,7 +493,7 @@ def main():
         #config = json.load(openf)
         config = YAML(typ='safe').load(openf)
 
-    model_save_path = exputils.io.create_dirs(model_save_path)
+    model_save_path = exputils.io.create_dirs(config['model']['save_path'])
 
     with open(args.io.config_path) as f:
         paramList = f.readlines()
@@ -577,32 +594,54 @@ def main():
             base_message=base_message,
         )
     else:
-        pass
-        # TODO if not train, then load model
+        # If not train, then load model
+        hw_crnn.load_state_dict(torch.load(config['model']['load_path']))
 
     if args.eval is not None:
-    #   TODO train and eval, or train and layer slice, or
         for data_split in args.eval:
-            eval_crnn(
+            if data_split == 'train':
+                dataloader = train_dataloader
+            # TODO elif data_split == 'train':
+            #    dataloader = val_dataloader
+            else:
+                dataloader = test_dataloader
+
+            logging.info('Evaluating CRNN on %s', data_split)
+            out = eval_crnn(
                 hw_crnn,
                 dataloader,
                 idx_to_char,
                 dtype,
                 output_crnn_eval=True,
-                layer=None,
+                layer=args.slice,
                 return_logits=True,
+                return_slice=args.slice is not None,
             )
 
-    # TODO obtain perfect RNN slices
-    if args.action == 'all' or 'slice' in args.action:
-        character_slices(
-            layer,
-            logits,
-            target_transcript,
-            idx_to_char,
-            add_idx=False,
-            mask_out=False,
-        )
+            # TODO save logits?
+
+            # Obtain perfect RNN slices
+            if args.slice:
+                perf_sliced_layer, perf_sliced_logits = character_slices(
+                    out[1],
+                    out[0],
+                    out[2],
+                    idx_to_char,
+                    #add_idx=False,
+                    #mask_out=False,
+                )
+
+                # Save slices idx, sliced layer, sliced logits
+                with h5py.File(
+                    exputils.io.create_filepath(os.path.join(
+                        model_save_path,
+                        f'perf_slices_{data_split}.hdf5',
+                    )),
+                    'w',
+                ) as h5f:
+                    h5f.create_dataset('indices', data=out[2])
+                    h5f.create_dataset('layer', data=perf_sliced_layer)
+                    h5f.create_dataset('logits', data=perf_sliced_logits)
 
 
 if __name__ == "__main__":
