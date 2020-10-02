@@ -98,6 +98,12 @@ def main():
         return_index=True,
     )
 
+    logging.debug(
+        'Label `%s`\'s indices = %s',
+        label,
+        label_index,
+    )
+
     # Be able to obtain the label from the MEVM's indexing of classes
     label_to_mevm_idx = {}
     label_to_mevm_idx = {}
