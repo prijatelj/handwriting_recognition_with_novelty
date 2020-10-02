@@ -365,17 +365,20 @@ def eval_crnn(
         return None
 
     logging.debug('perfect_indices len:\n%d', len(perfect_indices))
+
     logging.debug('perfect_indices:\n%s', perfect_indices)
-    #logging.debug('logits_list shapes:\n%s', logits_list)
-    logging.debug('logits_list shapes:\n%s', [logit.shape for logit in logits_list])
-    logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_out])
+    logging.debug(
+        'logits_list shapes:\n%s',
+        [logit.shape for logit in logits_list],
+    )
+    logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_outs])
 
     return_list = []
     if return_logits:
-        return_list.append(np.concatenate(logits_list, axis=0))
+        return_list.append(logits_list)
 
     if isinstance(layer, str):
-        return_list.append(np.concatenate(layer_outs, axis=0))
+        return_list.append(np.concatenate(layer_outs))
 
     if return_slice:
         return_list.append(perfect_indices)
