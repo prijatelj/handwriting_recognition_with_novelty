@@ -163,3 +163,25 @@ def load_prepare_data(config):
     # the 3 datasets lists together
 
     return iam_dset, all_dsets
+
+
+def init_CRNN(config):
+    """Initializes CRNN from config and loads model state if load path in
+    config.
+    """
+    hw_crnn = CRNN(**config['model']['crnn']['init'])
+
+    if 'load_path' in config['model']['crnn']:
+        hw_crnn.load_state_dict(torch.load(
+            config['model']['crnn']['load_path'],
+        ))
+
+    if torch.cuda.is_available():
+        hw_crnn.cuda()
+        dtype = torch.cuda.FloatTensor
+        logging.info("Using GPU")
+    else:
+        dtype = torch.FloatTensor
+        logging.info("No GPU detected")
+
+    return hw_crnn, dtype

@@ -119,35 +119,9 @@ def main():
         config = json.load(openf)
 
     iam_dset, all_dsets = crnn_data.load_prepare_data(config)
-    #char_to_idx = all_dsets.char_to_idx
-    #idx_to_char = all_dsets.idx_to_char
 
     # Load Model (CRNN)
-    if config['model'] == "crnn":
-        print("Using CRNN")
-        hw_crnn = crnn.create_model({
-            'input_height': config['network']['input_height'],
-            'cnn_out_size': config['network']['cnn_out_size'],
-            'num_channels': 3,
-            'num_classes': len(iam_dset.idx_to_char) + 1
-        })
-
-    hw_crnn.load_state_dict(torch.load(config['model_load_path']))
-
-    if torch.cuda.is_available():
-        hw_crnn.cuda()
-        dtype = torch.cuda.FloatTensor
-        print("Using GPU")
-    else:
-        dtype = torch.FloatTensor
-        print("No GPU detected")
-
-    #print(all_dsets.char_to_idx)
-    #voc = " "
-    #for x in range(1, len(all_dsets.idx_to_char) + 1):
-    #    voc = voc + all_dsets.idx_to_char[x]
-    #print(voc)
-    #print(all_dsets.idx_to_char)
+    hw_crnn, dtype = crnn_data.init_CRNN(config)
 
     # NOTE MEVM train loop is the CRNN's validation loop, but saving the
     # layer_out results only and then padding as necessary and feeding to the

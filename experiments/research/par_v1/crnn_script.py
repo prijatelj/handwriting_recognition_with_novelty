@@ -16,6 +16,7 @@ import exputils.io
 
 from hwr_novelty.models.crnn import CRNN
 
+from experiments.research.par_v1 import crnn_data
 from experiments.research.par_v1.grieggs import (
     character_set,
     error_rates,
@@ -583,17 +584,14 @@ def main():
     logging.info("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
-    hw_crnn = CRNN(**config['model']['crnn']['init'])
-
-    if torch.cuda.is_available():
-        hw_crnn.cuda()
-        dtype = torch.cuda.FloatTensor
-        logging.info("Using GPU")
-    else:
-        dtype = torch.FloatTensor
-        logging.info("No GPU detected")
+    hw_crnn, dtype = crnn_data.init_CRNN(config)
 
     if args.train:
+        if 'load_path' in config['model']['crnn']:
+            logging.warning(
+                '`load_path` in model config, and training the model!',
+            )
+
         optimizer = torch.optim.Adadelta(
             hw_crnn.parameters(),
             lr=config['model']['crnn']['train']['learning_rate'],
@@ -613,9 +611,6 @@ def main():
             test_dataloader,
             base_message=base_message,
         )
-    else:
-        # If not train, then load model
-        hw_crnn.load_state_dict(torch.load(config['model']['crnn']['load_path']))
 
     if args.eval is not None:
         for data_split in args.eval:
