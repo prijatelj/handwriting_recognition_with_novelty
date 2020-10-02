@@ -114,7 +114,9 @@ def main():
     mevm = MEVM(**config['model']['mevm']['init'])
 
     # Train MEVM given CRNN encoded data points
-    if 'save_path' in config['mevm'] and 'load_path' not in config['mevm']:
+    if ('save_path' in config['model']['mevm']
+        and 'load_path' not in config['model']['mevm']
+    ):
         # Train MEVM
         mevm.train(labels_repr, labels=unique_labels)
 
