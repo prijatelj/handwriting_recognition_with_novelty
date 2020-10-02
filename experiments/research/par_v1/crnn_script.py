@@ -334,8 +334,8 @@ def eval_crnn(
                     if return_slice and cer <= 0:
                         perfect_indices.append(count)
 
-                if return_logits:
-                    logits_list.append(out)
+                    if return_logits:
+                        logits_list.append(logits)
 
         if return_slice:
             # NOTE should this only increment when x is not None?
@@ -378,7 +378,7 @@ def eval_crnn(
         return_list.append(logits_list)
 
     if isinstance(layer, str):
-        return_list.append(np.concatenate(layer_outs))
+        return_list.append(layer_outs)
 
     if return_slice:
         return_list.append(perfect_indices)
@@ -454,16 +454,24 @@ def character_slices(
         # This expands the resulting output greatly
         raise NotImplementedError('mask_out is not implemented yet.')
 
+    logging.debug(
+        'logits_list shapes:\n%s',
+        [logit.shape for logit in logits_list],
+    )
+    logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_outs])
+
     # NOTE if layer_type == 'rnn':
     return (
-        layer[perfect_lines].reshape(
-            len(perfect_lines) * layer.shape[1],
-            -1,
-        ),
-        logits[perfect_lines].reshape(
-            len(perfect_lines) * logits.shape[1],
-            -1,
-        ),
+        #layer[perfect_lines].reshape(
+        #    len(perfect_lines) * layer.shape[1],
+        #    -1,
+        #),
+        #logits[perfect_lines].reshape(
+        #    len(perfect_lines) * logits.shape[1],
+        #    -1,
+        #),
+        np.concatenate(np.array(layer)[perfect_lines]),
+        np.concatenate(np.array(logits)[perfect_lines]),
     )
 
     # TODO expand logits when each has a different length
