@@ -82,6 +82,9 @@ model:
     # case of the CRNN, this is its weights.
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1/'
 
+    # `load_path` is the model state file to load after initializing the model
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-09-22_22-13-51/crnn_ep389.pt'
+
     # There may be higher level config args that pertain to multiple parts of
     # the model, such as `batch_size` carries over to both training and
     # prediction. And `metric` may be recorded both during training and
