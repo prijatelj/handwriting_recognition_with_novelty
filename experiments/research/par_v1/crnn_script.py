@@ -487,7 +487,7 @@ def io_args(parser):
 
 def main():
     # Handle argrument parsing
-    args = exputils.io.parse_args(io_args)
+    args = exputils.io.parse_args(custom_args=io_args)
 
     with open(args.io.config_path) as openf:
         #config = json.load(openf)
