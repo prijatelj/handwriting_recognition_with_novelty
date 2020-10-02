@@ -458,7 +458,7 @@ def character_slices(
 
 def io_args(parser):
     parser.add_argument(
-        '--config_path',
+        'config_path',
         help='YAML experiment configuration file defining the ANN and data.',
     )
 
