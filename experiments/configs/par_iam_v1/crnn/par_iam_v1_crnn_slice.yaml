@@ -1,0 +1,20 @@
+data:
+  iam:
+    train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_train-0.tsv'
+    val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/kfolds_strat/train_val_5fold_0/5folds_test-0.tsv'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
+    labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_char_set.tsv'
+model:
+  crnn:
+    metric: CER
+    init:
+      num_channels: 3
+      num_classes: 81 # May be just 80, but iirc Grieggs' added by 1
+      hidden_size: 256
+      input_height: 64
+    train:
+      learning_rate: 0.01
+    augmentation: True
+    batch_size: 1
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1/'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-1/'
