@@ -65,27 +65,31 @@ def old_load_dataset(config, dataset, RIMES=False, always_val=False):
         )
 
     except KeyError as e:
-        print("No validation set found, generating one")
-        master = train_dataset
+        if always_val:
+            print("No validation set found, generating one")
+            master = train_dataset
 
-        print("Total of " +str(len(master)) +" Training Examples")
-        n = len(master)  # how many total elements you have
-        n_test = int(n * .1)
-        n_train = n - n_test
+            print("Total of " +str(len(master)) +" Training Examples")
+            n = len(master)  # how many total elements you have
+            n_test = int(n * .1)
+            n_train = n - n_test
 
-        idx = list(range(n))  # indices to all elements
-        train_idx = idx[:n_train]
-        test_idx = idx[n_train:]
-        val_dataset = Subset(master, test_idx)
-        train_dataset = Subset(master, train_idx)
+            idx = list(range(n))  # indices to all elements
+            train_idx = idx[:n_train]
+            test_idx = idx[n_train:]
+            val_dataset = Subset(master, test_idx)
+            train_dataset = Subset(master, train_idx)
 
-    val_dataloader = DataLoader(
-        val_dataset,
-        batch_size=config['batch_size'],
-        shuffle=False,
-        num_workers=1,
-        collate_fn=hw_dataset.collate,
-    )
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=config['batch_size'],
+            shuffle=False,
+            num_workers=1,
+            collate_fn=hw_dataset.collate,
+        )
+        else:
+            val_dataset = None
+            val_dataloader = None
 
     test_dataset = hw_dataset.HwDataset(
         config[dataset]['test_set_path'],
