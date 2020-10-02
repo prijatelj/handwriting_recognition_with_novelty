@@ -80,13 +80,13 @@ def old_load_dataset(config, dataset, RIMES=False, always_val=False):
             val_dataset = Subset(master, test_idx)
             train_dataset = Subset(master, train_idx)
 
-        val_dataloader = DataLoader(
-            val_dataset,
-            batch_size=config['batch_size'],
-            shuffle=False,
-            num_workers=1,
-            collate_fn=hw_dataset.collate,
-        )
+            val_dataloader = DataLoader(
+                val_dataset,
+                batch_size=config['batch_size'],
+                shuffle=False,
+                num_workers=1,
+                collate_fn=hw_dataset.collate,
+            )
         else:
             val_dataset = None
             val_dataloader = None
