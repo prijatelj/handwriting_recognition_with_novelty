@@ -613,7 +613,7 @@ def main():
                 idx_to_char,
                 dtype,
                 output_crnn_eval=True,
-                layer=args.slice,
+                layer=args.slice[0],
                 return_logits=True,
                 return_slice=args.slice is not None,
             )
