@@ -364,9 +364,10 @@ def eval_crnn(
     if not (return_logits or isinstance(layer, str) or return_slice):
         return None
 
-    logging.debug('logits_list shapes:\n%s', [logit.shape() for logit in logits_list])
-    logging.debug('layer shapes:\n%s', [layer.shape() for layer in layer_out])
     logging.debug('perfect_indices:\n%s', perfect_indices)
+    logging.debug('logits_list shapes:\n%s', logits_list)
+    #logging.debug('logits_list shapes:\n%s', [logit.shape() for logit in logits_list])
+    logging.debug('layer shapes:\n%s', [layer.shape() for layer in layer_out])
 
     return_list = []
     if return_logits:
