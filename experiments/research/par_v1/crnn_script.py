@@ -374,7 +374,8 @@ def eval_crnn(
     if return_slice:
         return_list.append(perfect_indices)
 
-    return tuple(return_list)
+    #return tuple(return_list)
+    return return_list
 
 
 def find_perfect_indices(logits, target_transcript, idx_to_char):
