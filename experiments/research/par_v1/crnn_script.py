@@ -627,7 +627,6 @@ def main():
                     out[1],
                     out[0],
                     out[2],
-                    idx_to_char,
                     #add_idx=False,
                     #mask_out=False,
                 )
