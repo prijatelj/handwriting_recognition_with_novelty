@@ -364,7 +364,7 @@ def eval_crnn(
     if not (return_logits or isinstance(layer, str) or return_slice):
         return None
 
-    logging.debug('perfect_indices len:\n%d', len(perfect_indices))
+    logging.debug('perfect_indices len: %d', len(perfect_indices))
 
     logging.debug('perfect_indices:\n%s', perfect_indices)
     logging.debug(
