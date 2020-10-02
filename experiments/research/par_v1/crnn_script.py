@@ -366,10 +366,10 @@ def eval_crnn(
 
     return_list = []
     if return_logits:
-        return_list.append(logits_list)
+        return_list.append(np.concatenate(logits_list, axis=0))
 
     if isinstance(layer, str):
-        return_list.append(layer_outs)
+        return_list.append(np.concatenate(layer_outs, axis=0))
 
     if return_slice:
         return_list.append(perfect_indices)
