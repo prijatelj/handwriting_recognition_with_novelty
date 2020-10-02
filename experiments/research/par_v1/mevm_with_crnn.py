@@ -85,7 +85,7 @@ def main():
     # TODO Load the extra negative (known unknowns) data point layer repr
 
     logging.info(
-        'There are %d perfectly predicted characters to train MEVM.',
+        'There are %d perfectly predicted transcript lines to train MEVM.',
         len(perf_slices),
     )
 
@@ -109,6 +109,12 @@ def main():
         label_to_mevm_idx[label] = i
         label_to_mevm_idx[i] = label
         labels_repr.append(torch.tensor(layers[label_index[i]]))
+
+        logging.debug(
+            'Torch tensor shape of label %s = %s',
+            label
+            labels_repr[i].shape,
+        )
 
     # Init MEVM from config
     mevm = MEVM(**config['model']['mevm']['init'])
