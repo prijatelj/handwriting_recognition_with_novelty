@@ -665,8 +665,6 @@ def main():
                 random_seed=args.random_seed,
             )
 
-            # TODO save logits?
-
             # Obtain perfect RNN slices
             if args.slice:
                 perfect_slices = out[2]
