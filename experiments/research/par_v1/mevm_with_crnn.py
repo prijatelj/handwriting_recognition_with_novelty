@@ -79,9 +79,13 @@ def main():
 
     # Load the class data point layer representations
     with h5py.File(config['data']['iam']['encoded']['train'], 'r') as h5f:
-        perf_slices = h5f['indices'][:]
-        layers = h5f['layer'][:]
-        argmax_logits = h5f['logits'][:].argmax(axis=1)
+        perf_slices = h5f['perfect_indices'][:]
+
+        # Obtain perfect character embeddings only, this is simplest slice
+        layers = h5f['layer'][perf_slices]
+        argmax_logits = h5f['logits'][perf_slices].argmax(axis=1)
+
+    logging.info('Number of perfect slices = %d', len(perf_slices))
 
     # TODO Load the extra negative (known unknowns) data point layer repr
 
@@ -89,6 +93,9 @@ def main():
         'There are %d perfectly predicted transcript lines to train MEVM.',
         len(perf_slices),
     )
+    # Perfect slices is no longer needed, as setup is finalized. # TODO unless
+    # eval and saving that eval.
+    del perf_slices
 
     logging.debug('Shape of layers: %s', layers.shape)
 

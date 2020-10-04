@@ -211,6 +211,8 @@ def eval_crnn(
     layer=None,
     return_logits=True,
     return_slice=False,
+    deterministic=True,
+    random_seed=None,
 ):
     """Evaluates CRNN and returns the CRNN output. Optionally, this is also
     used to obtain certain layer's outputs such as the penultimate RNN or CNN
@@ -244,6 +246,24 @@ def eval_crnn(
         np.ndarray is [glyph_window, classes]. This assumes batch size is
         always 1.
     """
+    if deterministic:
+        if random_seed is None:
+            logging.warning(' '.join([
+                'Model is being evaluated and deterministic is true, but no',
+                'seed was provided. The default seed of `4816` is being used.',
+            ]))
+            random_seed = 4816
+        logging.info('random seed = %d', random_seed)
+
+        torch.manual_seed(random_seed)
+        torch.backends.cudnn.deterministic = True
+    else:
+        logging.warning(' '.join([
+            'Model is being evaluated and deterministic is False! The results',
+            'may not be reproducible now due to GPU hardware, even if there',
+            'is no shuffling or updating of the model.',
+        ]))
+
     # Initialize metrics
     if output_crnn_eval:
         tot_ce = 0.0
@@ -505,6 +525,26 @@ def io_args(parser):
         help='Slice the given layers of the CRNN.',
     )
 
+    parser.add_argument(
+        '--nondeterministic',
+        action='store_false',
+        help='Force the model to operate nondeterministically during eval.',
+        dest='deterministic'
+    )
+
+    parser.add_argument(
+        '--random_seed',
+        type=int,
+        default=None,
+        help='Initialize the model with this random seed.',
+    )
+
+    parser.add_argument(
+        '--save_perfect_slices_only',
+        action='store_true',
+        help='When evaluating, only the perfect slices of outputs are saved.',
+    )
+
 
 def main():
     # Handle argrument parsing
@@ -631,31 +671,37 @@ def main():
                 layer=args.slice,
                 return_logits=True,
                 return_slice=args.slice is not None,
+                deterministic=args.deterministic,
+                random_seed=args.random_seed,
             )
 
             # TODO save logits?
 
             # Obtain perfect RNN slices
             if args.slice:
-                perf_sliced_layer, perf_sliced_logits = character_slices(
-                    out[1],
-                    out[0],
-                    out[2],
-                    #add_idx=False,
-                    #mask_out=False,
-                )
+                perfect_slices = out[2]
+
+                if args.save_perfect_slices_only:
+                    layer, logits = character_slices(
+                        out[1],
+                        out[0],
+                        perfect_slices,
+                    )
+                else:
+                     layer = np.concatenate(np.array(out[1])),
+                     logits = np.concatenate(np.array(out[0])),
 
                 # Save slices idx, sliced layer, sliced logits
                 with h5py.File(
                     exputils.io.create_filepath(os.path.join(
                         model_save_path,
-                        f'perf_slices_{data_split}.hdf5',
+                        f'layer_logits_slices_{data_split}.hdf5',
                     )),
                     'w',
                 ) as h5f:
-                    h5f.create_dataset('indices', data=out[2])
-                    h5f.create_dataset('layer', data=perf_sliced_layer)
-                    h5f.create_dataset('logits', data=perf_sliced_logits)
+                    h5f.create_dataset('perfect_indices', data=perfect_slices)
+                    h5f.create_dataset('layer', data=layer)
+                    h5f.create_dataset('logits', data=logits)
 
 
 if __name__ == "__main__":
