@@ -16,8 +16,6 @@ from torch.utils.data import DataLoader
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
 
-from experiments.research.par_v1 import crnn_data
-
 
 def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
