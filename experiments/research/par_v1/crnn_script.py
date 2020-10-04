@@ -169,6 +169,9 @@ def train_crnn(
             # Repeatedly saves the best performing model so-far based on Val.
             if metric == "CER":
                 if lowest_loss > sum_loss / steps:
+                    # Save the weights for this epoch if the ANN has the lowest
+                    # CER yet. NOTE that this is not the Loss of the network,
+                    # but the CER.
                     lowest_loss = sum_loss / steps
                     logging.info("Saving Best")
                     message = message + "\nBest Result :)"

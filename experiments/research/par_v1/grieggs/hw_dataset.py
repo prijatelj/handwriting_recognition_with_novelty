@@ -116,6 +116,7 @@ class HwDataset(Dataset):
             img = cv2.resize(img, (0, 0), fx=percent_x, fy=percent_x, interpolation=cv2.INTER_CUBIC)
 
         if self.augmentation:
+            # TODO allow for passing an int random seed to seed the random state.
             img = grid_distortion.warp_image(img, h_mesh_std=5, w_mesh_std=10)
 
         img = img.astype(np.float32)

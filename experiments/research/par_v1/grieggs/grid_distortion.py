@@ -11,6 +11,7 @@ INTERPOLATION = {
 def warp_image(img, random_state=None, **kwargs):
     if random_state is None:
         random_state = np.random.RandomState()
+    # TODO allow for passing an int random seed to seed the random state.
 
     w_mesh_interval = kwargs.get('w_mesh_interval', 25)
     w_mesh_std = kwargs.get('w_mesh_std', 3.0)
