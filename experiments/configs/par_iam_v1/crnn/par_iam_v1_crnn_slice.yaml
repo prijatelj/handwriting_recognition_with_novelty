@@ -14,7 +14,7 @@ model:
       input_height: 64
     train:
       learning_rate: 0.01
-    augmentation: True
+    augmentation: False # Make sure this is False in Eval, a source of noise
     batch_size: 1
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-09-22_22-13-51/crnn_ep389_eval/'
     load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-09-22_22-13-51/crnn_ep389.pt'
