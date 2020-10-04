@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#$ -pe smp 8
+#$ -pe smp 4
 #$ -N crnn_parv1_slice
 #$ -q gpu
 #$ -l gpu=1
