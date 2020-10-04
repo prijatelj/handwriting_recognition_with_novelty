@@ -257,6 +257,7 @@ def eval_crnn(
 
         torch.manual_seed(random_seed)
         torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     else:
         logging.warning(' '.join([
             'Model is being evaluated and deterministic is False! The results',
@@ -265,7 +266,7 @@ def eval_crnn(
         ]))
 
     # Initialize metrics
-    if output_crnn_eval:
+    if output_crnn_eval or return_slice:
         tot_ce = 0.0
         tot_we = 0.0
         sum_loss = 0.0
@@ -280,7 +281,6 @@ def eval_crnn(
         logits_list = []
 
     if return_slice:
-        count = 0
         perfect_indices = []
 
     # For batch in dataloader
@@ -350,18 +350,14 @@ def eval_crnn(
 
                     sum_loss += cer
 
-                    steps += 1
 
                     if return_slice and cer <= 0:
-                        perfect_indices.append(count)
+                        perfect_indices.append(steps)
 
                     if return_logits:
                         logits_list.append(logits)
 
-        if return_slice:
-            # NOTE should this only increment when x is not None?
-            count += 1
-
+                    steps += 1
 
     if layer is None or output_crnn_eval:
         message = ''
@@ -374,12 +370,6 @@ def eval_crnn(
 
         logging.info("Total character Errors: %d", tot_ce)
         logging.info("Total word errors %d", tot_we)
-
-        tot_ce = 0.0
-        tot_we = 0.0
-        sum_loss = 0.0
-        sum_wer = 0.0
-        steps = 0.0
 
     # NOTE that the way this is setup, it always expects to return the layers
     if not (return_logits or isinstance(layer, str) or return_slice):
