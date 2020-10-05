@@ -16,7 +16,7 @@ def warp_image(img, random_state=None, **kwargs):
             '`random_state` expected to be of type None, int, or',
             'np.random.RandomState, but instead recieved argument of type:',
             f'{type(random_state)}',
-        )
+        ]))
 
     w_mesh_interval = kwargs.get('w_mesh_interval', 25)
     w_mesh_std = kwargs.get('w_mesh_std', 3.0)
