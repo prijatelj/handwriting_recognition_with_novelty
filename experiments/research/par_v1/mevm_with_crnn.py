@@ -81,6 +81,8 @@ def main():
 
         # Obtain perfect character embeddings only, this is simplest slice
         layers = h5f['layer'][perf_slices]
+        # TODO NOOOOOO. this needs to get argmax of axis 2, if it exists
+        # because logits SHOULD be [sample, line_character, classes]
         argmax_logits = h5f['logits'][perf_slices].argmax(axis=1)
 
     logging.info('Number of perfect slices = %d', len(perf_slices))
