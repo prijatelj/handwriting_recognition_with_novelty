@@ -38,6 +38,57 @@ class TranscriptResults:
     char_confusion_mat: np.ndarray
 
 
+def eval_transcription_logits(preds, texts)
+    """Evaluates the given predicted transcriptions to expected texts where the
+    predictions are given as a probability vector per character.
+
+    Parameters
+    ----------
+    preds : np.ndarray
+        array of shape [samples, timesteps, characters], where samples is the
+        number of samples, timesteps is the number timesteps of the respective
+        RNN's output, and characters is the number of known characters by the
+        predictor.
+    texts : np.ndarray(str)
+        An iterable of strings that represents the expected lines of texts to
+        be predicted.
+    """
+    # TODO
+    logits = out[j, ...]
+    pred, raw_pred = string_utils.naive_decode(logits)
+    pred_str = string_utils.label2str(pred, idx_to_char, False)
+    gt_str = x['gt'][j]
+    cer = error_rates.cer(gt_str, pred_str)
+    wer = error_rates.wer(gt_str, pred_str)
+    gt = gt_str
+    ot = pred_str
+    sum_loss += cer
+    sum_wer_loss += wer
+    steps += 1
+    return
+
+
+def eval_transcription(preds, texts)
+    """Evaluates the given predicted transcriptions to expected texts.
+
+    Parameters
+    ----------
+    preds : np.ndarray
+        array of shape [samples, timesteps, characters], where samples is the
+        number of samples, timesteps is the number timesteps of the respective
+        RNN's output, and characters is the number of known characters by the
+        predictor.
+    texts : np.ndarray(str)
+        An iterable of strings that represents the expected lines of texts to
+        be predicted.
+    """
+    # TODO
+    return crnn_data.TranscriptResults(
+        error_rates.cer(gt_str, pred_str),
+        error_rates.wer(gt_str, pred_str),
+    )
+
+
 def load_datasplit(config, img_hieight=64):
     """Loads all datasets contained within the given data config.
 
