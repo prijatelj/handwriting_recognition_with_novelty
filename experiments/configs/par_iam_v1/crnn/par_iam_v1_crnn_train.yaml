@@ -18,4 +18,4 @@ model:
       augmentation: True
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adam/5fold-0/'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/'
