@@ -562,8 +562,8 @@ def main():
         char_to_idx,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
-        # TODO change augmentation to be under train config.
-        augmentation=config['model']['crnn']['augmentation'],
+        # TODO change augmentation to be under train data/model config.
+        augmentation=config['model']['crnn']['train']['augmentation'],
     )
 
     try:
@@ -593,7 +593,7 @@ def main():
 
     train_dataloader = DataLoader(
         train_dataset,
-        batch_size=config['model']['crnn']['batch_size'],
+        batch_size=config['model']['crnn']['train']['batch_size'],
         shuffle=False,
         num_workers=1,
         collate_fn=hw_dataset.collate,
@@ -601,7 +601,7 @@ def main():
 
     test_dataloader = DataLoader(
         test_dataset,
-        batch_size=config['model']['crnn']['batch_size'],
+        batch_size=config['model']['crnn']['eval']['batch_size'],
         shuffle=False,
         num_workers=1,
         collate_fn=hw_dataset.collate,
@@ -619,7 +619,11 @@ def main():
                 '`load_path` in model config, and training the model!',
             )
 
-        if config['model']['crnn']['train']['optimizer'].lower() == 'adadelta':
+        if (
+            'optimizer' not in config['model']['crnn']['train']
+            or config['model']['crnn']['train']['optimizer'].lower()
+                == 'adadelta'
+        ):
             optimizer = torch.optim.Adadelta(
                 hw_crnn.parameters(),
                 lr=config['model']['crnn']['train']['learning_rate'],
@@ -629,6 +633,9 @@ def main():
                 hw_crnn.parameters(),
                 lr=config['model']['crnn']['train']['learning_rate'],
             )
+        else:
+            raise ValueError('optimizer can only be ADADelta or ADAM.')
+
         criterion = CTCLoss(reduction='sum', zero_infinity=True)
 
         # Training Loop
