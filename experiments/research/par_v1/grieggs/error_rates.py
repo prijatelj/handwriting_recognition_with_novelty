@@ -1,5 +1,4 @@
 import editdistance
-import re
 
 
 def cer(r, h):
@@ -19,4 +18,4 @@ def wer(r, h):
     r = r.split()
     h = h.split()
 
-    return err(r,h)
+    return err(r, h)
