@@ -174,6 +174,7 @@ def train_crnn(
                     # Save the weights for this epoch if the ANN has the lowest
                     # CER yet. NOTE that this is not the Loss of the network,
                     # but the CER.
+                    # TODO include saving network w/ best ANN Loss on Val
                     lowest_loss = sum_loss / steps
                     logging.info("Saving Best")
                     message = message + "\nBest Result :)"
@@ -316,15 +317,6 @@ def eval_crnn(
             else:
                 raise NotImplementedError('Concat/both RNN and Conv of CRNN.')
 
-            """
-            logging.info(f'line_imgs.shape = {line_imgs.shape}')
-            logging.info(f'line_imgs = {line_imgs}')
-            logging.info(f'Preds shape: {preds.shape}')
-            logging.info(f'RNN Out: {layer_out}')
-            logging.info(f'RNN Out: {layer_out.shape}')
-            logging.info(f'x["gt"] = {x["gt"]}')
-            logging.info(f'x["gt"] len = {len(x["gt"][0])}')
-            """
             # Swap 0 and 1 indices to have:
             #   batch sample, "character window", classes
             # Except, since batch sample is always 1 here, that dim is removed:
@@ -627,10 +619,16 @@ def main():
                 '`load_path` in model config, and training the model!',
             )
 
-        optimizer = torch.optim.Adadelta(
-            hw_crnn.parameters(),
-            lr=config['model']['crnn']['train']['learning_rate'],
-        )
+        if config['model']['crnn']['train']['optimizer'].lower() == 'adadelta':
+            optimizer = torch.optim.Adadelta(
+                hw_crnn.parameters(),
+                lr=config['model']['crnn']['train']['learning_rate'],
+            )
+        elif config['model']['crnn']['train']['optimizer'].lower() == 'adam':
+            optimizer = torch.optim.Adam(
+                hw_crnn.parameters(),
+                lr=config['model']['crnn']['train']['learning_rate'],
+            )
         criterion = CTCLoss(reduction='sum', zero_infinity=True)
 
         # Training Loop
