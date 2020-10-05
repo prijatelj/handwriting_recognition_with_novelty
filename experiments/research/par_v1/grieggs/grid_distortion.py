@@ -9,9 +9,14 @@ INTERPOLATION = {
 }
 
 def warp_image(img, random_state=None, **kwargs):
-    if random_state is None:
-        random_state = np.random.RandomState()
-    # TODO allow for passing an int random seed to seed the random state.
+    if random_state is None or isinstance(random_state, int):
+        random_state = np.random.RandomState(random_state)
+    elif not isinstance(random_state, np.randomRandomState):
+        raise TypeError(' '.join([
+            '`random_state` expected to be of type None, int, or',
+            'np.random.RandomState, but instead recieved argument of type:',
+            f'{type(random_state)}',
+        )
 
     w_mesh_interval = kwargs.get('w_mesh_interval', 25)
     w_mesh_std = kwargs.get('w_mesh_std', 3.0)

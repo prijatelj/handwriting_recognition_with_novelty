@@ -69,6 +69,7 @@ class HwDataset(Dataset):
         augmentation=False,
         remove_errors=False,
         sep='\t',
+        random_seed=None,
      ):
         with open(json_path) as f:
             #data = json.load(f)
@@ -83,8 +84,15 @@ class HwDataset(Dataset):
         self.img_width = img_width
         self.char_to_idx = char_to_idx
         self.data = data
-        self.augmentation = augmentation
         self.remove_errors = remove_errors
+
+        self.augmentation = augmentation
+
+        if augmentation:
+            # Initialize the random state of the augmentation
+            self.random_state = np.random.RandomState(random_seed)
+        else:
+            self.random_state = None
 
     def __len__(self):
         return len(self.data)
@@ -116,8 +124,12 @@ class HwDataset(Dataset):
             img = cv2.resize(img, (0, 0), fx=percent_x, fy=percent_x, interpolation=cv2.INTER_CUBIC)
 
         if self.augmentation:
-            # TODO allow for passing an int random seed to seed the random state.
-            img = grid_distortion.warp_image(img, h_mesh_std=5, w_mesh_std=10)
+            img = grid_distortion.warp_image(
+                img,
+                h_mesh_std=5,
+                w_mesh_std=10,
+                random_state=self.random_state,
+            )
 
         img = img.astype(np.float32)
         img = img / 128.0 - 1.0

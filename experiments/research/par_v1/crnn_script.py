@@ -569,6 +569,7 @@ def main():
         char_to_idx,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
+        # TODO change augmentation to be under train config.
         augmentation=config['model']['crnn']['augmentation'],
     )
 
