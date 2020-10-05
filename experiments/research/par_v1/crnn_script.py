@@ -104,6 +104,8 @@ def train_crnn(
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            # TODO output the Loss of the network!
+            # TODO and change sum_loss name to sum_cer
 
             # Training Eval loop on training data
             for j in range(out.shape[0]):
@@ -487,7 +489,6 @@ def character_slices(
     #np.concatenate([i.reshape(len(perfect_lines) * logits.shape[1], -1)
     #    for i in np.array(logits)[perfect_lines]
     #])
-
 
 
 def io_args(parser):
