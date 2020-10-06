@@ -8,10 +8,10 @@ import torch
 def str2label(value, characterToIndex={}, unknown_index=None):
     if unknown_index is None:
         unknown_index = len(characterToIndex)
+        # NOTE this is why we add one to the classes.
 
     label = []
     for v in value:
-        # print(v)
         if v not in characterToIndex:
             continue
         label.append(characterToIndex[v])
