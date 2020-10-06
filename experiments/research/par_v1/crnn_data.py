@@ -7,14 +7,22 @@ from dataclasses import dataclass
 import logging
 
 # 3rd party packages
+import editdistance
 import numpy as np
+from sklearn.metrics import confusion_matrix
 import torch
 from torch.utils.data import DataLoader, Subset
 
 # Internal package modules
 from hwr_novelty.models.crnn import CRNN
 
-from experiments.research.par_v1.grieggs import character_set, hw_dataset
+from exputils.eval import ConfusionMatrix
+from experiments.research.par_v1.grieggs import (
+    character_set,
+    error_rates,
+    hw_dataset,
+    string_utils,
+)
 
 
 @dataclass
@@ -22,23 +30,23 @@ class DataSet:
     """Contains everything for the dataset handling in one place."""
     idx_to_char: dict
     char_to_idx: dict
-    train_dataset: hw_dataset.HwDataset
-    train_dataloader: DataLoader
-    val_dataset: hw_dataset.HwDataset
-    val_dataloader: DataLoader
-    test_dataset: hw_dataset.HwDataset
-    test_dataloader: DataLoader
+    train_dataset: hw_dataset.HwDataset = None
+    train_dataloader: DataLoader = None
+    val_dataset: hw_dataset.HwDataset = None
+    val_dataloader: DataLoader= None
+    test_dataset: hw_dataset.HwDataset = None
+    test_dataloader: DataLoader = None
 
 
 @dataclass
 class TranscriptResults:
     """Contains everything for the dataset handling in one place."""
-    char_errors: int
-    word_errors: int
-    char_confusion_mat: np.ndarray
+    char_error_rate: float
+    word_error_rate: float
+    char_confusion_mat: np.ndarray = None
 
 
-def eval_transcription_logits(preds, texts)
+def eval_transcription_logits(texts, logits, idx_to_char, decode='naive'):
     """Evaluates the given predicted transcriptions to expected texts where the
     predictions are given as a probability vector per character.
 
@@ -53,40 +61,81 @@ def eval_transcription_logits(preds, texts)
         An iterable of strings that represents the expected lines of texts to
         be predicted.
     """
-    # TODO
-    logits = out[j, ...]
-    pred, raw_pred = string_utils.naive_decode(logits)
-    pred_str = string_utils.label2str(pred, idx_to_char, False)
-    gt_str = x['gt'][j]
-    cer = error_rates.cer(gt_str, pred_str)
-    wer = error_rates.wer(gt_str, pred_str)
-    gt = gt_str
-    ot = pred_str
-    sum_loss += cer
-    sum_wer_loss += wer
-    steps += 1
-    return
+    total_cer = 0
+    total_wer = 0
+
+    for i, logit in enumerate(logits):
+        pred, raw_pred = string_utils.naive_decode(logit)
+        pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+        total_cer += error_rates.cer(texts[i], pred_str)
+        total_wer += error_rates.cer(texts[i], pred_str)
+
+    return TranscriptResults(
+        total_cer / len(texts),
+        total_wer / len(texts),
+        None,
+    )
 
 
-def eval_transcription(preds, texts)
+def eval_transcription(texts, preds):
     """Evaluates the given predicted transcriptions to expected texts.
 
     Parameters
     ----------
     preds : np.ndarray
-        array of shape [samples, timesteps, characters], where samples is the
-        number of samples, timesteps is the number timesteps of the respective
-        RNN's output, and characters is the number of known characters by the
-        predictor.
+        array of shape [samples], where samples is the
+        number of sample lines, line_length is the length of the lines.
     texts : np.ndarray(str)
         An iterable of strings that represents the expected lines of texts to
         be predicted.
     """
-    # TODO
-    return crnn_data.TranscriptResults(
-        error_rates.cer(gt_str, pred_str),
-        error_rates.wer(gt_str, pred_str),
+    total_cer = 0
+    total_wer = 0
+
+    for i, pred in enumerate(preds):
+        total_cer += error_rates.cer(texts[i], pred)
+        total_wer += error_rates.cer(texts[i], pred)
+
+    return TranscriptResults(
+        total_cer / len(preds),
+        total_wer / len(preds),
+        None,
     )
+
+
+def eval_char_confusion(texts, preds, labels=None, char_level=False):
+    """Evaluates the given predicted transcriptions to expected texts by
+    calculating the multiclass confusion matrix for the characters. The
+    characters may be encoded.
+
+    Parameters
+    ----------
+    preds : np.ndarray
+        if char_level is False, then preds is an array with shape
+        [samples, text_length], where samples is the number of sample text
+        lines, text_length is the number of characters in the line. Otherwise,
+        preds is a single dimension array with shape [samples] where samples
+        corresponds to the number characters to assess.
+    texts : np.ndarray(str)
+        An iterable of strings that represents the expected lines of texts to
+        be predicted.
+    char_level : bool, optional
+        True if preds and texts are to be evaluated where the first dimension
+        is the number of characters, ow. preds and texts are evaluated as the
+        number of lines which are looped through to evaluate the characters.
+    """
+    if char_level:
+        assert preds.shape == texts.shape
+        return ConfusionMatrix(texts, preds, labels=labels)
+
+    # Expand both preds and texts to be shape [characters]
+    preds = np.concatenate([list(pred) for pred in preds])
+    texts = np.concatenate([list(text) for text in texts])
+
+    assert preds.shape == texts.shape
+
+    return ConfusionMatrix(texts, preds, labels=labels)
 
 
 def load_datasplit(config, img_hieight=64):
