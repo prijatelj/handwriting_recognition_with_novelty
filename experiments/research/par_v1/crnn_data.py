@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, Subset
 # Internal package modules
 from hwr_novelty.models.crnn import CRNN
 
-from exputils.eval import ConfusionMatrix
+from exputils.data import ConfusionMatrix
 from experiments.research.par_v1.grieggs import (
     character_set,
     error_rates,
