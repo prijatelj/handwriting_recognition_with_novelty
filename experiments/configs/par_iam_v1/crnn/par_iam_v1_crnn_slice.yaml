@@ -14,7 +14,9 @@ model:
       input_height: 64
     train:
       learning_rate: 0.01
-    augmentation: False # Make sure this is False in Eval, a source of noise. TODO move to dataset as this pertains to the dataset... Hmm, if done automatically during training, then it is part of the model. It should, however be put under train section then. But since it is part of the data loader... makes me believe it should be under data, esp. since it is then data specific, not model specific
+      batch_size: 1
+    eval:
+      batch_size: 1
     batch_size: 1
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/'
     load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997.pt'
