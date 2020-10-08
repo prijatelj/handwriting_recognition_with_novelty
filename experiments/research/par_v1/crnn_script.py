@@ -557,13 +557,17 @@ def main():
         config['data']['iam']['labels'],
     )
 
+    if 'augmentation' in config['model']['crnn']['train']:
+        train_augmentation = config['model']['crnn']['train']['augmentation']
+    else:
+        train_augmentation = False
+
     train_dataset = hw_dataset.HwDataset(
         config['data']['iam']['train'],
         char_to_idx,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
-        # TODO change augmentation to be under train data/model config.
-        augmentation=config['model']['crnn']['train']['augmentation'],
+        augmentation=train_augmentation,
     )
 
     try:
