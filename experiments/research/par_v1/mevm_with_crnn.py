@@ -29,6 +29,27 @@ def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
     return preds
 
 
+def eval_mevm_slices(points, labels, mevm):
+    """Given a CRNN and MEVM, evaluate the paired models on the provided data.
+    Calculates only the predicted classes.
+
+    Parameters
+    ----------
+
+    """
+    # TODO adapt the MEVM to actually be a predictor w/ pred() as expected...
+    # TODO figure out why this is done here, or why i am told to do this...?
+
+    probs = mevm.max_probabilities(points)
+
+
+    # It won't be a np.ndarray of [samples, classes + 1 for uknown]. That'd be too useful.
+
+    logging.debug('probs : \n%s', probs)
+
+    return preds
+
+
 def script_args(parser):
     parser.add_argument(
         'config_path',
@@ -124,7 +145,7 @@ def main():
 
     # Be able to obtain the label from the MEVM's indexing of classes
     label_to_mevm_idx = {}
-    label_to_mevm_idx = {}
+    mevm_idx_to_label = {}
 
     labels_repr = []
 
@@ -133,7 +154,7 @@ def main():
         logging.info('%d : %d', label, label_counts[i])
 
         label_to_mevm_idx[label] = i
-        label_to_mevm_idx[i] = label
+        mevm_idx_to_label[i] = label
 
         label_indices = np.where(argmax_logits == label)
         labels_repr.append(torch.tensor(layers[label_indices]))
@@ -165,10 +186,9 @@ def main():
         # Load MEVM state from file
         mevm.load(config['mevm']['load_path'])
     else:
-        raise KeyError(' '.join([
-            'Missing evm_save_path xor evm_load_path, xor both exist in',
-            'config.'
-        ]))
+        raise KeyError(
+            'Missing mevm save_path xor load_path, xor both exist in config'
+        )
 
     # TODO Eval
     # TODO Eval MEVM on train
