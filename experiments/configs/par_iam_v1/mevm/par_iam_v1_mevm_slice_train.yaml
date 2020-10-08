@@ -6,8 +6,8 @@ data:
     labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_char_set.tsv'
     # Encoded to designate the CRNN layer representation of perfect slices
     encoded:
-      train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-10-02_10-05-37/perf_slices_train.hdf5'
-      val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn_iam_par_5fold-0/_2020-10-02_10-05-37/perf_slices_train.hdf5'
+      train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/_2020-10-08_11-44-16/layer_logits_slices_train.hdf5'
+      val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/_2020-10-08_11-44-16/layer_logits_slices_test.hdf5'
 model:
   crnn:
     metric: CER
@@ -27,4 +27,4 @@ model:
     init:
       tailsize: 100
       cover_threshold: 0.5
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/mevm/'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/_2020-10-08_11-44-16/mevm/'
