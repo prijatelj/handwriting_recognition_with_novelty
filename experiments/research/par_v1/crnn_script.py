@@ -278,6 +278,8 @@ def eval_crnn(
         sum_loss = 0.0
         sum_wer = 0.0
         steps = 0.0
+        total_chars = 0.0
+        total_words = 0.0
 
     hw_crnn.eval()
 
@@ -345,6 +347,9 @@ def eval_crnn(
                     tot_we += wer * len(gt_line.split())
                     tot_ce += cer * len(u' '.join(gt_line.split()))
 
+                    total_words += len(gt_line.split())
+                    total_chars += len(u' '.join(gt_line.split()))
+
                     sum_loss += cer
 
 
@@ -357,16 +362,17 @@ def eval_crnn(
                     steps += 1
 
     if layer is None or output_crnn_eval:
-        message = ''
-        message = message + "\nTest CER: " + str(sum_loss / steps)
-        message = message + "\nTest WER: " + str(sum_wer / steps)
-
         logging.info('CRNN results:')
         logging.info("Validation CER %d", sum_loss / steps)
         logging.info("Validation WER %d", sum_wer / steps)
 
         logging.info("Total character Errors: %d", tot_ce)
+        logging.info("Total characters: %d", total_chars)
+        logging.info("Total character errors rate: %d", tot_ce / total_chars)
+
         logging.info("Total word errors %d", tot_we)
+        logging.info("Total words: %d", total_words)
+        logging.info("Total word error rate: %d", tot_we / total_words)
 
     # NOTE that the way this is setup, it always expects to return the layers
     if not (return_logits or isinstance(layer, str) or return_slice):
