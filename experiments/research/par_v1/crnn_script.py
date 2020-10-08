@@ -363,16 +363,16 @@ def eval_crnn(
 
     if layer is None or output_crnn_eval:
         logging.info('CRNN results:')
-        logging.info("Validation CER %d", sum_loss / steps)
-        logging.info("Validation WER %d", sum_wer / steps)
+        logging.info("Validation CER %f", sum_loss / steps)
+        logging.info("Validation WER %f", sum_wer / steps)
 
         logging.info("Total character Errors: %d", tot_ce)
         logging.info("Total characters: %d", total_chars)
-        logging.info("Total character errors rate: %d", tot_ce / total_chars)
+        logging.info("Total character errors rate: %f", tot_ce / total_chars)
 
         logging.info("Total word errors %d", tot_we)
         logging.info("Total words: %d", total_words)
-        logging.info("Total word error rate: %d", tot_we / total_words)
+        logging.info("Total word error rate: %f", tot_we / total_words)
 
     # NOTE that the way this is setup, it always expects to return the layers
     if not (return_logits or isinstance(layer, str) or return_slice):
