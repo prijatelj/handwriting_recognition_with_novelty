@@ -77,13 +77,29 @@ def main():
 
     # Load the class data point layer representations
     with h5py.File(config['data']['iam']['encoded']['train'], 'r') as h5f:
-        perf_slices = h5f['perfect_indices'][:]
+        perf_slices = h5f['perfect_indices'][:].astype(int)
 
-        # Obtain perfect character embeddings only, this is simplest slice
-        layers = h5f['layer'][perf_slices]
+        print('type of perf_slices: ', type(perf_slices))
+        print('dtype of perf_slices: ', perf_slices.dtype)
+        print('perf_slices: \n', perf_slices)
+
         # TODO NOOOOOO. this needs to get argmax of axis 2, if it exists
         # because logits SHOULD be [sample, line_character, classes]
-        argmax_logits = h5f['logits'][perf_slices].argmax(axis=1)
+        argmax_logits = np.squeeze(h5f['logits'][:, perf_slices]).argmax(axis=1)
+        print('argmax_logits shape = ', argmax_logits.shape)
+        #length = len(argmax_logits)
+        #argmax_logits = argmax_logits[perf_slices].argmax(axis=1)
+        #mask = np.array([False] * length)
+        #mask[perf_slices] = True
+
+        # Obtain perfect character embeddings only, this is simplest slice
+        layers = np.squeeze(h5f['layer'][:, perf_slices])
+        #layers = h5f['layer'][:10]
+
+        print('layers shape = ', layers.shape)
+
+        # TODO need more efficient loading because this nears memory limit!
+        # Esp. if the CRNN becomes more accurate w/ more perfect slices!
 
     logging.info('Number of perfect slices = %d', len(perf_slices))
 
@@ -100,13 +116,10 @@ def main():
     logging.debug('Shape of layers: %s', layers.shape)
 
     # Organize the layers into lists per character class.
-    unique_labels, label_index, label_counts = np.unique(
-        argmax_logits,
-        return_inverse=True,
-        return_counts=True,
-    )
+    unique_labels, label_counts = np.unique(argmax_logits, return_counts=True)
 
-    logging.debug('Label index: %s', label_index)
+    logging.debug('Number of Unique Labels: %d', len(unique_labels))
+    logging.debug('The unique labels: %s', unique_labels)
     logging.debug('Label counts: %s', label_counts)
 
     # Be able to obtain the label from the MEVM's indexing of classes
@@ -122,7 +135,7 @@ def main():
         label_to_mevm_idx[label] = i
         label_to_mevm_idx[i] = label
 
-        label_indices = np.where(label_index == label)
+        label_indices = np.where(argmax_logits == label)
         labels_repr.append(torch.tensor(layers[label_indices]))
 
         logging.debug('Label `%s`\'s indices = %s', label, label_indices)
