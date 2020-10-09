@@ -11,7 +11,7 @@ INTERPOLATION = {
 def warp_image(img, random_state=None, **kwargs):
     if random_state is None or isinstance(random_state, int):
         random_state = np.random.RandomState(random_state)
-    elif not isinstance(random_state, np.randomRandomState):
+    elif not isinstance(random_state, np.random.RandomState):
         raise TypeError(' '.join([
             '`random_state` expected to be of type None, int, or',
             'np.random.RandomState, but instead recieved argument of type:',
