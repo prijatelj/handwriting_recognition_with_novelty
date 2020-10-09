@@ -104,18 +104,12 @@ def main():
         print('dtype of perf_slices: ', perf_slices.dtype)
         print('perf_slices: \n', perf_slices)
 
-        # TODO NOOOOOO. this needs to get argmax of axis 2, if it exists
-        # because logits SHOULD be [sample, line_character, classes]
+        # logits SHOULD be [sample, line_character, classes]
         argmax_logits = np.squeeze(h5f['logits'][:, perf_slices]).argmax(axis=1)
         print('argmax_logits shape = ', argmax_logits.shape)
-        #length = len(argmax_logits)
-        #argmax_logits = argmax_logits[perf_slices].argmax(axis=1)
-        #mask = np.array([False] * length)
-        #mask[perf_slices] = True
 
         # Obtain perfect character embeddings only, this is simplest slice
         layers = np.squeeze(h5f['layer'][:, perf_slices])
-        #layers = h5f['layer'][:10]
 
         print('layers shape = ', layers.shape)
 
