@@ -646,7 +646,20 @@ def main():
         else:
             raise ValueError('optimizer can only be ADADelta or ADAM.')
 
-        criterion = CTCLoss(reduction='sum', zero_infinity=True)
+        if 'blank' in config['model']['crnn']['train']:
+            blank = config['model']['crnn']['train']['blank']
+        else:
+            logging.warning(' '.join([
+                'No `blank` for CTC Loss given in the config file!',
+                'Default assumed is 0',
+            ]))
+            blank = 0
+
+        criterion = CTCLoss(
+            blank=blank,
+            reduction='sum',
+            zero_infinity=True,
+        )
 
         # Training Loop
         # TODO save CRNN output for ease of eval and comparison

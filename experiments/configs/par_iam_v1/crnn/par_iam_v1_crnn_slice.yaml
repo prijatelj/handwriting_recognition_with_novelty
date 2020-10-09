@@ -9,12 +9,13 @@ model:
     metric: CER
     init:
       num_channels: 3
-      num_classes: 81 # May be just 80, but iirc Grieggs' added by 1
+      num_classes: 80
       hidden_size: 256
       input_height: 64
     train:
       learning_rate: 0.01
       batch_size: 1
+      blank: 79
     eval:
       batch_size: 1
     batch_size: 1
