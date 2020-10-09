@@ -22,10 +22,10 @@ model:
       blank: 79
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/'
-    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997.pt'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/_2020-10-09_03-20-07/crnn_ep919_eval/'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/_2020-10-09_03-20-07/crnn_ep919.pt'
   mevm:
     init:
       tailsize: 100
       cover_threshold: 0.5
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/crnn_ep997_eval/_2020-10-08_11-44-16/mevm/'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/crnn/adadelta/5fold-0/_2020-10-09_03-20-07/crnn_ep919_eval/mevm/'
