@@ -62,7 +62,7 @@ class HwDataset(Dataset):
     def __init__(
         self,
         json_path,
-        char_to_idx,
+        char_encoder,
         img_height=32,
         img_width=None,
         root_path=".",
@@ -82,7 +82,7 @@ class HwDataset(Dataset):
         self.root_path = root_path
         self.img_height = img_height
         self.img_width = img_width
-        self.char_to_idx = char_to_idx
+        self.char_encoder = char_encoder
         self.data = data
         self.remove_errors = remove_errors
 
@@ -135,7 +135,11 @@ class HwDataset(Dataset):
         img = img / 128.0 - 1.0
 
         gt = item['gt']
-        gt_label = string_utils.str2label(gt, self.char_to_idx)
+        gt_label = string_utils.str2label(
+            gt,
+            self.char_encoder.encoder,
+            self.char_encoder.unknown_idx,
+        )
 
         return {
             "line_id":item['image_path'],
