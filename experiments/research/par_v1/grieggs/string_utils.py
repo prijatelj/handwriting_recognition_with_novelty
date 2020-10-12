@@ -49,7 +49,7 @@ def label2input(value, num_of_inputs, char_break_interval):
 
     return np.array(input_data)
 
-def label2str(label, indexToCharacter, asRaw, spaceChar=" ", blank=0):
+def label2str(label, indexToCharacter, asRaw, spaceChar="~", blank=0):
     string = u""
     for i in range(len(label)):
         if label[i] == blank:
