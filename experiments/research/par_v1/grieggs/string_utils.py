@@ -1,8 +1,9 @@
+import logging
+
 import numpy as np
 from torch.nn.modules.loss import CTCLoss
 import torch
 # import generate_dict
-
 
 
 def str2label(value, characterToIndex={}, unknown_index=None):
@@ -13,7 +14,9 @@ def str2label(value, characterToIndex={}, unknown_index=None):
     label = []
     for v in value:
         if v not in characterToIndex:
-            continue
+            raise ValueError(
+                f'Character `v` is not in character to index! {v}'
+            )
         label.append(characterToIndex[v])
     return np.array(label, np.uint32)
 
@@ -42,10 +45,10 @@ def label2input(value, num_of_inputs, char_break_interval):
 
     return np.array(input_data)
 
-def label2str(label, indexToCharacter, asRaw, spaceChar = "~"):
+def label2str(label, indexToCharacter, asRaw, spaceChar=" ", blank=0):
     string = u""
     for i in range(len(label)):
-        if label[i] == 0:
+        if label[i] == blank:
             if asRaw:
                 string += spaceChar
             else:
