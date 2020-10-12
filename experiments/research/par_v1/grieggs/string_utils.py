@@ -8,8 +8,12 @@ import torch
 
 def str2label(value, characterToIndex={}, unknown_index=None):
     if unknown_index is None:
+        logging.warning(' '.join([
+            '`unknown_index` is None, the assumption is that `unknown_index`',
+            '= number of class in `characterToIndex`.',
+        ]))
         unknown_index = len(characterToIndex)
-        # NOTE this is why we add one to the classes.
+        # NOTE this is why we add one to the classes. Or an effect of...
 
     label = []
     for v in value:
