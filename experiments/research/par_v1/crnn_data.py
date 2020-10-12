@@ -47,6 +47,9 @@ class CharEncoder(NominalDataEncoder):
     # NOTE if you turn the str into a list of chars, [en/de]code will return
     # numpy arrays and function as expected... Just need to type cast np.uint32
 
+    # TODO posisbly include error_rates here or edit dist method if dependent
+    # on character encoding: e.g. blank, space char, or unknown idx.
+
 
 def load_char_encoder(filepath, blank, space_char, unknown_idx):
     """Loads the label set and creates char encoder"""
