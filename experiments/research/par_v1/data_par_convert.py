@@ -116,7 +116,12 @@ args = parse_args()
 
 # Load the given files: labels, transcripts
 # Load labels
-labels = pd.read_csv(args.labels_filepath, sep=args.delimiter)
+labels = pd.read_csv(
+    args.labels_filepath,
+    sep=args.delimiter,
+    quoting=csv.QUOTE_NONE,
+)
+
 
 unique_files = len(set(labels['file']))
 if len(set(labels['file'])) != len(labels.index):
@@ -222,7 +227,11 @@ if os.path.isfile(args.transcripts_filepath):
 # Add representation columns
 if os.path.isfile(args.repr_filepath):
     with open(args.repr_filepath) as repr_csv:
-        csv_reader = csv.reader(repr_csv, delimiter=args.delimiter)
+        csv_reader = csv.reader(
+            repr_csv,
+            delimiter=args.delimiter,
+            quoting=csv.QUOTE_NONE,
+        )
 
         # Skip expected header
         next(csv_reader)
@@ -267,4 +276,5 @@ labels.to_csv(
     exputils.io.create_filepath(args.output_filepath),
     sep=args.save_delimiter,
     index=False,
+    quoting=csv.QUOTE_NONE,
 )

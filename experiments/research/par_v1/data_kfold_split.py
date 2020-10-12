@@ -1,6 +1,7 @@
 """Script for splitting the given data json into multiple data JSONs for each
 train and test set per fold.
 """
+import csv
 import os
 
 import numpy as np
@@ -57,7 +58,11 @@ if __name__ == '__main__':
     )
 
     # Load the given data tsv
-    labels = pd.read_csv(args.labels_filepath, sep=args.delimiter)
+    labels = pd.read_csv(
+        args.labels_filepath,
+        sep=args.delimiter,
+        quoting=csv.QUOTE_NONE,
+    )
 
     # Data index splitting: Use kfold (stratified if told to) to split the data
     #if args.kfold_cv.stratified:
@@ -150,6 +155,7 @@ if __name__ == '__main__':
             ),
             sep=args.delimiter,
             index=False,
+            quoting=csv.QUOTE_NONE,
         )
 
         labels.iloc[test_fold].to_csv(
@@ -159,4 +165,5 @@ if __name__ == '__main__':
             ),
             sep=args.delimiter,
             index=False,
+            quoting=csv.QUOTE_NONE,
         )
