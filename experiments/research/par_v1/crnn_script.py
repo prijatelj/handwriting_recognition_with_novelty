@@ -14,11 +14,9 @@ from tqdm import tqdm
 
 import exputils.io
 
-from hwr_novelty.models.crnn import CRNN
-
 from experiments.research.par_v1 import crnn_data
 from experiments.research.par_v1.grieggs import (
-    character_set,
+    #character_set,
     error_rates,
     hw_dataset,
     string_utils,
@@ -30,7 +28,7 @@ def train_crnn(
     hw_crnn,
     optimizer,
     criterion,
-    idx_to_char,
+    char_encoder,
     train_dataloader,
     dtype,
     model_save_path=None,
@@ -110,8 +108,17 @@ def train_crnn(
             # Training Eval loop on training data
             for j in range(out.shape[0]):
                 logits = out[j, ...]
+
                 pred, raw_pred = string_utils.naive_decode(logits)
-                pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+                pred_str = string_utils.label2str(
+                    pred,
+                    char_encoder.encoder.inverse,
+                    False,
+                    char_encoder.space_char,
+                    char_encoder.blank,
+                )
+
                 gt_str = x['gt'][j]
                 cer = error_rates.cer(gt_str, pred_str)
                 wer = error_rates.wer(gt_str, pred_str)
@@ -155,7 +162,15 @@ def train_crnn(
                 for i, gt_line in enumerate(x['gt']):
                     logits = out[i, ...]
                     pred, raw_pred = string_utils.naive_decode(logits)
-                    pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+                    pred_str = string_utils.label2str(
+                        pred,
+                        char_encoder.encoder.inverse,
+                        False,
+                        char_encoder.space_char,
+                        char_encoder.blank,
+                    )
+
                     cer = error_rates.cer(gt_line, pred_str)
                     wer = error_rates.wer(gt_line, pred_str)
                     sum_wer_loss += wer
@@ -211,7 +226,7 @@ def train_crnn(
 def eval_crnn(
     hw_crnn,
     dataloader,
-    idx_to_char,
+    char_encoder,
     dtype,
     output_crnn_eval=True,
     layer=None,
@@ -337,7 +352,14 @@ def eval_crnn(
                     logits = out[i, ...]
 
                     pred, raw_pred = string_utils.naive_decode(logits)
-                    pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+                    pred_str = string_utils.label2str(
+                        pred,
+                        char_encoder.encoder.inverse,
+                        False,
+                        char_encoder.space_char,
+                        char_encoder.blank,
+                    )
 
                     wer = error_rates.wer(gt_line, pred_str)
                     sum_wer += wer
@@ -401,7 +423,7 @@ def eval_crnn(
     return return_list
 
 
-def find_perfect_indices(logits, target_transcript, idx_to_char):
+def find_perfect_indices(logits, target_transcript, char_encoder):
     """Given the logits and expected transcript labels, find the pairs with
     perfect prediction from the logits.
     """
@@ -410,7 +432,14 @@ def find_perfect_indices(logits, target_transcript, idx_to_char):
         line_encoded = logits[i, ...]
 
         pred = string_utils.naive_decode(line_encoded)[0]
-        pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+        pred_str = string_utils.label2str(
+            pred,
+            char_encoder.encoder.inverse,
+            False,
+            char_encoder.space_char,
+            char_encoder.blank,
+        )
 
         if error_rates.cer(gt_line, pred_str) <= 0:
             perfect_indices.append(i)
@@ -559,8 +588,35 @@ def main():
         base_message = base_message + line
 
     # Load and Prepare the data and labels
-    idx_to_char, char_to_idx = character_set.load_label_set(
+    if 'blank' in config['model']['crnn']['train']:
+        blank = config['model']['crnn']['train']['blank']
+    else:
+        logging.warning(' '.join([
+            'No `blank` for CTC Loss given in the config file!',
+            'Default assumed is 0',
+        ]))
+        blank = 0
+
+    if 'space_char' in config['model']['crnn']['train']:
+        space_char = config['model']['crnn']['train']['space_char']
+    else:
+        logging.warning(
+            'No `space_char` given in the config file! Default assumed is " "',
+        )
+        space_char = ' '
+
+    if 'unknown_idx' in config['model']['crnn']['train']:
+        unknown_idx = config['model']['crnn']['train']['unknown_idx']
+    else:
+        raise ValueError(
+            'No `unknown_idx` given in the config file! No assumed default!',
+        )
+
+    char_encoder = crnn_data.load_char_encoder(
         config['data']['iam']['labels'],
+        blank,
+        space_char,
+        unknown_idx,
     )
 
     if 'augmentation' in config['model']['crnn']['train']:
@@ -570,7 +626,7 @@ def main():
 
     train_dataset = hw_dataset.HwDataset(
         config['data']['iam']['train'],
-        char_to_idx,
+        char_encoder.encoder,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
         augmentation=train_augmentation,
@@ -579,7 +635,7 @@ def main():
     try:
         test_dataset = hw_dataset.HwDataset(
             config['data']['iam']['val'],
-            char_to_idx,
+            char_encoder.encoder,
             img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
         )
@@ -646,15 +702,6 @@ def main():
         else:
             raise ValueError('optimizer can only be ADADelta or ADAM.')
 
-        if 'blank' in config['model']['crnn']['train']:
-            blank = config['model']['crnn']['train']['blank']
-        else:
-            logging.warning(' '.join([
-                'No `blank` for CTC Loss given in the config file!',
-                'Default assumed is 0',
-            ]))
-            blank = 0
-
         criterion = CTCLoss(
             blank=blank,
             reduction='sum',
@@ -667,7 +714,7 @@ def main():
             hw_crnn,
             optimizer,
             criterion,
-            idx_to_char,
+            char_encoder.encoder.inverse,
             train_dataloader,
             dtype,
             model_save_path,
@@ -688,7 +735,7 @@ def main():
             out = eval_crnn(
                 hw_crnn,
                 dataloader,
-                idx_to_char,
+                char_encoder.encoder.inverse,
                 dtype,
                 output_crnn_eval=True,
                 layer=args.slice,
