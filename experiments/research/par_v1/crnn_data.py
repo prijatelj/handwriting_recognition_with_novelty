@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, Subset
 from hwr_novelty.models.crnn import CRNN
 
 from exputils.data import ConfusionMatrix
+from exputils.data.labels import NominalDataEncoder, load_label_set
 from experiments.research.par_v1.grieggs import (
     character_set,
     error_rates,
@@ -25,11 +26,39 @@ from experiments.research.par_v1.grieggs import (
 )
 
 
+class CharEncoder(NominalDataEncoder):
+    """Temporary hotfix for bringing all the label data together in one place.
+    Wraps NominalDataEncoder to include character specific things.
+    """
+    def __init__(self, blank, space_char, unknown_idx, *args, **kwargs):
+        super(CharEncoder, self).__init__(*args, **kwargs)
+
+        # NOTE CRNN expects 0 idx by default, any unique label
+        self.blank = blank
+
+        # NOTE CRNN expects ' ', any idx (def: 1)
+        self.space_char = space_char
+
+        # NOTE CRNN expects this to add to end of labels, any unique label.
+        self.unknown_idx = unknown_idx
+
+    # TODO copy/modify/replace str2label and label2str, etc from string_utils
+    # and put them here within the character encoder!
+    # NOTE if you turn the str into a list of chars, [en/de]code will return
+    # numpy arrays and function as expected... Just need to type cast np.uint32
+
+
+def load_char_encoder(filepath, blank, space_char, unknown_idx):
+    """Loads the label set and creates char encoder"""
+    nde = load_label_set(filepath)
+
+    return CharEncoder(blank, space_char, unknown_idx, list(nde.encoder))
+
+
 @dataclass
 class DataSet:
     """Contains everything for the dataset handling in one place."""
-    idx_to_char: dict
-    char_to_idx: dict
+    label_encoder: CharEncoder
     train_dataset: hw_dataset.HwDataset = None
     train_dataloader: DataLoader = None
     val_dataset: hw_dataset.HwDataset = None
@@ -46,7 +75,12 @@ class TranscriptResults:
     char_confusion_mat: np.ndarray = None
 
 
-def eval_transcription_logits(texts, logits, idx_to_char, decode='naive'):
+def eval_transcription_logits(
+    texts,
+    logits,
+    label_encoder,
+    decode='naive',
+):
     """Evaluates the given predicted transcriptions to expected texts where the
     predictions are given as a probability vector per character.
 
@@ -66,7 +100,14 @@ def eval_transcription_logits(texts, logits, idx_to_char, decode='naive'):
 
     for i, logit in enumerate(logits):
         pred, raw_pred = string_utils.naive_decode(logit)
-        pred_str = string_utils.label2str(pred, idx_to_char, False)
+
+        pred_str = string_utils.label2str(
+            pred,
+            label_encoder.encoder.inverse,
+            False,
+            spaceChar=label_encoder.space_char,
+            blank=label_encoder.blank,
+        )
 
         total_cer += error_rates.cer(texts[i], pred_str)
         total_wer += error_rates.cer(texts[i], pred_str)
@@ -128,6 +169,9 @@ def eval_char_confusion(texts, preds, labels=None, char_level=False):
     if char_level:
         assert preds.shape == texts.shape
         return ConfusionMatrix(texts, preds, labels=labels)
+    else:
+        # TODO expand the texts and preds to char level
+        raise NotImplementedError()
 
     # Expand both preds and texts to be shape [characters]
     preds = np.concatenate([list(pred) for pred in preds])
@@ -138,6 +182,8 @@ def eval_char_confusion(texts, preds, labels=None, char_level=False):
     return ConfusionMatrix(texts, preds, labels=labels)
 
 
+# TODO streamline loading of files as necessary to reduce code dup & potential
+# errors in typos between versions.
 def load_datasplit(config, img_hieight=64):
     """Loads all datasets contained within the given data config.
 
@@ -146,6 +192,7 @@ def load_datasplit(config, img_hieight=64):
 
     """
     raise NotImplementedError('use old load deataset instead.')
+
     dataset = hw_dataset.HwDataset(
         config[dataset_id]['train'],
         char_to_idx,
@@ -163,11 +210,23 @@ def load_datasplit(config, img_hieight=64):
     )
     return
 
+
 def old_load_dataset(config, dataset, shuffle=False, always_val=False):
     """Loads the datasets from the given dataset config."""
+    raise NotImplementedError(
+        'Depracted by expected version of config, needs updated.',
+    )
+
     idx_to_char, char_to_idx = character_set.load_label_set(
         config[dataset]['labels'],
     )
+
+    # TODO
+    #nominal_encoder = load_label_set(config[dataset]['labels'])
+    # Make CharEncoder
+    #char_encoder = CharEncoder(
+    #    config[dataset]['labels']
+    #)
 
     data_exists = False
 
