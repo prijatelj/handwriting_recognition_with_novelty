@@ -3,9 +3,6 @@ data:
     train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/v2/kfolds_strat/train_val_5fold_0/5folds_train-0.tsv'
     val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/v2/kfolds_strat/train_val_5fold_0/5folds_test-0.tsv'
     image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
-    normal_images_prefix: 'known_images/'
-    antique_images_prefix: 'bg_antique/'
-    noise_images_prefix: 'noise/'
     labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_CRNN_char_set.tsv'
 model:
   crnn:
@@ -24,4 +21,4 @@ model:
       space_char: ' ' # 1
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/all_repr/crnn/adadelta/5fold-0/'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/5fold-0/'
