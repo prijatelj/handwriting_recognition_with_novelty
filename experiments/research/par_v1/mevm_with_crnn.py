@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 # External packages but within project
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
+from exputils.data.labels import NominalDataEncoder
 
 
 def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
@@ -138,17 +139,13 @@ def main():
     logging.debug('Label counts: %s', label_counts)
 
     # Be able to obtain the label from the MEVM's indexing of classes
-    label_to_mevm_idx = {}
-    mevm_idx_to_label = {}
+    nominal_encoder = NominalDataEncoder(unique_labels)
 
     labels_repr = []
 
     logging.info('Unique Labels contained within layer encoding:')
     for i, label in enumerate(unique_labels):
         logging.info('%d : %d', label, label_counts[i])
-
-        label_to_mevm_idx[label] = i
-        mevm_idx_to_label[i] = label
 
         label_indices = np.where(argmax_logits == label)
         labels_repr.append(torch.tensor(layers[label_indices]))
@@ -168,7 +165,7 @@ def main():
         and 'load_path' not in config['model']['mevm']
     ):
         # Train MEVM
-        mevm.train(labels_repr, labels=unique_labels)
+        mevm.train(labels_repr, labels=np.array(nominal_encoder.encoder))
 
         # Save trained mevm
         mevm.save(exputils.io.create_filepath(os.path.join(
