@@ -132,6 +132,44 @@ if len(set(labels['file'])) != len(labels.index):
     ]))
 del unique_files
 
+# Add representation columns if any
+if os.path.isfile(args.repr_filepath):
+    with open(args.repr_filepath) as repr_csv:
+        csv_reader = csv.reader(
+            repr_csv,
+            delimiter=args.delimiter,
+            quoting=csv.QUOTE_NONE,
+        )
+
+        # Skip expected header
+        next(csv_reader)
+
+        # Add the provided repr columns
+        labels['bg_antique_provided'] = 0
+        labels['noise_provided'] = 0
+
+        file_counter = Counter()
+
+        for row in csv_reader:
+            if row[0] in file_counter and file_counter[row[0]] >= 2:
+                raise KeyError(
+                    f'Over 2 duplicates of a filename in repr csv! {row[0]}',
+                )
+            file_counter[row[0]] += 1
+
+            # Check if the writer matches
+            if str(labels['writer_id'][row[0]]) != row[1]:
+                raise ValueError(' '.join([
+                    'writer_id for file in repr csv does not match the labels',
+                    f'csv! writer_id in labels: {labels["writer_id"][row[0]]}',
+                    f'writer_id in repr csv: {row[1]}',
+                ]))
+
+            # Add the repr provided information. Dupes expected, thus |=
+            labels['bg_antique_provided'][row[0]] |= int(row[2])
+            labels['noise_provided'][row[0]] |= int(row[3])
+
+# Add transcripts if any
 if os.path.isfile(args.transcripts_filepath):
     # Load the PAR transcripts file
     with open(args.transcripts_filepath) as transcript_csv:
@@ -140,6 +178,11 @@ if os.path.isfile(args.transcripts_filepath):
             delimiter=args.transcript_csv_delimiter,
             quoting=csv.QUOTE_NONE,
         )
+
+        if not os.path.isfile(args.repr_filepath):
+            # Set the index to the unique image filenames for ease of mapping
+            # transcripts
+            labels.index = labels['file']
 
         # Set the index to the unique image filenames for ease of mapping
         # transcripts
@@ -223,48 +266,6 @@ if os.path.isfile(args.transcripts_filepath):
             # order.
             for character in sorted(unique_characters):
                 f.write(f'{character}\n')
-
-# Add representation columns
-if os.path.isfile(args.repr_filepath):
-    with open(args.repr_filepath) as repr_csv:
-        csv_reader = csv.reader(
-            repr_csv,
-            delimiter=args.delimiter,
-            quoting=csv.QUOTE_NONE,
-        )
-
-        # Skip expected header
-        next(csv_reader)
-
-        if 'transcript' not in labels.columns:
-            # Set the index to the unique image filenames for ease of mapping
-            # transcripts
-            labels.index = labels['file']
-
-        # Add the provided repr columns
-        labels['bg_antique_provided'] = 0
-        labels['noise_provided'] = 0
-
-        file_counter = Counter()
-
-        for row in csv_reader:
-            if row[0] in file_counter and file_counter[row[0]] >= 2:
-                raise KeyError(
-                    f'Over 2 duplicates of a filename in repr csv! {row[0]}',
-                )
-            file_counter[row[0]] += 1
-
-            # Check if the writer matches
-            if str(labels['writer_id'][row[0]]) != row[1]:
-                raise ValueError(' '.join([
-                    'writer_id for file in repr csv does not match the labels',
-                    f'csv! writer_id in labels: {labels["writer_id"][row[0]]}',
-                    f'writer_id in repr csv: {row[1]}',
-                ]))
-
-            # Add the repr provided information. Dupes expected, thus |=
-            labels['bg_antique_provided'][row[0]] |= int(row[2])
-            labels['noise_provided'][row[0]] |= int(row[3])
 
 # Append to image filepaths if necessary, after adding the transcriptions
 if args.append_filepath is not None:
