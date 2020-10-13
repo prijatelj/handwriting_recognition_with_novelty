@@ -1,6 +1,7 @@
 from collections import defaultdict
 import csv
 import json
+import logging
 import os
 import random
 
@@ -17,8 +18,8 @@ PADDING_CONSTANT = 1
 def collate(batch):
     batch = [b for b in batch if b is not None]
     #These all should be the same size or error
-    # print(len(set([b['line_img'].shape[0] for b in batch])))
-    # print(len(set([b['line_img'].shape[2] for b in batch])))
+    # logging.debug(len(set([b['line_img'].shape[0] for b in batch])))
+    # logging.debug(len(set([b['line_img'].shape[2] for b in batch])))
     if len(set([b['line_img'].shape[0] for b in batch])) == 0 or len(set([b['line_img'].shape[2] for b in batch])) == 0:
         return None
     assert len(set([b['line_img'].shape[0] for b in batch])) == 1
@@ -32,7 +33,11 @@ def collate(batch):
     label_lengths = []
     line_ids = []
 
-    input_batch = np.full((len(batch), dim0, dim1, dim2), PADDING_CONSTANT).astype(np.float32)
+    input_batch = np.full(
+        (len(batch), dim0, dim1, dim2),
+        PADDING_CONSTANT,
+    ).astype(np.float32)
+
     for i in range(len(batch)):
         b_img = batch[i]['line_img']
         input_batch[i,:,:b_img.shape[1],:] = b_img
@@ -70,6 +75,9 @@ class HwDataset(Dataset):
         remove_errors=False,
         sep='\t',
         random_seed=None,
+        normal_image_prefix='',
+        antique_image_prefix='',
+        noise_image_prefix='',
      ):
         with open(json_path) as f:
             #data = json.load(f)
@@ -79,7 +87,12 @@ class HwDataset(Dataset):
             next(reader)
             data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
 
+        # Path prefixes
         self.root_path = root_path
+        self.normal_image_prefix = normal_image_prefix
+        self.antique_image_prefix = antique_image_prefix
+        self.noise_image_prefix = noise_image_prefix
+
         self.img_height = img_height
         self.img_width = img_width
         self.char_encoder = char_encoder
@@ -99,29 +112,41 @@ class HwDataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        img = cv2.imread(os.path.join(self.root_path, item['image_path']))
-        # if img is not None:
-        #     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # else:
-        #     print("Bad. Not GOOD")
-        # ret, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # TODO have to figure out how to include bg_antique and noise samples!
+        #   This would involve expanding such that the iterator w/ idx is blind
+        #   to such an expansion of the images. So it needs done in init.
+        img_path = os.path.join(
+            self.root_path,
+            self.normal_image_prefix,
+            item['image_path'],
+        )
+
+        img = cv2.imread(img_path)
 
         if self.remove_errors:
             if item['err']:
-                # print("------------------------------------------------")
                 return None
         if img is None:
-            print("Warning: image is None:", os.path.join(self.root_path, item['image_path']))
+            logging.warning("image is None: %s", img_path)
             return None
 
         if self.img_width is not None:
-            # percent_x = float(self.img_height) / img.shape[0]
-            # percent_y = float(self.img_width) / img.shape[1]
-            img = cv2.resize(img, (self.img_width,self.img_height), interpolation = cv2.INTER_CUBIC)
+            img = cv2.resize(
+                img,
+                (self.img_width,self.img_height),
+                interpolation = cv2.INTER_CUBIC,
+            )
         else:
             # NOTE resize image based on given image height
             percent_x = float(self.img_height) / img.shape[0]
-            img = cv2.resize(img, (0, 0), fx=percent_x, fy=percent_x, interpolation=cv2.INTER_CUBIC)
+            img = cv2.resize(
+                img,
+                (0,0),
+                fx=percent_x,
+                fy=percent_x,
+                interpolation=cv2.INTER_CUBIC,
+            )
 
         if self.augmentation:
             img = grid_distortion.warp_image(

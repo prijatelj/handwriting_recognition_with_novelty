@@ -624,12 +624,31 @@ def main():
     else:
         train_augmentation = False
 
+    # Handle image path prefixes in config
+    if 'normal_image_prefix' in config['data']['iam']['normal_image_prefix']:
+        normal_image_prefix = config['data']['iam']['normal_image_prefix']
+    else:
+        normal_image_prefix = ''
+
+    if 'antique_image_prefix' in config['data']['iam']['antique_image_prefix']:
+        antique_image_prefix = config['data']['iam']['antique_image_prefix']
+    else:
+        antique_image_prefix = ''
+
+    if 'noise_image_prefix' in config['data']['iam']['noise_image_prefix']:
+        noise_image_prefix = config['data']['iam']['noise_image_prefix']
+    else:
+        noise_image_prefix = ''
+
     train_dataset = hw_dataset.HwDataset(
         config['data']['iam']['train'],
         char_encoder.encoder,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
         augmentation=train_augmentation,
+        normal_img_prefix=normal_image_prefix,
+        antique_img_prefix=antique_image_prefix,
+        noise_img_prefix=noise_image_prefix,
     )
 
     try:
@@ -638,6 +657,9 @@ def main():
             char_encoder.encoder,
             img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
+            normal_img_prefix=normal_image_prefix,
+            antique_img_prefix=antique_image_prefix,
+            noise_img_prefix=noise_image_prefix,
         )
     except KeyError as e:
         logging.info("No validation set found, generating one")
