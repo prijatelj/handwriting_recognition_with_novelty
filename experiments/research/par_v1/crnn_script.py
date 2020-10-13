@@ -385,8 +385,8 @@ def eval_crnn(
 
     if layer is None or output_crnn_eval:
         logging.info('CRNN results:')
-        logging.info("Validation CER %f", sum_loss / steps)
-        logging.info("Validation WER %f", sum_wer / steps)
+        logging.info("Eval CER %f", sum_loss / steps)
+        logging.info("Eval WER %f", sum_wer / steps)
 
         logging.info("Total character Errors: %d", tot_ce)
         logging.info("Total characters: %d", total_chars)
