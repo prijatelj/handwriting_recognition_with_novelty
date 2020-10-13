@@ -55,6 +55,9 @@ def label2str(label, indexToCharacter, asRaw, spaceChar="~", blank=0):
         if label[i] == blank:
             if asRaw:
                 string += spaceChar
+                # NOTE It may be the case that spaceChar is to be the blank
+                # character, not space character... which makes sense in this
+                # case. Given this is label2str w/ asRaw
             else:
                 break
         else:
