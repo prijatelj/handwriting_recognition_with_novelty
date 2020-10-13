@@ -642,7 +642,7 @@ def main():
 
     train_dataset = hw_dataset.HwDataset(
         config['data']['iam']['train'],
-        char_encoder.encoder,
+        char_encoder,
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
         augmentation=train_augmentation,
@@ -654,7 +654,7 @@ def main():
     try:
         test_dataset = hw_dataset.HwDataset(
             config['data']['iam']['val'],
-            char_encoder.encoder,
+            char_encoder,
             img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
             normal_image_prefix=normal_image_prefix,
@@ -736,7 +736,7 @@ def main():
             hw_crnn,
             optimizer,
             criterion,
-            char_encoder.encoder.inverse,
+            char_encoder,
             train_dataloader,
             dtype,
             model_save_path,
@@ -757,7 +757,7 @@ def main():
             out = eval_crnn(
                 hw_crnn,
                 dataloader,
-                char_encoder.encoder.inverse,
+                char_encoder,
                 dtype,
                 output_crnn_eval=True,
                 layer=args.slice,
