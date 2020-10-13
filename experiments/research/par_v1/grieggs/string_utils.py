@@ -49,17 +49,17 @@ def label2input(value, num_of_inputs, char_break_interval):
 
     return np.array(input_data)
 
-def label2str(label, indexToCharacter, asRaw, spaceChar="~", blank=0):
+def label2str(label, indexToCharacter, asRaw, blank_char="~", blank=0):
     string = u""
     for i in range(len(label)):
         if label[i] == blank:
-            if asRaw:
-                string += spaceChar
-                # NOTE It may be the case that spaceChar is to be the blank
-                # character, not space character... which makes sense in this
-                # case. Given this is label2str w/ asRaw
+            if asRaw: # This assumes indexToCharacter does not include blank
+                string += blank_char
             else:
                 break
+                # TODO understand why break when not Raw? Can there be no blank
+                # char in the middle of a label? That doesn't seem right. Why
+                # not continue instead, thus cutting out blanks?
         else:
             val = label[i]
             string += indexToCharacter[val]

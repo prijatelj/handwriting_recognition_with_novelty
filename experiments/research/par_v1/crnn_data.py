@@ -30,11 +30,11 @@ class CharEncoder(NominalDataEncoder):
     """Temporary hotfix for bringing all the label data together in one place.
     Wraps NominalDataEncoder to include character specific things.
     """
-    def __init__(self, blank, space_char, unknown_idx, *args, **kwargs):
+    def __init__(self, blank_idx, space_char, unknown_idx, *args, **kwargs):
         super(CharEncoder, self).__init__(*args, **kwargs)
 
         # NOTE CRNN expects 0 idx by default, any unique label
-        self.blank = blank
+        self.blank_idx = blank_idx
 
         # NOTE CRNN expects ' ', any idx (def: 1)
         self.space_char = space_char
@@ -49,6 +49,18 @@ class CharEncoder(NominalDataEncoder):
 
     # TODO posisbly include error_rates here or edit dist method if dependent
     # on character encoding: e.g. blank, space char, or unknown idx.
+
+    @property
+    def blank_char(self):
+        return self.encoder.inverse[self.blank]
+
+    @property
+    def space_idx(self):
+        return self.encoder[self.space_char]
+
+    @property
+    def unknown_char(self):
+        return self.encoder.inverse[self.unknown_idx]
 
 
 def load_char_encoder(filepath, blank, space_char, unknown_idx):
@@ -108,8 +120,8 @@ def eval_transcription_logits(
             pred,
             label_encoder.encoder.inverse,
             False,
-            spaceChar=label_encoder.space_char,
-            blank=label_encoder.blank,
+            blank_char=label_encoder.blank_char,
+            blank=label_encoder.blank_idx,
         )
 
         total_cer += error_rates.cer(texts[i], pred_str)

@@ -115,8 +115,8 @@ def train_crnn(
                     pred,
                     char_encoder.encoder.inverse,
                     False,
-                    char_encoder.space_char,
-                    char_encoder.blank,
+                    char_encoder.blank_char,
+                    char_encoder.blank_idx,
                 )
 
                 gt_str = x['gt'][j]
@@ -167,8 +167,8 @@ def train_crnn(
                         pred,
                         char_encoder.encoder.inverse,
                         False,
-                        char_encoder.space_char,
-                        char_encoder.blank,
+                        char_encoder.blank_char,
+                        char_encoder.blank_idx,
                     )
 
                     cer = error_rates.cer(gt_line, pred_str)
@@ -357,8 +357,8 @@ def eval_crnn(
                         pred,
                         char_encoder.encoder.inverse,
                         False,
-                        char_encoder.space_char,
-                        char_encoder.blank,
+                        char_encoder.blank_char,
+                        char_encoder.blank_idx,
                     )
 
                     wer = error_rates.wer(gt_line, pred_str)
@@ -437,8 +437,8 @@ def find_perfect_indices(logits, target_transcript, char_encoder):
             pred,
             char_encoder.encoder.inverse,
             False,
-            char_encoder.space_char,
-            char_encoder.blank,
+            char_encoder.blank_char,
+            char_encoder.blank_idx,
         )
 
         if error_rates.cer(gt_line, pred_str) <= 0:
@@ -617,6 +617,22 @@ def main():
         blank,
         space_char,
         unknown_idx,
+    )
+
+    logging.info(
+        'blank: char = %s; idx = %d;',
+        char_encoder.blank_char,
+        char_encoder.blank_idx,
+    )
+    logging.info(
+        'space: char = %s; idx = %d;',
+        char_encoder.space_char,
+        char_encoder.space_idx,
+    )
+    logging.info(
+        'unknown: char = %s; idx = %d;',
+        char_encoder.unknown_char,
+        char_encoder.unknown_idx,
     )
 
     if 'augmentation' in config['model']['crnn']['train']:
