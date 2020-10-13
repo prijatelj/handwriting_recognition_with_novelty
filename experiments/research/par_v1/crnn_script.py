@@ -625,17 +625,17 @@ def main():
         train_augmentation = False
 
     # Handle image path prefixes in config
-    if 'normal_image_prefix' in config['data']['iam']['normal_image_prefix']:
+    if 'normal_image_prefix' in config['data']['iam']:
         normal_image_prefix = config['data']['iam']['normal_image_prefix']
     else:
         normal_image_prefix = ''
 
-    if 'antique_image_prefix' in config['data']['iam']['antique_image_prefix']:
+    if 'antique_image_prefix' in config['data']['iam']:
         antique_image_prefix = config['data']['iam']['antique_image_prefix']
     else:
         antique_image_prefix = ''
 
-    if 'noise_image_prefix' in config['data']['iam']['noise_image_prefix']:
+    if 'noise_image_prefix' in config['data']['iam']:
         noise_image_prefix = config['data']['iam']['noise_image_prefix']
     else:
         noise_image_prefix = ''
