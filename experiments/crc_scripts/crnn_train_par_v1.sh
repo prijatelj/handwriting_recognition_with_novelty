@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #$ -pe smp 8
-#$ -N crnn_parv1
+#$ -N crnn_parv2
 #$ -q gpu
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
@@ -15,5 +15,5 @@ module add conda
 conda activate osr_torch
 
 python3 "$BASE_PATH/experiments/research/par_v1/crnn_script.py" \
-    "$BASE_PATH/experiments/configs/par_iam_v1/crnn/par_iam_v1_crnn_train.yaml" \
+    "$BASE_PATH/experiments/configs/par_iam_round1/v2/crnn/train_no_repr.yaml" \
     --train
