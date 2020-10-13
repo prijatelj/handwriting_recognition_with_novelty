@@ -52,7 +52,7 @@ class CharEncoder(NominalDataEncoder):
 
     @property
     def blank_char(self):
-        return self.encoder.inverse[self.blank]
+        return self.encoder.inverse[self.blank_idx]
 
     @property
     def space_idx(self):
