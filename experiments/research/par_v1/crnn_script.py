@@ -646,9 +646,9 @@ def main():
         img_height=config['model']['crnn']['init']['input_height'],
         root_path=config['data']['iam']['image_root_dir'],
         augmentation=train_augmentation,
-        normal_img_prefix=normal_image_prefix,
-        antique_img_prefix=antique_image_prefix,
-        noise_img_prefix=noise_image_prefix,
+        normal_image_prefix=normal_image_prefix,
+        antique_image_prefix=antique_image_prefix,
+        noise_image_prefix=noise_image_prefix,
     )
 
     try:
@@ -657,9 +657,9 @@ def main():
             char_encoder.encoder,
             img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
-            normal_img_prefix=normal_image_prefix,
-            antique_img_prefix=antique_image_prefix,
-            noise_img_prefix=noise_image_prefix,
+            normal_image_prefix=normal_image_prefix,
+            antique_image_prefix=antique_image_prefix,
+            noise_image_prefix=noise_image_prefix,
         )
     except KeyError as e:
         logging.info("No validation set found, generating one")
