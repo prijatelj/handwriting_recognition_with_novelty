@@ -22,5 +22,5 @@ model:
       space_char: ' ' # 1
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/5fold-0/_2020-10-13_00-04-09/crnn_ep595_eval/'
-    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/5fold-0/_2020-10-13_00-04-09/crnn_ep595.pt'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/5fold-0/crnn_ep873_eval/'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/5fold-0/crnn_ep873.pt'
