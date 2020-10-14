@@ -737,8 +737,15 @@ def main():
                 hw_crnn.parameters(),
                 lr=config['model']['crnn']['train']['learning_rate'],
             )
+        elif (
+            config['model']['crnn']['train']['optimizer'].lower() == 'rmsprop'
+        ):
+            optimizer = torch.optim.RMSprop(
+                hw_crnn.parameters(),
+                lr=config['model']['crnn']['train']['learning_rate'],
+            )
         else:
-            raise ValueError('optimizer can only be ADADelta or ADAM.')
+            raise ValueError('optimizer can only be ADADelta, RMSprop, ADAM.')
 
         criterion = CTCLoss(
             blank=blank,
