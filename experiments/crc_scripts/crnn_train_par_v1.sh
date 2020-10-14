@@ -16,4 +16,5 @@ conda activate osr_torch
 
 python3 "$BASE_PATH/experiments/research/par_v1/crnn_script.py" \
     "$BASE_PATH/experiments/configs/par_iam_round1/v2/crnn/train_no_repr.yaml" \
-    --train
+    --train \
+    --log_level DEBUG
