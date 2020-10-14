@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
-#$ -t 1-8
+#$ -t 7-8
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 BASE_CONFIG_PATH="$BASE_PATH/experiments/configs/par_iam_round1/v2/crnn"
@@ -26,11 +26,11 @@ elif [ "$SGE_TASK_ID" -eq "2" ]; then
 
 elif [ "$SGE_TASK_ID" -eq "3" ]; then
     echo "Adadelta learn rate 1e-2, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr.yaml"
+    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "4" ]; then
     echo "Adadelta learn rate 3e-4, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_lr3e-4.yaml"
+    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_lr3e-4.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "5" ]; then
     echo "Adadelta learn rate 1e-2"
@@ -42,11 +42,11 @@ elif [ "$SGE_TASK_ID" -eq "6" ]; then
 
 elif [ "$SGE_TASK_ID" -eq "7" ]; then
     echo "Adadelta learn rate 1e-2, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_rmsprop.yaml"
+    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "8" ]; then
     echo "Adadelta learn rate 3e-4, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_rmsprop_lr3e-4.yaml"
+    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop_lr3e-4.yaml"
 
 else
     echo "ERROR: Unexpected SGE_TASK_ID: $SGE_TASK_ID"
