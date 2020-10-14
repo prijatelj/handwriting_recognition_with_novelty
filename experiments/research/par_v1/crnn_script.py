@@ -136,9 +136,9 @@ def train_crnn(
             steps) + "\n"+"Time: " + str(eTime) + " Seconds"
         )
 
-        logging.info("Epoch: " + str(epoch) + " Training CER", sum_loss / steps)
-        logging.info("Training WER: " + str(sum_wer_loss / steps))
-        logging.info("Time: " + str(eTime) + " Seconds")
+        logging.info("Epoch: %d: Training CER %f", epoch, sum_loss / steps)
+        logging.info("Training WER: %f", sum_wer_loss / steps)
+        logging.info("Time: %f Seconds.", eTime)
 
         sum_loss = 0.0
         sum_wer_loss = 0.0
@@ -147,7 +147,7 @@ def train_crnn(
 
         # Validation loop per epoch
         if test_dataloader is not None:
-            logging.info("Validation Set Size = " + str(len(test_dataloader)))
+            logging.info("Validation Set Size = %d", len(test_dataloader))
 
             for x in tqdm(test_dataloader):
                 torch.no_grad()
@@ -179,8 +179,8 @@ def train_crnn(
 
             message = message + "\nTest CER: " + str(sum_loss / steps)
             message = message + "\nTest WER: " + str(sum_wer_loss / steps)
-            logging.info("Test CER %d", sum_loss / steps)
-            logging.info("Test WER %d", sum_wer_loss / steps)
+            logging.info("Test CER %f", sum_loss / steps)
+            logging.info("Test WER %f", sum_wer_loss / steps)
             best_distance += 1
 
             # Repeatedly saves the best performing model so-far based on Val.
