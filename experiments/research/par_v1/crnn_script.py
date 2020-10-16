@@ -36,6 +36,8 @@ def train_crnn(
     epochs=1000,
     metric='CER',
     base_message='',
+    thresh=None,
+    max_epochs_no_improvement=800,
 ):
     """Streamline the training of the CRNN."""
     # Variables for training loop
@@ -186,22 +188,35 @@ def train_crnn(
             # Repeatedly saves the best performing model so-far based on Val.
             if metric == "CER":
                 if lowest_loss > sum_loss / steps:
-                    # Save the weights for this epoch if the ANN has the lowest
-                    # CER yet. NOTE that this is not the Loss of the network,
-                    # but the CER.
-                    # TODO include saving network w/ best ANN Loss on Val
-                    lowest_loss = sum_loss / steps
-                    logging.info("Saving Best")
-                    message = message + "\nBest Result :)"
-                    torch.save(
-                        hw_crnn.state_dict(),
-                        os.path.join(
-                            model_save_path,
-                            f'crnn_ep{str(epoch)}.pt',
-                        ),
-                    )
-                    best_distance = 0
-                if best_distance > 800:
+                    if thresh and lowest_loss - sum_loss / steps > thresh:
+                        lowest_loss = sum_loss / steps
+                        logging.info("Saving Best")
+                        message = message + "\nBest Result :)"
+                        torch.save(
+                            hw_crnn.state_dict(),
+                            os.path.join(
+                                model_save_path,
+                                f'crnn_ep{str(epoch)}.pt',
+                            ),
+                        )
+                        best_distance = 0
+                    elif thresh is None:
+                        # Save the weights for this epoch if the ANN has the
+                        # lowest CER yet. NOTE that this is not the Loss of the
+                        # network, but the CER.
+                        # TODO include saving network w/ best ANN Loss on Val
+                        lowest_loss = sum_loss / steps
+                        logging.info("Saving Best")
+                        message = message + "\nBest Result :)"
+                        torch.save(
+                            hw_crnn.state_dict(),
+                            os.path.join(
+                                model_save_path,
+                                f'crnn_ep{str(epoch)}.pt',
+                            ),
+                        )
+                        best_distance = 0
+                if best_distance > max_epochs_no_improvement:
                     break
             elif metric == "WER":
                 if lowest_loss > sum_wer_loss / steps:
@@ -216,7 +231,7 @@ def train_crnn(
                         ),
                     )
                     best_distance = 0
-                if best_distance > 80:
+                if best_distance > max_epochs_no_improvement:
                     break
             else:
                 raise ValueError("This is actually very bad")
@@ -753,6 +768,22 @@ def main():
             zero_infinity=True,
         )
 
+        # Validation informed train termination params
+        if 'thresh' in config['model']['crnn']['train']:
+            thresh = config['model']['crnn']['train']['thresh']
+        else:
+            thresh = None
+
+        if 'max_epochs_no_improvement' in config['model']['crnn']['train']:
+            max_epochs_no_improvement = config['model']['crnn']['train']['max_epochs_no_improvement']
+        else:
+            max_epochs_no_improvement = 800
+
+        if 'epochs' in config['model']['crnn']['train']:
+            epochs = config['model']['crnn']['train']
+        else:
+            epochs = 1000
+
         # Training Loop
         # TODO save CRNN output for ease of eval and comparison
         train_crnn(
@@ -765,6 +796,9 @@ def main():
             model_save_path,
             test_dataloader,
             base_message=base_message,
+            epochs=epochs,
+            thresh=thresh,
+            max_epochs_no_improvement=max_epochs_no_improvement,
         )
 
     if args.eval is not None:
