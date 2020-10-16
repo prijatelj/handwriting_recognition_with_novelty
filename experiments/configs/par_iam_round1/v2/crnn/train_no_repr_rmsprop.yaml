@@ -21,6 +21,9 @@ model:
       unknown_idx: 80
       space_char: ' ' # 1
       optimizer: rmsprop
+      epochs: 100000
+      thresh: 0.000001 # 1e-6
+      max_epochs_no_improvement: 100
     eval:
       batch_size: 1
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/rmsprop/lr1e-2/5fold-0/'

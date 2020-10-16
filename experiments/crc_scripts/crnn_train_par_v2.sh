@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
-#$ -t 7-8
+#$ -t 1-5
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 BASE_CONFIG_PATH="$BASE_PATH/experiments/configs/par_iam_round1/v2/crnn"
@@ -21,32 +21,33 @@ if [ "$SGE_TASK_ID" -eq "1" ]; then
     CONFIG="$BASE_CONFIG_PATH/train_no_repr.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "2" ]; then
-    echo "Adadelta learn rate 3e-2"
-    CONFIG="$BASE_CONFIG_PATH/train_no_repr_lr3e-4.yaml"
+    #echo "Adadelta learn rate 3e-2"
+    echo "Adadelta learn rate 1e-3"
+    CONFIG="$BASE_CONFIG_PATH/train_no_repr_lr1e-3.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "3" ]; then
-    echo "Adadelta learn rate 1e-2, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue.yaml"
+    echo "ADAM learn rate 1e-3, continue"
+    CONFIG="$BASE_CONFIG_PATH/train_no_repr_adam_cont_lr1e-3.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "4" ]; then
-    echo "Adadelta learn rate 3e-4, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_lr3e-4.yaml"
+    echo "ADAM learn rate 1e-3"
+    CONFIG="$BASE_CONFIG_PATH/train_no_repr_adam_lr1e-3.yaml"
+
+#elif [ "$SGE_TASK_ID" -eq "5" ]; then
+#    echo "RMSprop learn rate 1e-2"
+#    CONFIG="$BASE_CONFIG_PATH/train_no_repr_rmsprop.yaml"
 
 elif [ "$SGE_TASK_ID" -eq "5" ]; then
-    echo "Adadelta learn rate 1e-2"
-    CONFIG="$BASE_CONFIG_PATH/train_no_repr_rmsprop.yaml"
-
-elif [ "$SGE_TASK_ID" -eq "6" ]; then
-    echo "Adadelta learn rate 3e-2"
+    echo "RMSprop learn rate 3e-2"
     CONFIG="$BASE_CONFIG_PATH/train_no_repr_rmsprop_lr3e-4.yaml"
 
-elif [ "$SGE_TASK_ID" -eq "7" ]; then
-    echo "Adadelta learn rate 1e-2, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop.yaml"
+#elif [ "$SGE_TASK_ID" -eq "7" ]; then
+#    echo "Adadelta learn rate 1e-2, continue"
+#    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop.yaml"
 
-elif [ "$SGE_TASK_ID" -eq "8" ]; then
-    echo "Adadelta learn rate 3e-4, continue"
-    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop_lr3e-4.yaml"
+#elif [ "$SGE_TASK_ID" -eq "8" ]; then
+#    echo "Adadelta learn rate 3e-4, continue"
+#    CONFIG="$BASE_CONFIG_PATH/continue/train_no_repr_continue_rmsprop_lr3e-4.yaml"
 
 else
     echo "ERROR: Unexpected SGE_TASK_ID: $SGE_TASK_ID"

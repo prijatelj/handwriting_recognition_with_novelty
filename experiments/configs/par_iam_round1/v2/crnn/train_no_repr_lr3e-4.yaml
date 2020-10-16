@@ -20,6 +20,10 @@ model:
       blank: 0 # ~
       unknown_idx: 80
       space_char: ' ' # 1
+      epochs: 100000
+      thresh: 0.000001 # 1e-6
+      max_epochs_no_improvement: 100
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/lr3e-4/5fold-0/'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/lr3e-4/5fold-0/crnn_ep997_continue/'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/lr3e-4/5fold-0/crnn_ep997.pt'
