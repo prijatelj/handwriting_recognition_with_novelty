@@ -780,7 +780,7 @@ def main():
             max_epochs_no_improvement = 800
 
         if 'epochs' in config['model']['crnn']['train']:
-            epochs = config['model']['crnn']['train']
+            epochs = config['model']['crnn']['train']['epochs']
         else:
             epochs = 1000
 
