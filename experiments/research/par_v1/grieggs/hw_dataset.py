@@ -63,6 +63,27 @@ def collate(batch):
     }
 
 
+def load_labels_file(filepath):
+    file_extension = json_path.rpartition('.')[-1]
+    if file_extension in {'csv', 'tsv'}:
+        with open(json_path) as f:
+            #data = json.load(f)
+            reader = csv.reader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
+
+            # remove headers
+            next(reader)
+            data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
+    elif file_extension == 'json':
+        with open(json_path, 'r') as openf:
+            data = json.load(openf)
+    else:
+        raise ValueError(
+            'HwDataset is only able to load labels from csv, tsv, or json',
+        )
+
+    return data
+
+
 class HwDataset(Dataset):
     def __init__(
         self,
@@ -79,22 +100,7 @@ class HwDataset(Dataset):
         antique_image_prefix='',
         noise_image_prefix='',
      ):
-        file_extension = json_path.rpartition('.')[-1]
-        if file_extension in {'csv', 'tsv'}:
-            with open(json_path) as f:
-                #data = json.load(f)
-                reader = csv.reader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
-
-                # remove headers
-                next(reader)
-                data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
-        elif file_extension == 'json':
-            with open(json_path, 'r') as openf:
-                data = json.load(openf)
-        else:
-            raise ValueError(
-                'HwDataset is only able to load labels from csv, tsv, or json',
-            )
+        data = load_labels_file(json_path)
 
         # Path prefixes
         self.root_path = root_path
