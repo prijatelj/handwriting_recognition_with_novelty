@@ -17,6 +17,7 @@ from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
 from exputils.data.labels import NominalDataEncoder
 
+from experiments.research.par_v1 import crnn_script
 
 def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
@@ -81,56 +82,65 @@ def script_args(parser):
         ]),
     )
 
+    parser.add_argument(
+        '--mevm_features',
+        default=None,
+        help='Slices whose layer repreesntaiton are to obtained.',
+        choices=['perfect_slices', 'col_chars'],
+    )
 
-def main():
-    args = exputils.io.parse_args(custom_args=script_args)
 
-    if args.random_seed:
-        torch.manual_seed(args.random_seed)
-        torch.backends.cudnn.deterministic = True
-
-        logging.info('Random seed = %d', args.random_seed)
-
-    with open(args.config_path) as openf:
-        config = YAML(typ='safe').load(openf)
-
-    # Load the data
-    #iam_dset, all_dsets = crnn_data.load_prepare_data(config)
-
+def load_hdf5_slices(
+    hdf5_path,
+    slice_idx='perfect_indices',
+    logits_name='logits',
+    layers_name='layer',
+):
     # Load the class data point layer representations
-    with h5py.File(config['data']['iam']['encoded']['train'], 'r') as h5f:
-        perf_slices = h5f['perfect_indices'][:].astype(int)
+    with h5py.File(hdf5_path, 'r') as h5f:
+        perf_slices = h5f[slice_idx][:].astype(int)
 
         print('type of perf_slices: ', type(perf_slices))
         print('dtype of perf_slices: ', perf_slices.dtype)
         print('perf_slices: \n', perf_slices)
 
         # logits SHOULD be [sample, line_character, classes]
-        argmax_logits = np.squeeze(h5f['logits'][:, perf_slices]).argmax(axis=1)
+        argmax_logits = np.squeeze(h5f[logits_name][:, perf_slices]).argmax(axis=1)
         print('argmax_logits shape = ', argmax_logits.shape)
 
         # Obtain perfect character embeddings only, this is simplest slice
-        layers = np.squeeze(h5f['layer'][:, perf_slices])
+        layers = np.squeeze(h5f[layers_name][:, perf_slices])
 
         print('layers shape = ', layers.shape)
 
         # TODO need more efficient loading because this nears memory limit!
         # Esp. if the CRNN becomes more accurate w/ more perfect slices!
 
-    logging.info('Number of perfect slices = %d', len(perf_slices))
-
     # TODO Load the extra negative (known unknowns) data point layer repr
 
-    logging.info(
-        'There are %d perfectly predicted transcript lines to train MEVM.',
-        len(perf_slices),
+    return perf_slices, argmax_logits, layers
+
+
+def col_chars_crnn(dataloader, crnn, char_enc, dtype, layer='rnn'):
+    """Given bbox directory, CRNN, and character encoder obtains the layer
+    representations of the images.
+    """
+    layer_out, col_chars = crnn_script.eval_crnn(
+        crnn,
+        dataloader,
+        char_enc,
+        dtype,
+        layer=layer,
+        return_col_chars=True,
     )
-    # Perfect slices is no longer needed, as setup is finalized. # TODO unless
-    # eval and saving that eval.
-    del perf_slices
 
-    logging.debug('Shape of layers: %s', layers.shape)
+    layer_out = np.concatenate(layer_out)
+    col_chars = np.concatenate(col_chars)
 
+    return organize_data_pts_by_logits(col_chars, layer_out)
+
+
+def organize_data_pts_by_logits(argmax_logits, layers):
     # Organize the layers into lists per character class.
     unique_labels, label_counts = np.unique(argmax_logits, return_counts=True)
 
@@ -156,6 +166,54 @@ def main():
             label,
             labels_repr[i].shape,
         )
+
+    return labels_repr, nominal_encoder
+
+
+def main():
+    args = exputils.io.parse_args(custom_args=script_args)
+
+    if args.random_seed:
+        torch.manual_seed(args.random_seed)
+        torch.backends.cudnn.deterministic = True
+
+        logging.info('Random seed = %d', args.random_seed)
+
+    with open(args.config_path) as openf:
+        config = YAML(typ='safe').load(openf)
+
+    # Load the data
+    #iam_dset, all_dsets = crnn_data.load_prepare_data(config)
+
+    if args.mevm_features == 'perfect_slices':
+        perf_slices, argmax_logits, layers = load_hdf5_slices(
+            config['data']['iam']['encoded']['train'],
+        )
+
+        logging.info(
+            'There are %d perfectly predicted transcript lines to train MEVM.',
+            len(perf_slices),
+        )
+        # Perfect slices is no longer needed, as setup is finalized. # TODO unless
+        # eval and saving that eval.
+        del perf_slices
+
+        logging.debug('Shape of layers: %s', layers.shape)
+
+        labels_repr, nominal_encoder = organize_data_pts_by_logits(
+            argmax_logits,
+            layers,
+        )
+    elif args.mevm_features == 'col_chars':
+        labels_repr, nominal_enc = col_chars_crnn(
+            dataloader,
+            crnn,
+            char_enc,
+            dtype,
+            layer='rnn',
+        )
+    else:
+        raise ValueError('Unrecognized value for mevm_features.')
 
     # Init MEVM from config
     mevm = MEVM(**config['model']['mevm']['init'])
