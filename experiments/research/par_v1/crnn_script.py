@@ -249,6 +249,7 @@ def eval_crnn(
     return_slice=False,
     deterministic=True,
     random_seed=None,
+    return_col_chars=False,
 ):
     """Evaluates CRNN and returns the CRNN output. Optionally, this is also
     used to obtain certain layer's outputs such as the penultimate RNN or CNN
@@ -302,7 +303,7 @@ def eval_crnn(
         ]))
 
     # Initialize metrics
-    if output_crnn_eval or return_slice:
+    if output_crnn_eval or return_slice or save_col_chars:
         tot_ce = 0.0
         tot_we = 0.0
         sum_loss = 0.0
@@ -320,6 +321,9 @@ def eval_crnn(
 
     if return_slice:
         perfect_indices = []
+
+    if return_col_chars:
+        col_chars = []
 
     # For batch in dataloader
     for x in dataloader:
@@ -396,6 +400,9 @@ def eval_crnn(
                     if return_logits:
                         logits_list.append(logits)
 
+                    if return_col_chars:
+                        col_chars.append(x['col_chars'][i])
+
                     steps += 1
 
     if layer is None or output_crnn_eval:
@@ -412,7 +419,12 @@ def eval_crnn(
         logging.info("Total word error rate: %f", tot_we / total_words)
 
     # NOTE that the way this is setup, it always expects to return the layers
-    if not (return_logits or isinstance(layer, str) or return_slice):
+    if not (
+        return_logits
+        or isinstance(layer, str)
+        or return_slice
+        or return_col_chars
+    ):
         return None
 
     logging.debug('perfect_indices len: %d', len(perfect_indices))
@@ -433,6 +445,9 @@ def eval_crnn(
 
     if return_slice:
         return_list.append(perfect_indices)
+
+    if return_slice:
+        return_list.append(col_chars)
 
     #return tuple(return_list)
     return return_list
@@ -603,131 +618,9 @@ def main():
         base_message = base_message + line
 
     # Load and Prepare the data and labels
-    if 'blank' in config['model']['crnn']['train']:
-        blank = config['model']['crnn']['train']['blank']
-    else:
-        logging.warning(' '.join([
-            'No `blank` for CTC Loss given in the config file!',
-            'Default assumed is 0',
-        ]))
-        blank = 0
-
-    if 'space_char' in config['model']['crnn']['train']:
-        space_char = config['model']['crnn']['train']['space_char']
-    else:
-        logging.warning(
-            'No `space_char` given in the config file! Default assumed is " "',
-        )
-        space_char = ' '
-
-    if 'unknown_idx' in config['model']['crnn']['train']:
-        unknown_idx = config['model']['crnn']['train']['unknown_idx']
-    else:
-        raise ValueError(
-            'No `unknown_idx` given in the config file! No assumed default!',
-        )
-
-    char_encoder = crnn_data.load_char_encoder(
-        config['data']['iam']['labels'],
-        blank,
-        space_char,
-        unknown_idx,
+    train_dataloader, test_dataloader, char_encoder = crnn_data.load_data(
+        config,
     )
-
-    logging.info(
-        'blank: char = %s; idx = %d;',
-        char_encoder.blank_char,
-        char_encoder.blank_idx,
-    )
-    logging.info(
-        'space: char = %s; idx = %d;',
-        char_encoder.space_char,
-        char_encoder.space_idx,
-    )
-    logging.info(
-        'unknown: char = %s; idx = %d;',
-        char_encoder.unknown_char,
-        char_encoder.unknown_idx,
-    )
-
-    if 'augmentation' in config['model']['crnn']['train']:
-        train_augmentation = config['model']['crnn']['train']['augmentation']
-    else:
-        train_augmentation = False
-
-    # Handle image path prefixes in config
-    if 'normal_image_prefix' in config['data']['iam']:
-        normal_image_prefix = config['data']['iam']['normal_image_prefix']
-    else:
-        normal_image_prefix = ''
-
-    if 'antique_image_prefix' in config['data']['iam']:
-        antique_image_prefix = config['data']['iam']['antique_image_prefix']
-    else:
-        antique_image_prefix = ''
-
-    if 'noise_image_prefix' in config['data']['iam']:
-        noise_image_prefix = config['data']['iam']['noise_image_prefix']
-    else:
-        noise_image_prefix = ''
-
-    train_dataset = hw_dataset.HwDataset(
-        config['data']['iam']['train'],
-        char_encoder,
-        img_height=config['model']['crnn']['init']['input_height'],
-        root_path=config['data']['iam']['image_root_dir'],
-        augmentation=train_augmentation,
-        normal_image_prefix=normal_image_prefix,
-        antique_image_prefix=antique_image_prefix,
-        noise_image_prefix=noise_image_prefix,
-    )
-
-    try:
-        test_dataset = hw_dataset.HwDataset(
-            config['data']['iam']['val'],
-            char_encoder,
-            img_height=config['model']['crnn']['init']['input_height'],
-            root_path=config['data']['iam']['image_root_dir'],
-            normal_image_prefix=normal_image_prefix,
-            antique_image_prefix=antique_image_prefix,
-            noise_image_prefix=noise_image_prefix,
-        )
-    except KeyError as e:
-        logging.info("No validation set found, generating one")
-
-        master = train_dataset
-
-        logging.info("Total of " +str(len(master)) +" Training Examples")
-
-        n = len(master)  # how many total elements you have
-        n_test = int(n * .1)
-        n_train = n - n_test
-        idx = list(range(n))  # indices to all elements
-
-        train_idx = idx[:n_train]
-        test_idx = idx[n_train:]
-
-        test_dataset = Subset(master, test_idx)
-        train_dataset = Subset(master, train_idx)
-
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=config['model']['crnn']['train']['batch_size'],
-        shuffle=False,
-        num_workers=1,
-        collate_fn=hw_dataset.collate,
-    )
-
-    test_dataloader = DataLoader(
-        test_dataset,
-        batch_size=config['model']['crnn']['eval']['batch_size'],
-        shuffle=False,
-        num_workers=1,
-        collate_fn=hw_dataset.collate,
-    )
-
-    logging.info("Train Dataset Length: " + str(len(train_dataset)))
-    logging.info("Test Dataset Length: " + str(len(test_dataset)))
 
     # Create Model (CRNN)
     hw_crnn, dtype = crnn_data.init_CRNN(config)
@@ -763,7 +656,7 @@ def main():
             raise ValueError('optimizer can only be ADADelta, RMSprop, ADAM.')
 
         criterion = CTCLoss(
-            blank=blank,
+            blank=char_encoder.blank_idx,
             reduction='sum',
             zero_infinity=True,
         )
