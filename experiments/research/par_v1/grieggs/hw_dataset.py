@@ -99,6 +99,7 @@ class HwDataset(Dataset):
         normal_image_prefix='',
         antique_image_prefix='',
         noise_image_prefix='',
+        col_chars_path=None,
      ):
         data = load_labels_file(json_path)
 
@@ -115,6 +116,7 @@ class HwDataset(Dataset):
         self.remove_errors = remove_errors
 
         self.augmentation = augmentation
+        self.col_chars_path = col_chars_path
 
         if augmentation:
             # Initialize the random state of the augmentation
@@ -181,9 +183,30 @@ class HwDataset(Dataset):
             self.char_encoder.unknown_idx,
         )
 
+        if self.col_chars_path is not None:
+            # Given bbox_dir load the image's corresponding column characters
+            col_chars_full_path = os.path.join(
+                self.col_chars_path,
+                item['image_path'],
+            )
+
+            if not os.path.isfile(col_chars_full_path):
+                return None
+
+            col_chars = self.char_encoder.encode(np.load(col_chars_full_path))
+
+            return {
+                "line_id":item['image_path'],
+                "line_img": img,
+                "gt_label": gt_label,
+                "gt": gt,
+                'col_chars': col_chars,
+            }
+
+
         return {
             "line_id":item['image_path'],
             "line_img": img,
             "gt_label": gt_label,
-            "gt": gt
+            "gt": gt,
         }
