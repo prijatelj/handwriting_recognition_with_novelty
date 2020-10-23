@@ -197,6 +197,155 @@ def eval_char_confusion(texts, preds, labels=None, char_level=False):
     return ConfusionMatrix(texts, preds, labels=labels)
 
 
+def load_config_char_enc(config):
+    if 'blank' in config['model']['crnn']['train']:
+        blank = config['model']['crnn']['train']['blank']
+    else:
+        logging.warning(' '.join([
+            'No `blank` for CTC Loss given in the config file!',
+            'Default assumed is 0',
+        ]))
+        blank = 0
+
+    if 'space_char' in config['model']['crnn']['train']:
+        space_char = config['model']['crnn']['train']['space_char']
+    else:
+        logging.warning(
+            'No `space_char` given in the config file! Default assumed is " "',
+        )
+        space_char = ' '
+
+    if 'unknown_idx' in config['model']['crnn']['train']:
+        unknown_idx = config['model']['crnn']['train']['unknown_idx']
+    else:
+        raise ValueError(
+            'No `unknown_idx` given in the config file! No assumed default!',
+        )
+
+    char_encoder = load_char_encoder(
+        config['data']['iam']['labels'],
+        blank,
+        space_char,
+        unknown_idx,
+    )
+
+    logging.info(
+        'blank: char = %s; idx = %d;',
+        char_encoder.blank_char,
+        char_encoder.blank_idx,
+    )
+    logging.info(
+        'space: char = %s; idx = %d;',
+        char_encoder.space_char,
+        char_encoder.space_idx,
+    )
+    logging.info(
+        'unknown: char = %s; idx = %d;',
+        char_encoder.unknown_char,
+        char_encoder.unknown_idx,
+    )
+
+    return char_encoder
+
+
+def load_dataloader(config, char_encoder, must_validate=True):
+    if 'augmentation' in config['model']['crnn']['train']:
+        train_augmentation = config['model']['crnn']['train']['augmentation']
+    else:
+        train_augmentation = False
+
+    # Handle image path prefixes in config
+    if 'normal_image_prefix' in config['data']['iam']:
+        normal_image_prefix = config['data']['iam']['normal_image_prefix']
+    else:
+        normal_image_prefix = ''
+
+    if 'antique_image_prefix' in config['data']['iam']:
+        antique_image_prefix = config['data']['iam']['antique_image_prefix']
+    else:
+        antique_image_prefix = ''
+
+    if 'noise_image_prefix' in config['data']['iam']:
+        noise_image_prefix = config['data']['iam']['noise_image_prefix']
+    else:
+        noise_image_prefix = ''
+
+    train_dataset = hw_dataset.HwDataset(
+        config['data']['iam']['train'],
+        char_encoder,
+        img_height=config['model']['crnn']['init']['input_height'],
+        root_path=config['data']['iam']['image_root_dir'],
+        augmentation=train_augmentation,
+        normal_image_prefix=normal_image_prefix,
+        antique_image_prefix=antique_image_prefix,
+        noise_image_prefix=noise_image_prefix,
+    )
+
+    try:
+        test_dataset = hw_dataset.HwDataset(
+            config['data']['iam']['val'],
+            char_encoder,
+            img_height=config['model']['crnn']['init']['input_height'],
+            root_path=config['data']['iam']['image_root_dir'],
+            normal_image_prefix=normal_image_prefix,
+            antique_image_prefix=antique_image_prefix,
+            noise_image_prefix=noise_image_prefix,
+        )
+    except KeyError as e:
+        logging.warning("No validation set found.")
+
+        if must_validate:
+            logging.info("No validation set found, generating one")
+
+            master = train_dataset
+
+            logging.info("Total of " +str(len(master)) +" Training Examples")
+
+            n = len(master)  # how many total elements you have
+            n_test = int(n * .1)
+            n_train = n - n_test
+            idx = list(range(n))  # indices to all elements
+
+            train_idx = idx[:n_train]
+            test_idx = idx[n_train:]
+
+            test_dataset = Subset(master, test_idx)
+            train_dataset = Subset(master, train_idx)
+        else:
+            test_dataset = None
+
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=config['model']['crnn']['train']['batch_size'],
+        shuffle=False,
+        num_workers=1,
+        collate_fn=hw_dataset.collate,
+    )
+
+    logging.info("Train Dataset Length: " + str(len(train_dataset)))
+
+    if test_dataset is not None:
+        test_dataloader = DataLoader(
+            test_dataset,
+            batch_size=config['model']['crnn']['eval']['batch_size'],
+            shuffle=False,
+            num_workers=1,
+            collate_fn=hw_dataset.collate,
+        )
+        logging.info("Test Dataset Length: " + str(len(test_dataset)))
+
+        return train_dataloader, test_dataloader
+
+    return train_dataloader
+
+
+def load_data(config, col_chars_path=None):
+    char_encoder = load_config_char_enc(config)
+    train_dataloader, test_dataloader = load_dataloader(config, char_encoder)
+
+    return train_dataloader, test_dataloader, char_encoder
+
+
 # TODO streamline loading of files as necessary to reduce code dup & potential
 # errors in typos between versions.
 def load_datasplit(config, img_hieight=64):
@@ -224,176 +373,6 @@ def load_datasplit(config, img_hieight=64):
         collate_fn=hw_dataset.collate,
     )
     return
-
-
-def old_load_dataset(config, dataset, shuffle=False, always_val=False):
-    """Loads the datasets from the given dataset config."""
-    raise NotImplementedError(
-        'Depracted by expected version of config, needs updated.',
-    )
-
-    idx_to_char, char_to_idx = character_set.load_label_set(
-        config[dataset]['labels'],
-    )
-
-    # TODO
-    #nominal_encoder = load_label_set(config[dataset]['labels'])
-    # Make CharEncoder
-    #char_encoder = CharEncoder(
-    #    config[dataset]['labels']
-    #)
-
-    data_exists = False
-
-    if 'train' in config['data'][dataset]:
-        train_dataset = hw_dataset.HwDataset(
-            config['data'][dataset]['training_set_path'],
-            char_to_idx,
-            img_height=config['network']['input_height'],
-            root_path=config['data'][dataset]['image_root_directory'],
-            augmentation=False,
-        )
-
-        train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=config['batch_size'],
-            shuffle=shuffle,
-            num_workers=1,
-            collate_fn=hw_dataset.collate,
-        )
-        data_exists = True
-    else:
-        train_dataset = None
-        train_dataloader = None
-
-    if 'val' in config['data'][dataset]:
-        val_dataset = hw_dataset.HwDataset(
-            config['data'][dataset]['val'],
-            char_to_idx,
-            img_height=config['network']['input_height'],
-            root_path=config['data'][dataset]['image_root_directory'],
-            #augmentation=False,
-            remove_errors=True,
-        )
-
-        val_dataloader = DataLoader(
-            val_dataset,
-            batch_size=config['batch_size'],
-            shuffle=shuffle,
-            num_workers=1,
-            collate_fn=hw_dataset.collate,
-        )
-
-        data_exists = True
-    elif always_val:
-        print("No validation set found, generating one")
-        if data_exists:
-            master = train_dataset
-
-            print("Total of " +str(len(master)) +" Training Examples")
-            n = len(master)  # how many total elements you have
-            n_test = int(n * .1)
-            n_train = n - n_test
-
-            idx = list(range(n))  # indices to all elements
-            train_idx = idx[:n_train]
-            test_idx = idx[n_train:]
-            val_dataset = Subset(master, test_idx)
-            train_dataset = Subset(master, train_idx)
-
-            val_dataloader = DataLoader(
-                val_dataset,
-                batch_size=config['batch_size'],
-                shuffle=shuffle,
-                num_workers=1,
-                collate_fn=hw_dataset.collate,
-            )
-        else:
-            raise KeyError('No training set exists, but `always_val` is True')
-    else:
-        val_dataset = None
-        val_dataloader = None
-
-    if 'test' in config['data'][dataset]:
-        test_dataset = hw_dataset.HwDataset(
-            config['data'][dataset]['test'],
-            char_to_idx,
-            img_height=config['network']['input_height'],
-            root_path=config['data'][dataset]['image_root_directory'],
-            remove_errors=True,
-        )
-        test_dataloader = DataLoader(
-            test_dataset,
-            batch_size=config['batch_size'],
-            shuffle=shuffle,
-            num_workers=0,
-            collate_fn=hw_dataset.collate,
-        )
-        data_exists = True
-    else:
-        test_dataset = None
-        test_dataloader = None
-
-    if not data_exists:
-        raise KeyError('No train, val, or test set given in config!')
-
-    return DataSet(
-        idx_to_char,
-        char_to_idx,
-        train_dataset,
-        train_dataloader,
-        val_dataset,
-        val_dataloader,
-        test_dataset,
-        test_dataloader,
-    )
-
-
-def load_prepare_data(config):
-    # Load Data
-    datasets = {}
-    if 'iam' in config:
-        iam_dset = old_load_dataset(config, 'iam')
-    else:
-        raise NotImplementedError('Need to have IAM dataset in config.')
-
-    if 'rimes' in config:
-        datasets['rimes'] = old_load_dataset(config, 'rimes')
-    if 'manuscript' in config:
-        datasets['manuscript'] = old_load_dataset(config, 'manuscript')
-
-    # Combine the char to idx and idx to chars iam_dset = datasets.pop('iam')
-    all_dsets = deepcopy(iam_dset)
-    inc = len(all_dsets.char_to_idx) + 1
-    for dset in datasets:
-        # Remove all char keys that already exist in char to idx
-        for key in (
-            all_dsets.char_to_idx.keys() & datasets[dset].char_to_idx.keys()
-        ):
-            datasets[dset].char_to_idx.pop(key, None)
-
-        # Recreate indices based on remaining chars to indices
-        for key in datasets[dset].char_to_idx:
-            datasets[dset].char_to_idx[key] = inc
-            inc += 1
-
-        all_dsets.char_to_idx.update(datasets[dset].char_to_idx)
-
-    datasets['iam'] = iam_dset
-
-    # Create idx_to_char from char_to_idx
-    all_dsets.idx_to_char = {v: k for k, v in all_dsets.char_to_idx.items()}
-
-    # NOTE possiblity of these needing to be from iam_dset
-    #char_to_idx = all_dsets.char_to_idx
-    #idx_to_char = all_dsets.idx_to_char
-
-    # ??? combine train, val, and test to form knowns and unknowns
-    # datasets, dataloaders
-    # The datasets could be as simple as a map to the filepaths and just stack
-    # the 3 datasets lists together
-
-    return iam_dset, all_dsets
 
 
 def init_CRNN(config):
