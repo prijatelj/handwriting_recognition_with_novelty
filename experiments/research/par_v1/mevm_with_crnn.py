@@ -121,7 +121,7 @@ def load_hdf5_slices(
     return perf_slices, argmax_logits, layers
 
 
-def col_chars_crnn(dataloader, crnn, char_enc, dtype, layer='rnn'):
+def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn'):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
     """
@@ -214,16 +214,16 @@ def main():
 
         #for dataloader in (train_dataloader, test_dataloader):
         train_labels_repr, train_nominal_enc = col_chars_crnn(
-            train_dataloader,
             crnn,
+            train_dataloader,
             char_enc,
             dtype,
             layer='rnn',
         )
 
-        train_labels_repr, train_nominal_enc = col_chars_crnn(
-            train_dataloader,
+        test_labels_repr, test_nominal_enc = col_chars_crnn(
             crnn,
+            test_dataloader,
             char_enc,
             dtype,
             layer='rnn',
@@ -237,7 +237,8 @@ def main():
     mevm = MEVM(**config['model']['mevm']['init'])
 
     # Train MEVM given CRNN encoded data points
-    if ('save_path' in config['model']['mevm']
+    if (
+        'save_path' in config['model']['mevm']
         and 'load_path' not in config['model']['mevm']
     ):
         # Train MEVM
