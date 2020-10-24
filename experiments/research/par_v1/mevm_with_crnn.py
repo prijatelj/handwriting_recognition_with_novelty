@@ -210,15 +210,26 @@ def main():
             args.col_char_path,
         )
 
-        crnn, dtype = crnn_data.load_data(config)
+        crnn, dtype = crnn_data.init_CRNN(config)
 
-        labels_repr, nominal_enc = col_chars_crnn(
+        #for dataloader in (train_dataloader, test_dataloader):
+        train_labels_repr, train_nominal_enc = col_chars_crnn(
             train_dataloader,
             crnn,
             char_enc,
             dtype,
             layer='rnn',
         )
+
+        train_labels_repr, train_nominal_enc = col_chars_crnn(
+            train_dataloader,
+            crnn,
+            char_enc,
+            dtype,
+            layer='rnn',
+        )
+
+        # TODO how to handle train/test nominal encoder differences w/ MEVM?
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
@@ -230,7 +241,8 @@ def main():
         and 'load_path' not in config['model']['mevm']
     ):
         # Train MEVM
-        mevm.train(labels_repr, labels=np.array(nominal_encoder.encoder))
+        mevm.train(train_labels_repr, labels=np.array(train_nominal_enc.encoder))
+        # labels=np.array(nominal_encoder.encoder)
 
         # Save trained mevm
         mevm.save(exputils.io.create_filepath(os.path.join(
