@@ -17,7 +17,7 @@ from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
 from exputils.data.labels import NominalDataEncoder
 
-from experiments.research.par_v1 import crnn_script
+from experiments.research.par_v1 import crnn_script, crnn_data
 
 def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
@@ -205,8 +205,15 @@ def main():
             layers,
         )
     elif args.mevm_features == 'col_chars':
+        train_dataloader, test_dataloader, char_enc = crnn_data.load_data(
+            config,
+            args.col_char_path,
+        )
+
+        crnn, dtype = crnn_data.load_data(config)
+
         labels_repr, nominal_enc = col_chars_crnn(
-            dataloader,
+            train_dataloader,
             crnn,
             char_enc,
             dtype,
