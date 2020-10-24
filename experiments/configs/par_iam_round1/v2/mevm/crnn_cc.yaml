@@ -11,7 +11,7 @@ model:
     init:
       num_channels: 3
       num_classes: 80
-      hidden_size: 256
+      hidden_size: 1024
       input_height: 64
     train:
       learning_rate: 0.01
