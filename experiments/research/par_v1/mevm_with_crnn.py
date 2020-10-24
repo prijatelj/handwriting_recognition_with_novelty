@@ -73,6 +73,13 @@ def script_args(parser):
     )
 
     parser.add_argument(
+        '--layer',
+        default=None,
+        help='The layer of the ANN to use for feature representaiton.',
+        choices=['rnn', 'cnn', 'conv'],
+    )
+
+    parser.add_argument(
         '--random_seed',
         default=68,
         type=int,
@@ -218,7 +225,7 @@ def main():
             train_dataloader,
             char_enc,
             dtype,
-            layer='rnn',
+            layer=args.layer,
         )
 
         test_labels_repr, test_nominal_enc = col_chars_crnn(
@@ -226,7 +233,7 @@ def main():
             test_dataloader,
             char_enc,
             dtype,
-            layer='rnn',
+            layer=args.layer,
         )
 
         # TODO how to handle train/test nominal encoder differences w/ MEVM?
