@@ -343,7 +343,11 @@ def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=Tru
 
 def load_data(config, col_chars_path=None):
     char_encoder = load_config_char_enc(config)
-    train_dataloader, test_dataloader = load_dataloader(config, char_encoder)
+    train_dataloader, test_dataloader = load_dataloader(
+        config,
+        char_encoder,
+        col_chars_path=col_chars_path,
+    )
 
     return train_dataloader, test_dataloader, char_encoder
 
