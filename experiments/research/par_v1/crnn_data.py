@@ -248,7 +248,7 @@ def load_config_char_enc(config):
     return char_encoder
 
 
-def load_dataloader(config, char_encoder, must_validate=True):
+def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=True):
     if 'augmentation' in config['model']['crnn']['train']:
         train_augmentation = config['model']['crnn']['train']['augmentation']
     else:
@@ -279,6 +279,7 @@ def load_dataloader(config, char_encoder, must_validate=True):
         normal_image_prefix=normal_image_prefix,
         antique_image_prefix=antique_image_prefix,
         noise_image_prefix=noise_image_prefix,
+        col_chars_path=col_chars_path,
     )
 
     try:
@@ -290,6 +291,7 @@ def load_dataloader(config, char_encoder, must_validate=True):
             normal_image_prefix=normal_image_prefix,
             antique_image_prefix=antique_image_prefix,
             noise_image_prefix=noise_image_prefix,
+            col_chars_path=col_chars_path,
         )
     except KeyError as e:
         logging.warning("No validation set found.")
