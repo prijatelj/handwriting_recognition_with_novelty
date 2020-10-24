@@ -53,20 +53,28 @@ def collate(batch):
     line_imgs = torch.from_numpy(line_imgs)
     labels = torch.from_numpy(all_labels.astype(np.int32))
     label_lengths = torch.from_numpy(label_lengths.astype(np.int32))
-
+    if 'col_chars' in batch[0]:
+        return {
+            "line_ids": line_ids,
+            "line_imgs": line_imgs,
+            "labels": labels,
+            "label_lengths": label_lengths,
+            "gt": [b['gt'] for b in batch],
+            "col_chars": [b['col_chars'] for b in batch],
+        }
     return {
         "line_ids": line_ids,
         "line_imgs": line_imgs,
         "labels": labels,
         "label_lengths": label_lengths,
-        "gt": [b['gt'] for b in batch]
+        "gt": [b['gt'] for b in batch],
     }
 
 
-def load_labels_file(filepath):
-    file_extension = json_path.rpartition('.')[-1]
+def load_labels_file(filepath, sep=','):
+    file_extension = filepath.rpartition('.')[-1]
     if file_extension in {'csv', 'tsv'}:
-        with open(json_path) as f:
+        with open(filepath) as f:
             #data = json.load(f)
             reader = csv.reader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
 
@@ -74,7 +82,7 @@ def load_labels_file(filepath):
             next(reader)
             data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
     elif file_extension == 'json':
-        with open(json_path, 'r') as openf:
+        with open(filepath, 'r') as openf:
             data = json.load(openf)
     else:
         raise ValueError(
@@ -202,7 +210,6 @@ class HwDataset(Dataset):
                 "gt": gt,
                 'col_chars': col_chars,
             }
-
 
         return {
             "line_id":item['image_path'],
