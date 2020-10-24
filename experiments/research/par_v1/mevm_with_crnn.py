@@ -58,6 +58,8 @@ def script_args(parser):
         help='YAML experiment configuration file defining the model and data.',
     )
 
+    # Train and eval are unused in this script. trianing and eval is inferred
+    # from presence of load and save state of mevm
     parser.add_argument(
         '--train',
         action='store_true',
@@ -70,6 +72,12 @@ def script_args(parser):
         nargs='+',
         help='The data splits to be evaluated.',
         choices=['train', 'val', 'test'],
+    )
+
+    parser.add_argument(
+        '--col_chars_path',
+        default=None,
+        help='The root path to all images characters per pixel column.',
     )
 
     parser.add_argument(
@@ -214,7 +222,7 @@ def main():
     elif args.mevm_features == 'col_chars':
         train_dataloader, test_dataloader, char_enc = crnn_data.load_data(
             config,
-            args.col_char_path,
+            args.col_chars_path,
         )
 
         crnn, dtype = crnn_data.init_CRNN(config)
