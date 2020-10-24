@@ -74,7 +74,7 @@ def script_args(parser):
 
     parser.add_argument(
         '--layer',
-        default=None,
+        default='rnn',
         help='The layer of the ANN to use for feature representaiton.',
         choices=['rnn', 'cnn', 'conv'],
     )
