@@ -427,23 +427,22 @@ def eval_crnn(
     ):
         return None
 
-    logging.debug('perfect_indices len: %d', len(perfect_indices))
-
-    logging.debug('perfect_indices:\n%s', perfect_indices)
-    logging.debug(
-        'logits_list shapes:\n%s',
-        [logit.shape for logit in logits_list],
-    )
-    logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_outs])
-
     return_list = []
     if return_logits:
+        logging.debug(
+            'logits_list shapes:\n%s',
+            [logit.shape for logit in logits_list],
+        )
         return_list.append(logits_list)
 
     if isinstance(layer, str):
+        logging.debug('layer shapes:\n%s', [layer.shape for layer in layer_outs])
         return_list.append(layer_outs)
 
     if return_slice:
+        logging.debug('perfect_indices len: %d', len(perfect_indices))
+        logging.debug('perfect_indices:\n%s', perfect_indices)
+
         return_list.append(perfect_indices)
 
     if return_slice:
