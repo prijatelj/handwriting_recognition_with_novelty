@@ -37,9 +37,9 @@ def collate(batch, PADDING_CONSTANT=1):
     ).astype(np.float32)
 
     for i in range(len(batch)):
-        b_img = batch[i]['line_img']
+        #b_img = batch[i]['line_img']
+        input_batch[i] = batch[i]['line_img']
         #input_batch[i,:,:b_img.shape[1],:] = b_img
-        input_batch[i] = b_img
         line_ids.append(batch[i]['line_id'])
         l = batch[i]['gt_label']
         all_labels.append(l)
