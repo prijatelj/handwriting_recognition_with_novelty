@@ -113,7 +113,7 @@ class CRNN(nn.Module):
             )
 
             if batch_norm:
-                cnn.add_module(f'batch_norm{i}', nn.BatchNorm2d(output_size))
+                cnn.add_module(f'batchnorm{i}', nn.BatchNorm2d(output_size))
 
             if leakyRelu:
                 cnn.add_module(f'relu{i}', nn.LeakyReLU(0.2, inplace=True))
