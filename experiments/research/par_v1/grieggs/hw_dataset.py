@@ -195,7 +195,7 @@ class HwDataset(Dataset):
             # Given bbox_dir load the image's corresponding column characters
             col_chars_full_path = os.path.join(
                 self.col_chars_path,
-                item['image_path'],
+                f'{item["image_path"].rpartition(".")[0]}.npy',
             )
 
             if not os.path.isfile(col_chars_full_path):
