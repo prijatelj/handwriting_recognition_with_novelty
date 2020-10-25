@@ -94,6 +94,7 @@ class CRNN(nn.Module):
             None, # *[(2, 2), (2, 1), (0, 1)]
             None, # *[(2, 2), (2, 1), (0, 0)]
         ]
+        maxpool_idx = [0, 1, 1, None, None] # to better match original's name scheme...
         dropout_probs = [0, 0, 0.2, 0.2, 0.2]
 
         # Construct the CRNN given architecture specification
@@ -122,7 +123,7 @@ class CRNN(nn.Module):
 
             if isinstance(maxpool2d_args[i], dict):
                 cnn.add_module(
-                    f'pooling{i}',
+                    f'pooling{maxpool_idx[i]}',
                     nn.MaxPool2d(**maxpool2d_args[i]),
                 )
 
