@@ -126,7 +126,7 @@ class CRNN(nn.Module):
                     nn.MaxPool2d(**maxpool2d_args[i]),
                 )
 
-            if dropout_probs[i] >= 0:
+            if dropout_probs[i] > 0:
                 cnn.add_module('dropout{0}', nn.Dropout2d(p=dropout_probs[i]))
 
         # Original conv shapes (from pytorch version by meijieru)
