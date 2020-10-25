@@ -13,9 +13,7 @@ from torch.utils.data import Dataset
 
 from experiments.research.par_v1.grieggs import grid_distortion, string_utils
 
-PADDING_CONSTANT = 1
-
-def collate(batch):
+def collate(batch, PADDING_CONSTANT=1):
     batch = [b for b in batch if b is not None]
     #These all should be the same size or error
     # logging.debug(len(set([b['line_img'].shape[0] for b in batch])))
@@ -40,7 +38,8 @@ def collate(batch):
 
     for i in range(len(batch)):
         b_img = batch[i]['line_img']
-        input_batch[i,:,:b_img.shape[1],:] = b_img
+        #input_batch[i,:,:b_img.shape[1],:] = b_img
+        input_batch[i] = b_img
         line_ids.append(batch[i]['line_id'])
         l = batch[i]['gt_label']
         all_labels.append(l)
