@@ -140,7 +140,7 @@ def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn'):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
     """
-    layer_out, col_chars = crnn_script.eval_crnn(
+    logits, layer_out, col_chars = crnn_script.eval_crnn(
         crnn,
         dataloader,
         char_enc,

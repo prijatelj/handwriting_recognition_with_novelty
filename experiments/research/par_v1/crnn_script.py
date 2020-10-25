@@ -445,7 +445,7 @@ def eval_crnn(
 
         return_list.append(perfect_indices)
 
-    if return_slice:
+    if return_col_chars:
         return_list.append(col_chars)
 
     #return tuple(return_list)
