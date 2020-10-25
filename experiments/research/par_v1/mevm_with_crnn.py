@@ -149,10 +149,10 @@ def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn'):
         return_col_chars=True,
     )
 
-    layer_out = np.concatenate(layer_out)
-    col_chars = np.concatenate(col_chars)
+    layer_out_conc = np.concatenate(layer_out)
+    col_chars_conc = np.concatenate(col_chars)
 
-    return organize_data_pts_by_logits(col_chars, layer_out)
+    return organize_data_pts_by_logits(col_chars_conc, layer_out_conc)
 
 
 def organize_data_pts_by_logits(argmax_logits, layers):
