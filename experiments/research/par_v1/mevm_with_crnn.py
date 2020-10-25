@@ -172,7 +172,7 @@ def organize_data_pts_by_logits(argmax_logits, layers):
     for i, label in enumerate(unique_labels):
         logging.info('%d : %d', label, label_counts[i])
 
-        label_indices = np.where(argmax_logits == label)
+        label_indices = np.where(argmax_logits == label)[0]
         labels_repr.append(torch.tensor(layers[label_indices]))
 
         logging.debug('Label `%s`\'s indices = %s', label, label_indices)
