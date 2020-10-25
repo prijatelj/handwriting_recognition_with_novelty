@@ -23,33 +23,39 @@ def collate(batch, PADDING_CONSTANT=1):
     assert len(set([b['line_img'].shape[0] for b in batch])) == 1
     assert len(set([b['line_img'].shape[2] for b in batch])) == 1
 
+    """
     dim0 = batch[0]['line_img'].shape[0]
     dim1 = max([b['line_img'].shape[1] for b in batch])
     dim1 = dim1 + (dim0 - (dim1 % dim0))
     dim2 = batch[0]['line_img'].shape[2]
-    all_labels = []
-    label_lengths = []
-    line_ids = []
 
     input_batch = np.full(
         (len(batch), dim0, dim1, dim2),
         PADDING_CONSTANT,
     ).astype(np.float32)
+    #"""
+    input_batch = []
+
+    all_labels = []
+    label_lengths = []
+    line_ids = []
 
     for i in range(len(batch)):
         #b_img = batch[i]['line_img']
-        input_batch[i] = batch[i]['line_img']
+        input_batch.append(batch[i]['line_img'])
         #input_batch[i,:,:b_img.shape[1],:] = b_img
         line_ids.append(batch[i]['line_id'])
         l = batch[i]['gt_label']
         all_labels.append(l)
         label_lengths.append(len(l))
 
+    input_batch = np.array(input_batch)
     all_labels = np.concatenate(all_labels)
     label_lengths = np.array(label_lengths)
 
     line_imgs = input_batch.transpose([0,3,1,2])
     line_imgs = torch.from_numpy(line_imgs)
+
     labels = torch.from_numpy(all_labels.astype(np.int32))
     label_lengths = torch.from_numpy(label_lengths.astype(np.int32))
     if 'col_chars' in batch[0]:
