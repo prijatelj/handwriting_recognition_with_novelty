@@ -78,7 +78,8 @@ class CRNN(nn.Module):
             ]))
         elif cnn_output_size is None and input_height is not None:
             # TODO figure out constant multiple value and why.
-            cnn_output_size = int(cnn_input_dims[-1] * input_height / 8)
+            #cnn_output_size = int(cnn_input_dims[-1] * input_height / 8)
+            cnn_output_size = int(cnn_input_dims[-1] * input_height / 4)
 
         cnn = nn.Sequential()
 
