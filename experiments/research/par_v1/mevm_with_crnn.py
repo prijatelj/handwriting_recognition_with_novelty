@@ -340,7 +340,7 @@ def main():
         del test_dataloader
 
     elif args.mevm_features == 'load_col_chars':
-        char_encoder = crnn_data.load_config_char_enc(config)
+        char_enc = crnn_data.load_config_char_enc(config)
 
         with h5py.File(args.col_chars_path, 'r') as hf5:
             train_nominal_enc = NominalDataEncoder([
