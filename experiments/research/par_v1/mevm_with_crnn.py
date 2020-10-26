@@ -346,7 +346,9 @@ def main():
             train_nominal_enc = NominalDataEncoder([
                 char_enc.encoder[key.rpartition('_')[-1]] for key in hf5.keys()
             ])
-            train_labels_repr = [hf5[dat][:] for dat in hf5.keys()]
+            train_labels_repr = [
+                torch.tensor(hf5[dat][:]) for dat in hf5.keys()
+            ]
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
