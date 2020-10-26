@@ -340,7 +340,10 @@ def main():
         and 'load_path' not in config['model']['mevm']
     ):
         # Train MEVM
-        mevm.train(train_labels_repr, labels=np.array(train_nominal_enc.encoder))
+        mevm.train(
+            train_labels_repr_pca,
+            labels=np.array(train_nominal_enc.encoder),
+        )
         # labels=np.array(nominal_encoder.encoder)
 
         # Save trained mevm
