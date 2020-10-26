@@ -338,6 +338,13 @@ def main():
         # TODO CLEAN UP: attempt to save memory by deleting objects...
         del train_dataloader
         del test_dataloader
+
+    elif args.mevm_features == 'load_col_chars':
+        char_encoder = crnn_data.load_config_char_enc(config)
+
+        with h5py.File(args.col_chars_path, 'r') as hf5:
+            train_nominal_enc = NominalDataEncoder(list(hf5.keys()))
+            train_labels_repr = [hf5[dat][:] for dat in hf5.keys()]
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
