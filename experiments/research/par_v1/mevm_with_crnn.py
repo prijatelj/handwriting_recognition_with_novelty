@@ -190,7 +190,7 @@ def col_chars_crnn(
         else:
             # Reduce the cols_char by convultion factor (4)
             # TODO pad the characters by ~ to be a multiple of 4
-            col_mod = col_chars[i] % 4
+            col_mod = len(col_chars[i]) % 4
             if 0 == col_mod:
                 # NOTE cuts, does not pad!
                 col_chars[i] = col_chars[i][: -col_mod]
