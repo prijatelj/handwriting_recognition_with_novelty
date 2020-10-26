@@ -349,6 +349,10 @@ def main():
             train_labels_repr = [
                 torch.tensor(hf5[dat][:]) for dat in hf5.keys()
             ]
+
+            blank_mevm_idx = train_nominal_enc.encoder[char_enc.encoder['~']]
+
+            train_labels_repr[blank_mevm_idx] = train_labels_repr[blank_mevm_idx][:int(len(train_labels_repr[blank_mevm_idx]) / 2)]
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
