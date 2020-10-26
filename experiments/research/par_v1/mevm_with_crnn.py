@@ -106,6 +106,13 @@ def script_args(parser):
         choices=['perfect_slices', 'col_chars', 'load_col_chars'],
     )
 
+    parser.add_argument(
+        '--blank_repr_div',
+        default=None,
+        type=int,
+        help='Divides the number of blank char repr samples by this number.',
+    )
+
 
 def load_hdf5_slices(
     hdf5_path,
@@ -352,7 +359,8 @@ def main():
 
             blank_mevm_idx = train_nominal_enc.encoder[char_enc.encoder['~']]
 
-            train_labels_repr[blank_mevm_idx] = train_labels_repr[blank_mevm_idx][:int(len(train_labels_repr[blank_mevm_idx]) / 2)]
+            if args.blank_repr_div is not None:
+                train_labels_repr[blank_mevm_idx] = train_labels_repr[blank_mevm_idx][:int(len(train_labels_repr[blank_mevm_idx]) / args.blank_repr_div)]
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
