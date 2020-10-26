@@ -136,7 +136,7 @@ def load_hdf5_slices(
     return perf_slices, argmax_logits, layers
 
 
-def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn'):
+def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn', repeat=4):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
     """
@@ -148,6 +148,9 @@ def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn'):
         layer=layer,
         return_col_chars=True,
     )
+
+    for i in range(len(layer_out)):
+        layer_out[i] = np.repeat(layer_out[i], repeat, axis=0)
 
     layer_out_conc = np.concatenate(layer_out)
     col_chars_conc = np.concatenate(col_chars)
