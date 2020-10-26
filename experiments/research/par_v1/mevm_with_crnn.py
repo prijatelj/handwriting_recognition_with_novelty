@@ -8,7 +8,7 @@ import h5py
 import numpy as np
 from ruamel.yaml import YAML
 from scipy import stats
-from sklearn.decompositoin import PCA
+from sklearn.decomposition import PCA
 import torch
 from torch.autograd import Variable
 from torch.utils import data
