@@ -345,6 +345,7 @@ def main():
         mevm.train(
             train_labels_repr_pca,
             labels=np.array(train_nominal_enc.encoder),
+            device='cpu',
         )
         # labels=np.array(nominal_encoder.encoder)
 
