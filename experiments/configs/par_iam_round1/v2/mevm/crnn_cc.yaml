@@ -27,6 +27,6 @@ model:
     load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/models/mevm_bbox_solu/25.pt'
   mevm:
     init:
-      tailsize: 100
+      tailsize: 20 # 100
       cover_threshold: 0.5
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/mevm/crnn_cc_sams25pt/'
