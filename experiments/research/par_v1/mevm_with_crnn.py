@@ -158,6 +158,7 @@ def col_chars_crnn(
         return_col_chars=True,
     )
 
+    # Handle the alignment of col_chars to the CRNN layer repr
     for i in range(len(layer_out)):
         if duplicate:
             layer_out[i] = np.repeat(layer_out[i], repeat, axis=0)
@@ -199,6 +200,8 @@ def col_chars_crnn(
             col_chars[i] = stats.mode(
                 col_chars[i].reshape([-1, 4])
             )[0].flatten()
+
+    assert len(layer_out) == len(col_chars)
 
     layer_out_conc = np.concatenate(layer_out)
     col_chars_conc = np.concatenate(col_chars)
