@@ -159,7 +159,7 @@ def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn', repeat=4):
             col_chars[i] = np.append(
                 col_chars[i],
                 col_chars[i][
-                    [-1] * (layer_out[i].shape[0] - col_chars[i].shape[0]])
+                    [-1] * (layer_out[i].shape[0] - col_chars[i].shape[0])
                 ],
             )
 
