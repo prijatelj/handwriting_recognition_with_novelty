@@ -344,7 +344,7 @@ def main():
 
         with h5py.File(args.col_chars_path, 'r') as hf5:
             train_nominal_enc = NominalDataEncoder([
-                key.rpartition('_')[-1] for key in hf5.keys()
+                char_enc.encoder[key.rpartition('_')[-1]] for key in hf5.keys()
             ])
             train_labels_repr = [hf5[dat][:] for dat in hf5.keys()]
     else:
