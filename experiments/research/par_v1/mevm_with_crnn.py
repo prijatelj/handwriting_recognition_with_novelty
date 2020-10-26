@@ -302,7 +302,9 @@ def main():
         # TODO how to handle train/test nominal encoder differences w/ MEVM?
 
         # PCA using Maximum Likelihod Estimation via Minka
-        pca = PCA('mle')
+        #pca = PCA('mle')
+        pca = PCA(100)
+
         # TODO fit PCA on ALL of the CRNN layer repr in train.
         all_train_loader, all_test_loader, char_enc = crnn_data.load_data(
             config,
