@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 from ruamel.yaml import YAML
 from scipy import stats
+from sklearn.decompositoin import PCA
 import torch
 from torch.autograd import Variable
 from torch.utils import data
@@ -144,7 +145,7 @@ def col_chars_crnn(
     dtype,
     layer='rnn',
     repeat=4,
-    duplicate=False,
+    duplicate=True,
 ):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
@@ -299,6 +300,15 @@ def main():
         )
 
         # TODO how to handle train/test nominal encoder differences w/ MEVM?
+
+        # PCA using Maximum Likelihod Estimation via Minka
+        pca = PCA('mle')
+        pca.fit(np.concatenate([c.numpy() for c in train_labels_repr]))
+
+        train_labels_repr_pca = [torch.tensor(pca.transform(rep.numpy()))
+            for rep in train_labels_repr]
+        test_labels_repr_pca = [torch.tensor(pca.transform(rep.numpy()))
+            for rep in test_labels_repr]
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
