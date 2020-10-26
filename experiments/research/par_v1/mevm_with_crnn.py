@@ -303,12 +303,31 @@ def main():
 
         # PCA using Maximum Likelihod Estimation via Minka
         pca = PCA('mle')
-        pca.fit(np.concatenate([c.numpy() for c in train_labels_repr]))
+        # TODO fit PCA on ALL of the CRNN layer repr in train.
+        all_train_loader, all_test_loader, char_enc = crnn_data.load_data(
+            config,
+        )
+
+        logits, layer_out = crnn_script.eval_crnn(
+            crnn,
+            all_train_loader,
+            char_enc,
+            dtype,
+            layer=layer,
+        )
+
+        logging.info('PCA begin fitting.')
+        #pca.fit(np.concatenate([c.numpy() for c in train_labels_repr]))
+        pca.fit(np.concatenate(layer_out))
+
+        logging.info('PCA components: %d', pca.n_components)
 
         train_labels_repr_pca = [torch.tensor(pca.transform(rep.numpy()))
             for rep in train_labels_repr]
         test_labels_repr_pca = [torch.tensor(pca.transform(rep.numpy()))
             for rep in test_labels_repr]
+
+        # TODO set the unknown char to the extra_negatives
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
