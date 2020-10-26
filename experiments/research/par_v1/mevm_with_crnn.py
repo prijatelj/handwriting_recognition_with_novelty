@@ -136,7 +136,15 @@ def load_hdf5_slices(
     return perf_slices, argmax_logits, layers
 
 
-def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn', repeat=4):
+def col_chars_crnn(
+    crnn,
+    dataloader,
+    char_enc,
+    dtype,
+    layer='rnn',
+    repeat=4,
+    duplicate=True,
+):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
     """
@@ -150,29 +158,37 @@ def col_chars_crnn(crnn, dataloader, char_enc, dtype, layer='rnn', repeat=4):
     )
 
     for i in range(len(layer_out)):
-        layer_out[i] = np.repeat(layer_out[i], repeat, axis=0)
+        if duplicate:
+            layer_out[i] = np.repeat(layer_out[i], repeat, axis=0)
 
-        # TODO this is a hotfix and needs replaced eventually. May cause errors
-        if layer_out[i].shape[0] > col_chars[i].shape[0]:
-            # Duplicates the last charater to pad the layer to the size of the
-            # layer_out
-            col_chars[i] = np.append(
-                col_chars[i],
-                col_chars[i][
-                    [-1] * (layer_out[i].shape[0] - col_chars[i].shape[0])
-                ],
-            )
+            # TODO this is a hotfix and needs replaced eventually. May cause
+            # errors
+            if layer_out[i].shape[0] > col_chars[i].shape[0]:
+                # Duplicates the last charater to pad the layer to the size of
+                # the layer_out
+                #col_chars[i] = np.append(
+                #    col_chars[i],
+                #    col_chars[i][
+                #        [-1] * (layer_out[i].shape[0] - col_chars[i].shape[0])
+                #    ],
+                #)
+                layer_out[i] = layer_out[i][:
+                    col_chars[i].shape[0] - layer_out[i].shape[0]
+                ]
 
-        elif layer_out[i].shape[0] < col_chars[i].shape[0]:
-            # Duplicates the last layer to pad the layer to the size of the
-            # pixel columns
-            layer_out[i] = np.append(
-                layer_out[i],
-                layer_out[i][
-                    [-1] * (col_chars[i].shape[0] - layer_out[i].shape[0])
-                ],
-                axis=0,
-            )
+            elif layer_out[i].shape[0] < col_chars[i].shape[0]:
+                # Duplicates the last layer to pad the layer to the size of the
+                # pixel columns
+                layer_out[i] = np.append(
+                    layer_out[i],
+                    layer_out[i][
+                        [-1] * (col_chars[i].shape[0] - layer_out[i].shape[0])
+                    ],
+                    axis=0,
+                )
+        else:
+            # Reduce the cols_char by convultion factor
+            pass
 
     layer_out_conc = np.concatenate(layer_out)
     col_chars_conc = np.concatenate(col_chars)
