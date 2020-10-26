@@ -103,7 +103,7 @@ def script_args(parser):
         '--mevm_features',
         default=None,
         help='Slices whose layer repreesntaiton are to obtained.',
-        choices=['perfect_slices', 'col_chars'],
+        choices=['perfect_slices', 'col_chars', 'load_col_chars'],
     )
 
 
