@@ -7,6 +7,7 @@ import os
 import h5py
 import numpy as np
 from ruamel.yaml import YAML
+from scipy import stats
 import torch
 from torch.autograd import Variable
 from torch.utils import data
@@ -143,7 +144,7 @@ def col_chars_crnn(
     dtype,
     layer='rnn',
     repeat=4,
-    duplicate=True,
+    duplicate=False,
 ):
     """Given bbox directory, CRNN, and character encoder obtains the layer
     representations of the images.
@@ -187,8 +188,17 @@ def col_chars_crnn(
                     axis=0,
                 )
         else:
-            # Reduce the cols_char by convultion factor
-            pass
+            # Reduce the cols_char by convultion factor (4)
+            # TODO pad the characters by ~ to be a multiple of 4
+            col_mod = col_chars[i] % 4
+            if 0 == col_mod:
+                # NOTE cuts, does not pad!
+                col_chars[i] = col_chars[i][: -col_mod]
+
+            # Obtain the mode from each group of 4 characters
+            col_chars[i] = stats.mode(
+                col_chars[i].reshape([-1, 4])
+            )[0].flatten()
 
     layer_out_conc = np.concatenate(layer_out)
     col_chars_conc = np.concatenate(col_chars)
