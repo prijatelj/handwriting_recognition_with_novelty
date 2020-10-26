@@ -320,7 +320,7 @@ def main():
         #pca.fit(np.concatenate([c.numpy() for c in train_labels_repr]))
         pca.fit(np.concatenate(layer_out))
 
-        logging.info('PCA components: %d', pca.n_components)
+        logging.info('PCA components: %d', pca.n_components_)
 
         train_labels_repr_pca = [torch.tensor(pca.transform(rep.numpy()))
             for rep in train_labels_repr]
