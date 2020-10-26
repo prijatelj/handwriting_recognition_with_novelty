@@ -313,7 +313,7 @@ def main():
             all_train_loader,
             char_enc,
             dtype,
-            layer=layer,
+            layer=args.layer,
         )
 
         logging.info('PCA begin fitting.')
