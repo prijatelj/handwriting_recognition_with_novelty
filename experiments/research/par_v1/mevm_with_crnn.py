@@ -334,7 +334,7 @@ def main():
         raise ValueError('Unrecognized value for mevm_features.')
 
     # Init MEVM from config
-    mevm = MEVM(**config['model']['mevm']['init'])
+    mevm = MEVM(device='cpu', **config['model']['mevm']['init'])
 
     # Train MEVM given CRNN encoded data points
     if (
@@ -345,7 +345,6 @@ def main():
         mevm.train(
             train_labels_repr_pca,
             labels=np.array(train_nominal_enc.encoder),
-            device='cpu',
         )
         # labels=np.array(nominal_encoder.encoder)
 
