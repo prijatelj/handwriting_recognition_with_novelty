@@ -575,6 +575,13 @@ def main():
             decode=args.decode,
             threshold=args.unknown_threshold,
         )
+
+        logging.info(
+            'train eval performance: CER: %f; WER: %f',
+            results.char_error_rate,
+            results.word_error_rate,
+        )
+
     if 'test' in args.eval:
         # TODO make sure the data loader is not shuffling! Error ow.
         # TODO warn if the data loader uses augmentation
@@ -590,6 +597,11 @@ def main():
             threshold=args.unknown_threshold,
         )
 
+        logging.info(
+            'test eval performance: CER: %f; WER: %f',
+            results.char_error_rate,
+            results.word_error_rate,
+        )
 
 if __name__ == "__main__":
     main()
