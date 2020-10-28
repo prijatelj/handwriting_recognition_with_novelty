@@ -132,66 +132,6 @@ def eval_mevm_slices(points, labels, mevm):
     return preds
 
 
-def script_args(parser):
-    parser.add_argument(
-        'config_path',
-        help='YAML experiment configuration file defining the model and data.',
-    )
-
-    # Train and eval are unused in this script. trianing and eval is inferred
-    # from presence of load and save state of mevm
-    parser.add_argument(
-        '--train',
-        action='store_true',
-        help='Expect to train model if given.',
-    )
-
-    parser.add_argument(
-        '--eval',
-        default=None,
-        nargs='+',
-        help='The data splits to be evaluated.',
-        choices=['train', 'val', 'test'],
-    )
-
-    parser.add_argument(
-        '--col_chars_path',
-        default=None,
-        help='The root path to all images characters per pixel column.',
-    )
-
-    parser.add_argument(
-        '--layer',
-        default='rnn',
-        help='The layer of the ANN to use for feature representaiton.',
-        choices=['rnn', 'cnn', 'conv'],
-    )
-
-    parser.add_argument(
-        '--random_seed',
-        default=68,
-        type=int,
-        help=' '.join([
-            'Seed used to ensure the eval is deterministic. Give a negative',
-            'value if a nondeterministic eval is desired.',
-        ]),
-    )
-
-    parser.add_argument(
-        '--mevm_features',
-        default=None,
-        help='Slices whose layer repreesntaiton are to obtained.',
-        choices=['perfect_slices', 'col_chars', 'load_col_chars'],
-    )
-
-    parser.add_argument(
-        '--blank_repr_div',
-        default=None,
-        type=int,
-        help='Divides the number of blank char repr samples by this number.',
-    )
-
-
 def load_hdf5_slices(
     hdf5_path,
     slice_idx='perfect_indices',
@@ -325,6 +265,75 @@ def col_chars_crnn(
     return organize_data_pts_by_logits(col_chars_conc, layer_out_conc)
 
 
+def script_args(parser):
+    parser.add_argument(
+        'config_path',
+        help='YAML experiment configuration file defining the model and data.',
+    )
+
+    # Train and eval are unused in this script. trianing and eval is inferred
+    # from presence of load and save state of mevm
+    parser.add_argument(
+        '--train',
+        action='store_true',
+        help='Expect to train model if given.',
+    )
+
+    parser.add_argument(
+        '--eval',
+        default=None,
+        nargs='+',
+        help='The data splits to be evaluated.',
+        choices=['train', 'val', 'test'],
+    )
+
+    parser.add_argument(
+        '--col_chars_path',
+        default=None,
+        help='The root path to all images characters per pixel column.',
+    )
+
+    parser.add_argument(
+        '--layer',
+        default='rnn',
+        help='The layer of the ANN to use for feature representaiton.',
+        choices=['rnn', 'cnn', 'conv'],
+    )
+
+    parser.add_argument(
+        '--random_seed',
+        default=68,
+        type=int,
+        help=' '.join([
+            'Seed used to ensure the eval is deterministic. Give a negative',
+            'value if a nondeterministic eval is desired.',
+        ]),
+    )
+
+    parser.add_argument(
+        '--mevm_features',
+        default=None,
+        help='Slices whose layer repreesntaiton are to obtained.',
+        choices=['perfect_slices', 'col_chars', 'load_col_chars'],
+    )
+
+    parser.add_argument(
+        '--blank_repr_div',
+        default=None,
+        type=int,
+        help='Divides the number of blank char repr samples by this number.',
+    )
+
+    parser.add_argument(
+        '--unknown_char_exta_neg',
+        action='store_true',
+        help=' '.join([
+            'Treats the unknown character as the known unknown class and thus',
+            'all unknowns are expected to be stored here.',
+        ])
+    )
+
+
 def main():
     args = exputils.io.parse_args(custom_args=script_args)
 
@@ -443,13 +452,18 @@ def main():
 
 
             # Handle unknown character as extra_negatives
-            if char_enc.encoder['#'] in train_nominal_enc.encoder:
+            if (
+                char_enc.unknown_idx in train_nominal_enc.encoder
+                and args.unknown_char_exta_neg
+            ):
                 unknown_mevm_idx = train_nominal_enc.encoder[
                     char_enc.encoder['#']
                 ]
 
                 extra_negatives = train_labels_repr[unknoqn_mevm_idx]
 
+                # Given unknown char is treated as rest of unknowns, remove so
+                # MEVM do not treat it as a known class.
                 train_nominal_enc.pop(unknoqn_mevm_idx)
             else:
                 extra_negatives = None
@@ -493,7 +507,14 @@ def main():
 
     # TODO Eval
     if 'train' in args.eval:
+        # TODO make sure the data loader is not shuffling
+        # TODO warn if the data loader uses augmentation
         results = eval_crnn_mevm(
+            crnn,
+            train_dataloader,
+            char_enc,
+            dtype,
+            layer=args.layer,
         )
 
     # TODO Eval MEVM on train
