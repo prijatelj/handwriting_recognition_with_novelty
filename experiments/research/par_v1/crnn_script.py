@@ -401,6 +401,9 @@ def eval_crnn(
                         logits_list.append(logits)
 
                     if return_col_chars:
+                        # NOTE this is easily obtainable w/ the DataLoader
+                        # alone, so consider removing this here. Only useful
+                        # when shuffle is on in the dataloader.
                         col_chars.append(x['col_chars'][i])
 
                     steps += 1
