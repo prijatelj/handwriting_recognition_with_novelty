@@ -87,7 +87,7 @@ class TranscriptResults:
     """Contains everything for the dataset handling in one place."""
     char_error_rate: float
     word_error_rate: float
-    char_confusion_mat: np.ndarray = None
+    #char_confusion_mat: np.ndarray = None
 
 
 def eval_transcription_logits(
@@ -127,11 +127,9 @@ def eval_transcription_logits(
         total_cer += error_rates.cer(texts[i], pred_str)
         total_wer += error_rates.cer(texts[i], pred_str)
 
-    return TranscriptResults(
-        total_cer / len(texts),
-        total_wer / len(texts),
-        None,
-    )
+        # TODO log CER and WER for each line?
+
+    return TranscriptResults(total_cer / len(texts), total_wer / len(texts))
 
 
 def eval_transcription(texts, preds):
@@ -153,11 +151,7 @@ def eval_transcription(texts, preds):
         total_cer += error_rates.cer(texts[i], pred)
         total_wer += error_rates.cer(texts[i], pred)
 
-    return TranscriptResults(
-        total_cer / len(preds),
-        total_wer / len(preds),
-        None,
-    )
+    return TranscriptResults(total_cer / len(texts), total_wer / len(texts))
 
 
 def eval_char_confusion(texts, preds, labels=None, char_level=False):
