@@ -18,19 +18,97 @@ from torch.utils.data import DataLoader
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM as MEVM
 import exputils.io
 from exputils.data.labels import NominalDataEncoder
+from exputils.data.confusion_matrix import ConfusionMatrix
 
 from experiments.research.par_v1 import crnn_script, crnn_data
 
-def eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets):
+
+def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
+    """Given a CRNN and MEVM, evaluate the paired models on the provided data
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    list(np.ndarray(int)), list(np.ndarray(float))
+        Predictions of the CRNN and MEVM ordered by dataloader order of lines.
+        List entries correspond to line images' predicted transcripts, which
+        are represented by a numpy array of character encodings. These include
+        the repeats and are not decoded yet.
+
+        Also, the probability for every character by the MEVM is also returned
+        as a list of numpy arrays of a float per character in the line.
+    """
+    # TODO feed data thru crnn, get repr
+    labels_repr, nominal_enc = col_chars_crnn(
+        crnn,
+        dataloader,
+        char_enc,
+        dtype,
+        layer=layer,
+    )
+
+
+
+    # Feed repr thru MEVM, get max_probs
+    max_probs, mevm_idx = mevm.max_probabilities(labels_repr)
+    max_probs = np.array(max_probs)
+    preds = np.array(mevm_idx)[:, 0]
+
+    return preds, max_probs
+
+
+def eval_crnn_mevm(
+    crnn,
+    mevm,
+    dataloader,
+    char_enc,
+    dtype,
+    layer='rnn',
+    decode='naive',
+    threshold=0,
+):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
 
     Parameters
     ----------
 
     """
-    preds = None
+    preds, max_probs = predict_crnn_mevm(
+        crnn,
+        mevm,
+        dataloader,
+        char_enc,
+        dtype,
+        layer=layer,
+    )
 
-    return preds
+    if threshold > 0:
+        # apply threshold to probs of each character to determine if unknown.
+        # If the probability is below threshold, then it is unknown.
+        raise NotImplementedError('Thresholding for unknowns DNE yet.')
+
+    # Obtain ground truth from dataloader
+    ground_truth = [x['gt'] for x in dataloader]
+
+    # Obtain CER and WER given groundtruth, preds and
+    transcript_results = crnn_data.eval_transcription_logits(
+        ground_truth,
+        preds,
+        char_enc,
+        decode,
+    )
+
+    # TODO calculate conf mat from preds (do this elsewhere, as it tends to
+    # depend bounding box annotations or known perfect predictions by the CRNN
+    #conf_mat = ConfusionMatrix(
+    #    char_enc.decode(nominal_enc.decode(ground_truth)), # needs reformated
+    #    char_enc.decode(nominal_enc.decode(preds)),
+    #    labels=np.array(char_enc.encoder),
+    #)
+
+    return transcript_results
 
 
 def eval_mevm_slices(points, labels, mevm):
@@ -145,6 +223,36 @@ def load_hdf5_slices(
     return perf_slices, argmax_logits, layers
 
 
+def organize_data_pts_by_logits(argmax_logits, layers):
+    # Organize the layers into lists per character class.
+    unique_labels, label_counts = np.unique(argmax_logits, return_counts=True)
+
+    logging.debug('Number of Unique Labels: %d', len(unique_labels))
+    logging.debug('The unique labels: %s', unique_labels)
+    logging.debug('Label counts: %s', label_counts)
+
+    # Be able to obtain the label from the MEVM's indexing of classes
+    nominal_encoder = NominalDataEncoder(unique_labels)
+
+    labels_repr = []
+
+    logging.info('Unique Labels contained within layer encoding:')
+    for i, label in enumerate(unique_labels):
+        logging.info('%d : %d', label, label_counts[i])
+
+        label_indices = np.where(argmax_logits == label)[0]
+        labels_repr.append(torch.tensor(layers[label_indices]))
+
+        logging.debug('Label `%s`\'s indices = %s', label, label_indices)
+        logging.debug(
+            'Torch tensor shape of label %s = %s',
+            label,
+            labels_repr[i].shape,
+        )
+
+    return labels_repr, nominal_encoder
+
+
 def col_chars_crnn(
     crnn,
     dataloader,
@@ -217,36 +325,6 @@ def col_chars_crnn(
     return organize_data_pts_by_logits(col_chars_conc, layer_out_conc)
 
 
-def organize_data_pts_by_logits(argmax_logits, layers):
-    # Organize the layers into lists per character class.
-    unique_labels, label_counts = np.unique(argmax_logits, return_counts=True)
-
-    logging.debug('Number of Unique Labels: %d', len(unique_labels))
-    logging.debug('The unique labels: %s', unique_labels)
-    logging.debug('Label counts: %s', label_counts)
-
-    # Be able to obtain the label from the MEVM's indexing of classes
-    nominal_encoder = NominalDataEncoder(unique_labels)
-
-    labels_repr = []
-
-    logging.info('Unique Labels contained within layer encoding:')
-    for i, label in enumerate(unique_labels):
-        logging.info('%d : %d', label, label_counts[i])
-
-        label_indices = np.where(argmax_logits == label)[0]
-        labels_repr.append(torch.tensor(layers[label_indices]))
-
-        logging.debug('Label `%s`\'s indices = %s', label, label_indices)
-        logging.debug(
-            'Torch tensor shape of label %s = %s',
-            label,
-            labels_repr[i].shape,
-        )
-
-    return labels_repr, nominal_encoder
-
-
 def main():
     args = exputils.io.parse_args(custom_args=script_args)
 
@@ -271,8 +349,8 @@ def main():
             'There are %d perfectly predicted transcript lines to train MEVM.',
             len(perf_slices),
         )
-        # Perfect slices is no longer needed, as setup is finalized. # TODO unless
-        # eval and saving that eval.
+        # Perfect slices is no longer needed, as setup is finalized. # TODO
+        # unless eval and saving that eval.
         del perf_slices
 
         logging.debug('Shape of layers: %s', layers.shape)
@@ -340,6 +418,7 @@ def main():
 
         # TODO set the unknown char to the extra_negatives
 
+        extra_negatives = None
 
 
         # TODO CLEAN UP: attempt to save memory by deleting objects...
@@ -361,6 +440,19 @@ def main():
 
             if args.blank_repr_div is not None:
                 train_labels_repr[blank_mevm_idx] = train_labels_repr[blank_mevm_idx][:int(len(train_labels_repr[blank_mevm_idx]) / args.blank_repr_div)]
+
+
+            # Handle unknown character as extra_negatives
+            if char_enc.encoder['#'] in train_nominal_enc.encoder:
+                unknown_mevm_idx = train_nominal_enc.encoder[
+                    char_enc.encoder['#']
+                ]
+
+                extra_negatives = train_labels_repr[unknoqn_mevm_idx]
+
+                train_nominal_enc.pop(unknoqn_mevm_idx)
+            else:
+                extra_negatives = None
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
@@ -377,6 +469,7 @@ def main():
             #train_labels_repr_pca,
             train_labels_repr,
             labels=np.array(train_nominal_enc.encoder),
+            extra_negatives=extra_negatives,
         )
         # labels=np.array(nominal_encoder.encoder)
 
@@ -394,7 +487,15 @@ def main():
             'Missing mevm save_path xor load_path, xor both exist in config'
         )
 
+
+    if args.eval is None:
+        return
+
     # TODO Eval
+    if 'train' in args.eval:
+        results = eval_crnn_mevm(
+        )
+
     # TODO Eval MEVM on train
     # if some boolean identifier to eval on train
     #preds = eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets)
