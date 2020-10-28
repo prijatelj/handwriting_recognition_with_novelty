@@ -40,8 +40,9 @@ def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
         Also, the probability for every character by the MEVM is also returned
         as a list of numpy arrays of a float per character in the line.
     """
-    # TODO feed data thru crnn, get repr
-    labels_repr, nominal_enc = col_chars_crnn(
+    # Feed data thru crnn, get repr
+    # TODO does not have the column characters! only predicting!
+    logits, layer_out = crnn_script.eval_crnn(
         crnn,
         dataloader,
         char_enc,
@@ -49,14 +50,17 @@ def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
         layer=layer,
     )
 
+    # Feed repr thru MEVM, get max_probs, all maintaining line structure
+    probs = []
+    preds = []
 
+    for labels_repr in layer_out:
+        max_probs, mevm_idx = mevm.max_probabilities(labels_repr)
 
-    # Feed repr thru MEVM, get max_probs
-    max_probs, mevm_idx = mevm.max_probabilities(labels_repr)
-    max_probs = np.array(max_probs)
-    preds = np.array(mevm_idx)[:, 0]
+        probs.append(np.array(max_probs))
+        preds.append(np.array(mevm_idx)[:, 0])
 
-    return preds, max_probs
+    return preds, probs
 
 
 def eval_crnn_mevm(
@@ -64,6 +68,7 @@ def eval_crnn_mevm(
     mevm,
     dataloader,
     char_enc,
+    mevm_enc,
     dtype,
     layer='rnn',
     decode='naive',
@@ -75,7 +80,7 @@ def eval_crnn_mevm(
     ----------
 
     """
-    preds, max_probs = predict_crnn_mevm(
+    preds, probs = predict_crnn_mevm(
         crnn,
         mevm,
         dataloader,
@@ -84,10 +89,21 @@ def eval_crnn_mevm(
         layer=layer,
     )
 
+    # Convert from the MEVM's index enc to char_enc
     if threshold > 0:
         # apply threshold to probs of each character to determine if unknown.
         # If the probability is below threshold, then it is unknown.
         raise NotImplementedError('Thresholding for unknowns DNE yet.')
+
+        # NOTE that currently if unknown idx is set, that is the default
+        # unknown class,  so if it is set to # then all unknowns are assigned
+        # to #
+        for i, line in enumerate(preds):
+            preds[i] = mevm_enc.decode(line)
+            preds[i][line < threshold] = char_enc.unknown_idx
+    else:
+        for i, line in enumerate(preds):
+            preds[i] = mevm_enc.decode(line)
 
     # Obtain ground truth from dataloader
     ground_truth = [x['gt'] for x in dataloader]
@@ -109,27 +125,6 @@ def eval_crnn_mevm(
     #)
 
     return transcript_results
-
-
-def eval_mevm_slices(points, labels, mevm):
-    """Given a CRNN and MEVM, evaluate the paired models on the provided data.
-    Calculates only the predicted classes.
-
-    Parameters
-    ----------
-
-    """
-    # TODO adapt the MEVM to actually be a predictor w/ pred() as expected...
-    # TODO figure out why this is done here, or why i am told to do this...?
-
-    probs = mevm.max_probabilities(points)
-
-
-    # It won't be a np.ndarray of [samples, classes + 1 for uknown]. That'd be too useful.
-
-    logging.debug('probs : \n%s', probs)
-
-    return preds
 
 
 def load_hdf5_slices(
@@ -193,7 +188,7 @@ def organize_data_pts_by_logits(argmax_logits, layers):
     return labels_repr, nominal_encoder
 
 
-def col_chars_crnn(
+def col_chars_crnn_fwd(
     crnn,
     dataloader,
     char_enc,
@@ -202,8 +197,12 @@ def col_chars_crnn(
     repeat=4,
     duplicate=True,
 ):
-    """Given bbox directory, CRNN, and character encoder obtains the layer
-    representations of the images.
+    """Given CRNN and dataloader, feed forward data and obtain the layer
+    representation for every column of characters. Basically make it so the
+    MEVM may match the number of characters outputed by the typical CRNN.
+
+    This is only for when assessing the MEVM or the characters per pixel
+    columns
     """
     logits, layer_out, col_chars = crnn_script.eval_crnn(
         crnn,
@@ -213,6 +212,9 @@ def col_chars_crnn(
         layer=layer,
         return_col_chars=True,
     )
+
+    # Log the number of layer timesteps that match the length of the str
+    count_matches = 0
 
     # Handle the alignment of col_chars to the CRNN layer repr
     for i in range(len(layer_out)):
@@ -244,6 +246,8 @@ def col_chars_crnn(
                     ],
                     axis=0,
                 )
+            else:
+                count_matches += 1
         else:
             # Reduce the cols_char by convultion factor (4)
             # TODO pad the characters by ~ to be a multiple of 4
@@ -257,7 +261,44 @@ def col_chars_crnn(
                 col_chars[i].reshape([-1, 4])
             )[0].flatten()
 
+    logging.info(
+        ' '.join([
+            'There were a total of `%d` lines of text transcribed. The total',
+            'number of layer representation\'s timesteps that matched the',
+            'number of characters in the label string after the constant',
+            'multiplier: %d',
+        ]),
+        len(layer_out),
+        count_matches,
+    )
+
     assert len(layer_out) == len(col_chars)
+
+    return layer_out, col_chars
+
+
+def col_chars_crnn(
+    crnn,
+    dataloader,
+    char_enc,
+    dtype,
+    layer='rnn',
+    repeat=4,
+    duplicate=True,
+):
+    """Given bbox directory, CRNN, and character encoder obtains the layer
+    representations of the images. Combines the characters of every string into
+    a single vector of characters, paired with their CRNN layer representation.
+    """
+    layer_out, col_chars = col_chars_crnn_fwd(
+        crnn,
+        dataloader,
+        char_enc,
+        dtype,
+        layer,
+        repeat,
+        duplicate,
+    )
 
     layer_out_conc = np.concatenate(layer_out)
     col_chars_conc = np.concatenate(col_chars)
@@ -331,6 +372,20 @@ def script_args(parser):
             'Treats the unknown character as the known unknown class and thus',
             'all unknowns are expected to be stored here.',
         ])
+    )
+
+    parser.add_argument(
+        '--unknown_threshold',
+        default=0,
+        type=int,
+        help='Threshold below which predictions are considered unknown.',
+    )
+
+    parser.add_argument(
+        '--decode',
+        default='naive',
+        help='How to decode the CRNN\s output.',
+        choices=['naive'],
     )
 
 
@@ -460,11 +515,11 @@ def main():
                     char_enc.encoder['#']
                 ]
 
-                extra_negatives = train_labels_repr[unknoqn_mevm_idx]
+                extra_negatives = train_labels_repr[unknown_mevm_idx]
 
                 # Given unknown char is treated as rest of unknowns, remove so
                 # MEVM do not treat it as a known class.
-                train_nominal_enc.pop(unknoqn_mevm_idx)
+                train_nominal_enc.pop(unknown_mevm_idx)
             else:
                 extra_negatives = None
     else:
@@ -505,29 +560,35 @@ def main():
     if args.eval is None:
         return
 
-    # TODO Eval
+    # Eval
     if 'train' in args.eval:
-        # TODO make sure the data loader is not shuffling
+        # TODO make sure the data loader is not shuffling! Error ow.
         # TODO warn if the data loader uses augmentation
         results = eval_crnn_mevm(
             crnn,
+            mevm,
             train_dataloader,
             char_enc,
+            train_nominal_enc,
             dtype,
             layer=args.layer,
+            decode=args.decode,
+            threshold=args.unknown_threshold,
         )
-
-    # TODO Eval MEVM on train
-    # if some boolean identifier to eval on train
-    #preds = eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets)
-
-    # TODO Eval MEVM on val
-    # if val in datasets
-    #preds = eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets)
-
-    # TODO Eval MEVM on test
-    # if test in datasets
-    #preds = eval_crnn_mevm(hw_crnn, mevm, all_dsets, datasets)
+    if 'test' in args.eval:
+        # TODO make sure the data loader is not shuffling! Error ow.
+        # TODO warn if the data loader uses augmentation
+        results = eval_crnn_mevm(
+            crnn,
+            mevm,
+            test_dataloader,
+            char_enc,
+            train_nominal_enc,
+            dtype,
+            layer=args.layer,
+            decode=args.decode,
+            threshold=args.unknown_threshold,
+        )
 
 
 if __name__ == "__main__":
