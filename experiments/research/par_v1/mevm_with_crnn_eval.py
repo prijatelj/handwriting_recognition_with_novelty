@@ -77,6 +77,7 @@ def main():
             layer=args.layer,
             decode=args.decode,
             threshold=args.unknown_threshold,
+            crnn_pass=args.crnn_pass,
         )
 
         logging.info(
@@ -98,6 +99,7 @@ def main():
             layer=args.layer,
             decode=args.decode,
             threshold=args.unknown_threshold,
+            crnn_pass=args.crnn_pass,
         )
 
         logging.info(

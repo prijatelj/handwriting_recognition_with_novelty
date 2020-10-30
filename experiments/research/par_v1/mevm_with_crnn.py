@@ -466,6 +466,13 @@ def script_args(parser):
         choices=['naive'],
     )
 
+    parser.add_argument(
+        '--crnn_pass',
+        default=None,
+        nargs='+',
+        help='Classes that skip the MEVM fwd pass when predicted by the CRNN.',
+    )
+
 
 def main():
     args = exputils.io.parse_args(custom_args=script_args)
