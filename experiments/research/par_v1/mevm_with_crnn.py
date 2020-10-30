@@ -88,8 +88,8 @@ def predict_crnn_mevm(
             pred_probs[idx_pass] = max_probs
             probs.append(pred_probs)
 
-            labels_repr[idx_pass] = np.array(mevm_idx)[:, 0]
-            preds.append(labels_repr)
+            argmax_logits[idx_pass] = np.array(mevm_idx)[:, 0]
+            preds.append(argmax_logits)
         else:
             max_probs, mevm_idx = mevm.max_probabilities(
                 torch.tensor(labels_repr),
