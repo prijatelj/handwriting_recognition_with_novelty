@@ -26,7 +26,7 @@ def custom_args(parser):
 
 
 def main():
-    args = exputils.io.parse_args(custom_args=)
+    args = exputils.io.parse_args(custom_args=custom_args)
 
     if args.random_seed:
         torch.manual_seed(args.random_seed)
