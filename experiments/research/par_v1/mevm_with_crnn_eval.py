@@ -15,8 +15,18 @@ from experiments.research.par_v1 import crnn_script, crnn_data
 from experiments.research.par_v1 import mevm_with_crnn
 
 
+def custom_args(parser):
+    mevm_with_crnn.script_args(parser)
+
+    parser.add_argument(
+        '--mevm_path',
+        default=None,
+        help='The path to the trained MEVM state.',
+    )
+
+
 def main():
-    args = exputils.io.parse_args(custom_args=mevm_with_crnn.script_args)
+    args = exputils.io.parse_args(custom_args=)
 
     if args.random_seed:
         torch.manual_seed(args.random_seed)
@@ -49,7 +59,7 @@ def main():
     mevm = MEVM(device='cpu', **config['model']['mevm']['init'])
 
     # load MEVM
-    mevm.load(args.trained_mevm_path)
+    mevm.load(args.mevm_path)
 
     # Eval
     if 'train' in args.eval:
