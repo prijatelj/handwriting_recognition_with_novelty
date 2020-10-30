@@ -55,7 +55,7 @@ def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
     preds = []
 
     for labels_repr in layer_out:
-        max_probs, mevm_idx = mevm.max_probabilities(labels_repr)
+        max_probs, mevm_idx = mevm.max_probabilities(torch.tensor(labels_repr))
 
         probs.append(np.array(max_probs))
         preds.append(np.array(mevm_idx)[:, 0])
