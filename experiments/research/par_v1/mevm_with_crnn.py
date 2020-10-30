@@ -106,7 +106,7 @@ def eval_crnn_mevm(
             preds[i] = mevm_enc.decode(line)
 
     # Obtain ground truth from dataloader
-    ground_truth = [x['gt'] for x in dataloader]
+    ground_truth = [x['gt'][0] for x in dataloader]
 
     # Obtain CER and WER given groundtruth, preds and
     transcript_results = crnn_data.eval_transcription_logits(
