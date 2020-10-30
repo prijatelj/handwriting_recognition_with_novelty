@@ -72,7 +72,7 @@ def predict_crnn_mevm(
         # Find the classes predicted by CRNN that do not go through MEVM
         if crnn_pass is not None:
             idx_pass = np.logical_not(np.logical_or(
-                *[labels_repr == c for c in crnn_pass]
+                *[labels_repr == char_enc.encoder[c] for c in crnn_pass]
             ))
             max_probs, mevm_idx = mevm.max_probabilities(
                 torch.tensor(labels_repr[idx_pass]),
