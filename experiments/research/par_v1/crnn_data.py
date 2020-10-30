@@ -95,6 +95,7 @@ def eval_transcription_logits(
     logits,
     label_encoder,
     decode='naive',
+    argmax=True,
 ):
     """Evaluates the given predicted transcriptions to expected texts where the
     predictions are given as a probability vector per character.
@@ -114,7 +115,7 @@ def eval_transcription_logits(
     total_wer = 0
 
     for i, logit in enumerate(logits):
-        pred, raw_pred = string_utils.naive_decode(logit)
+        pred, raw_pred = string_utils.naive_decode(logit, argmax)
 
         pred_str = string_utils.label2str(
             pred,

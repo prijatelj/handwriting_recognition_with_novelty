@@ -114,6 +114,7 @@ def eval_crnn_mevm(
         preds,
         char_enc,
         decode,
+        argmax=False,
     )
 
     # TODO calculate conf mat from preds (do this elsewhere, as it tends to

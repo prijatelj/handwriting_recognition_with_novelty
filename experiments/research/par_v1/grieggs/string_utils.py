@@ -65,8 +65,12 @@ def label2str(label, indexToCharacter, asRaw, blank_char="~", blank=0):
             string += indexToCharacter[val]
     return string
 
-def naive_decode(output):
-    rawPredData = np.argmax(output, axis=1)
+def naive_decode(output, argmax=True):
+    if argmax:
+        rawPredData = np.argmax(output, axis=1)
+    else:
+        rawPredData = output
+
     predData = []
     for i in range(len(output)):
         if (
