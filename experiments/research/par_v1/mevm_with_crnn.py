@@ -306,6 +306,46 @@ def col_chars_crnn(
     return organize_data_pts_by_logits(col_chars_conc, layer_out_conc)
 
 
+def load_col_chars(
+    char_enc,
+    col_chars_path,
+    blank_repr_div=4,
+    unknown_char_extra_neg=False,
+):
+    with h5py.File(col_chars_path, 'r') as hf5:
+        nominal_enc = NominalDataEncoder([
+            char_enc.encoder[key.rpartition('_')[-1]] for key in hf5.keys()
+        ])
+        labels_repr = [
+            torch.tensor(hf5[dat][:]) for dat in hf5.keys()
+        ]
+
+        blank_mevm_idx = nominal_enc.encoder[char_enc.encoder['~']]
+
+        if blank_repr_div is not None:
+            labels_repr[blank_mevm_idx] = labels_repr[blank_mevm_idx][:int(len(labels_repr[blank_mevm_idx]) / blank_repr_div)]
+
+
+        # Handle unknown character as extra_negatives
+        if (
+            char_enc.unknown_idx in nominal_enc.encoder
+            and unknown_char_extra_neg
+        ):
+            unknown_mevm_idx = nominal_enc.encoder[
+                char_enc.encoder['#']
+            ]
+
+            extra_negatives = labels_repr[unknown_mevm_idx]
+
+            # Given unknown char is treated as rest of unknowns, remove so
+            # MEVM do not treat it as a known class.
+            nominal_enc.pop(unknown_mevm_idx)
+        else:
+            extra_negatives = None
+
+    return nominal_enc, labels_repr, extra_negatives
+
+
 def script_args(parser):
     parser.add_argument(
         'config_path',
@@ -366,7 +406,7 @@ def script_args(parser):
     )
 
     parser.add_argument(
-        '--unknown_char_exta_neg',
+        '--unknown_char_extra_neg',
         action='store_true',
         help=' '.join([
             'Treats the unknown character as the known unknown class and thus',
@@ -491,37 +531,12 @@ def main():
 
     elif args.mevm_features == 'load_col_chars':
         char_enc = crnn_data.load_config_char_enc(config)
-
-        with h5py.File(args.col_chars_path, 'r') as hf5:
-            train_nominal_enc = NominalDataEncoder([
-                char_enc.encoder[key.rpartition('_')[-1]] for key in hf5.keys()
-            ])
-            train_labels_repr = [
-                torch.tensor(hf5[dat][:]) for dat in hf5.keys()
-            ]
-
-            blank_mevm_idx = train_nominal_enc.encoder[char_enc.encoder['~']]
-
-            if args.blank_repr_div is not None:
-                train_labels_repr[blank_mevm_idx] = train_labels_repr[blank_mevm_idx][:int(len(train_labels_repr[blank_mevm_idx]) / args.blank_repr_div)]
-
-
-            # Handle unknown character as extra_negatives
-            if (
-                char_enc.unknown_idx in train_nominal_enc.encoder
-                and args.unknown_char_exta_neg
-            ):
-                unknown_mevm_idx = train_nominal_enc.encoder[
-                    char_enc.encoder['#']
-                ]
-
-                extra_negatives = train_labels_repr[unknown_mevm_idx]
-
-                # Given unknown char is treated as rest of unknowns, remove so
-                # MEVM do not treat it as a known class.
-                train_nominal_enc.pop(unknown_mevm_idx)
-            else:
-                extra_negatives = None
+        train_nominal_enc, train_labels_repr, extra_negatives = load_col_chars(
+            char_enc,
+            args.col_chars_path,
+            args.blank_repr_div,
+            args.unknown_char_extra_neg,
+        )
     else:
         raise ValueError('Unrecognized value for mevm_features.')
 
