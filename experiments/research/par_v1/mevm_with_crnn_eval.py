@@ -61,6 +61,11 @@ def main():
     # load MEVM
     mevm.load(args.mevm_path)
 
+    if args.eval is None:
+        raise ValueError(
+            'This eval script requires you to specify the --eval arg.'
+        )
+
     # Eval
     if 'train' in args.eval:
         # TODO make sure the data loader is not shuffling! Error ow.
