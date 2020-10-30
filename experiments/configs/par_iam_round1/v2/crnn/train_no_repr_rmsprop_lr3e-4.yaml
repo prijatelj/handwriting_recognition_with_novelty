@@ -27,4 +27,4 @@ model:
     eval:
       batch_size: 1
     save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/rmsprop/lr3e-4/5fold-0/crnn_ep952_continue/cont_ep125/'
-    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/rmsprop/lr3e-4/5fold-0/crnn_ep952_continue/_2020-10-15_21-24-00/crrn_ep125.pt'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/rmsprop/lr3e-4/5fold-0/crnn_ep952_continue/_2020-10-15_21-24-00/crnn_ep125.pt'

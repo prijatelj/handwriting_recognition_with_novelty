@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/crnn/par/train/logs/
-#$ -t 1-5
+#$ -t 5-5
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 BASE_CONFIG_PATH="$BASE_PATH/experiments/configs/par_iam_round1/v2/crnn"

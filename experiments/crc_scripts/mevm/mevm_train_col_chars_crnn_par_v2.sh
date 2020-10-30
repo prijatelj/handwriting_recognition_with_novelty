@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#$ -pe smp 4
+#$ -pe smp 24
 #$ -N mevm_crnn_cc
 #$ -q gpu
 #$ -l gpu=1
@@ -16,6 +16,6 @@ conda activate osr_torch
 python3 "$BASE_PATH/experiments/research/par_v1/mevm_with_crnn.py" \
     "$BASE_PATH/experiments/configs/par_iam_round1/v2/mevm/crnn_cc.yaml" \
     --layer rnn \
-    --mevm_features col_chars \
-    --col_chars_path "$HOME/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/models/mevm_bbox_solu/col_chars/" \
+    --mevm_features load_col_chars \
+    --col_chars_path "$HOME/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/mevm/crnn_sam_25pt/crnn_25pt_train_rnn_repr.hdf5" \
     --log_level DEBUG
