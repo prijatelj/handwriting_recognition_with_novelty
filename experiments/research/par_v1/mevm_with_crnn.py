@@ -23,7 +23,15 @@ from exputils.data.confusion_matrix import ConfusionMatrix
 from experiments.research.par_v1 import crnn_script, crnn_data
 
 
-def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
+def predict_crnn_mevm(
+    crnn,
+    mevm,
+    dataloader,
+    char_enc,
+    dtype,
+    layer='rnn',
+    crnn_pass=None,
+):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
 
     Parameters
@@ -39,6 +47,9 @@ def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
 
         Also, the probability for every character by the MEVM is also returned
         as a list of numpy arrays of a float per character in the line.
+    crnn_pass : list
+        list of the classes who when predicted by the CRNN are outputted as is
+        without going through the MEVM.
     """
     # Feed data thru crnn, get repr
     # TODO does not have the column characters! only predicting!
@@ -54,11 +65,33 @@ def predict_crnn_mevm(crnn, mevm, dataloader, char_enc, dtype, layer='rnn'):
     probs = []
     preds = []
 
-    for labels_repr in layer_out:
-        max_probs, mevm_idx = mevm.max_probabilities(torch.tensor(labels_repr))
+    # NOTE may be faster if the length of each line is calculated, all
+    # flattened, run through MEVM and then "reshape" into a list of the
+    # different length lines.
+    for i, labels_repr in enumerate(layer_out):
+        # Find the classes predicted by CRNN that do not go through MEVM
+        if crnn_pass is not None:
+            idx_pass = np.logical_not(np.logical_or(
+                *[labels_repr == c for c in crnn_pass]
+            ))
+            max_probs, mevm_idx = mevm.max_probabilities(
+                torch.tensor(labels_repr[idx_pass]),
+            )
 
-        probs.append(np.array(max_probs))
-        preds.append(np.array(mevm_idx)[:, 0])
+            # put the MEVM probs and preds back into order w/ pass thru samples
+            pred_probs = np.ones(len(labels_repr))
+            pred_probs[idx_pass] = max_probs
+            probs.append(pred_probs)
+
+            labels_repr[idx_pass] = np.array(mevm_idx)[:, 0]
+            preds.append(labels_repr)
+        else:
+            max_probs, mevm_idx = mevm.max_probabilities(
+                torch.tensor(labels_repr),
+            )
+
+            probs.append(np.array(max_probs))
+            preds.append(np.array(mevm_idx)[:, 0])
 
     return preds, probs
 
@@ -73,12 +106,15 @@ def eval_crnn_mevm(
     layer='rnn',
     decode='naive',
     threshold=0,
+    crnn_pass=None,
 ):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
 
     Parameters
     ----------
-
+    crnn_pass : list
+        list of the classes who when predicted by the CRNN are outputted as is
+        without going through the MEVM.
     """
     preds, probs = predict_crnn_mevm(
         crnn,
@@ -87,6 +123,7 @@ def eval_crnn_mevm(
         char_enc,
         dtype,
         layer=layer,
+        crnn_pass=crnn_pass,
     )
 
     # Convert from the MEVM's index enc to char_enc
