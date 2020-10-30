@@ -38,10 +38,7 @@ def main():
         config = YAML(typ='safe').load(openf)
 
     # Load the data
-    train_dataloader, test_dataloader, char_enc = crnn_data.load_data(
-        config,
-        args.col_chars_path,
-    )
+    train_dataloader, test_dataloader, char_enc = crnn_data.load_data(config)
 
     # Load CRNN
     crnn, dtype = crnn_data.init_CRNN(config)
