@@ -51,7 +51,22 @@ class SupervisedLearner(Predictor):
         pass
 
 
-class SupervisedTranscripter(SupervisedLearner):
+class SupervisedClassifier(SupervisedLearner):
+    """Abstract class for supervised learning classifiers.
+
+    Attributes
+    ----------
+    label_enc : NominalDataEncoder
+    """
+
+    # TODO __init__ either sets random state or setups up random state to be
+    # created when first fit occurs (implies unable to predict in this case).
+
+    def __init__(self, *args, **kwargs):
+        self.label_enc = NominalDataEncoder(*args, **kwargs)
+
+
+class SupervisedTranscripter(SupervisedClassifier):
     """Abstract class for supervised learning predictors.
 
     Attributes
@@ -64,6 +79,7 @@ class SupervisedTranscripter(SupervisedLearner):
 
     def __init__(self, *args, **kwargs):
         self.char_enc = CharEncoder(*args, **kwargs)
+        self.label_enc = self.char_enc
 
     @asbtractmethod
     def fit(self, features, labels):
@@ -81,25 +97,23 @@ class SupervisedTranscripter(SupervisedLearner):
 #   fit(), predict(), NominalDataEncoder
 #   save updated to include a dataset for the labels for NominalDataEncoder
 
-"""
-class ANNMEVM(SupervisedTranscripter)
-    """The combination of an artificial neural network and an MEVM.
-
-    Attributes
-    ----------
-    ann
-    mevm : MEVM
-        The MEVM class that wraps the MultipleEVM class.
-    """
-
-    def __init__(self):
-        pass
-
-
-class CRNNMEVM(ANNMEVM):
-    """The CRNN and MEVM combined to form a transcripter."""
-
-class MEVMBasedHWRDetector():
-
-class MEVMBasedHWRAdapter():
-#"""
+#class ANNMEVM(SupervisedTranscripter)
+#    """The combination of an artificial neural network and an MEVM.
+#
+#    Attributes
+#    ----------
+#    ann
+#    mevm : MEVM
+#        The MEVM class that wraps the MultipleEVM class.
+#    """
+#
+#    def __init__(self):
+#        pass
+#
+#
+#class CRNNMEVM(ANNMEVM):
+#    """The CRNN and MEVM combined to form a transcripter."""
+#
+#class MEVMBasedHWRDetector():
+#
+#class MEVMBasedHWRAdapter():
