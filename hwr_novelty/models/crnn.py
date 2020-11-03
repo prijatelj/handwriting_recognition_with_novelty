@@ -57,9 +57,42 @@ class CRNN(nn.Module):
         num_hidden=5,
         cnn_output_size=None,
         input_height=None,
-        leakyRelu=True,
+        leaky_relu=True,
         batch_norm=True,
+        legacy=False,
     ):
+        """Constructor for the CRNN class. This builds the Pytorch ANN
+        architecture.
+
+        Parameters
+        ----------
+        num_channels : int
+            The number channels for the input images, e.g. 3 channels for RGB
+            color space.
+        num_classes : int
+            The number classes expected to be classified by the CRNN.
+        hidden_size : int
+            The width of all hidden layers as the number of units.
+        num_hidden : int
+            The number of hidden layers.
+        cnn_output_size : int, optional
+            Explicitly specify the output size of the final CNN(Legacy). If not
+            given, then the output size is determined from the expected
+            computation of the default CNN architecture, which depends on
+            `input_height` being provided.
+        input_height : int, optional
+            The expected constant number of pixels as the height of the input
+            images. Must be provided if `cnn_output_size` is None.
+        leaky_relu : bool, optional
+            Uses the Leaky ReLU if True, otherwise default ReLU. These occur
+            after every CNN.
+        batch_norm : bool, optional
+            Uses batch normalization after each CNN if True, otherwise does not.
+        legacy : bool, optional
+            If True, the naming of weights and parameters matches the Legacy
+            version, otherwise uses the updated naming scheme. This is only
+            necessary when loading weights with names from the legacy version.
+        """
         super(CRNN, self).__init__()
 
         # TODO have these be adjustable params or CRNN_Network_Param class
@@ -94,7 +127,13 @@ class CRNN(nn.Module):
             None, # *[(2, 2), (2, 1), (0, 1)]
             None, # *[(2, 2), (2, 1), (0, 0)]
         ]
-        maxpool_idx = [0, 1, 1, None, None] # to better match original's name scheme...
+
+        # tmp workaround to support legacy naming scheme
+        if legacy:
+            maxpool_idx = [0, 1, 1, None, None]
+        else:
+            maxpool_idx = [0, 1, 2, None, None]
+
         dropout_probs = [0, 0, 0.2, 0.2, 0.2]
 
         # Construct the CRNN given architecture specification
@@ -116,7 +155,7 @@ class CRNN(nn.Module):
             if batch_norm:
                 cnn.add_module(f'batchnorm{i}', nn.BatchNorm2d(output_size))
 
-            if leakyRelu:
+            if leaky_relu:
                 cnn.add_module(f'relu{i}', nn.LeakyReLU(0.2, inplace=True))
             else:
                 cnn.add_module(f'relu{i}', nn.ReLU(True))
@@ -128,7 +167,16 @@ class CRNN(nn.Module):
                 )
 
             if dropout_probs[i] > 0:
-                cnn.add_module('dropout{0}', nn.Dropout2d(p=dropout_probs[i]))
+                if legacy:
+                    cnn.add_module(
+                        'dropout{0}',
+                        nn.Dropout2d(p=dropout_probs[i]),
+                    )
+                else:
+                    cnn.add_module(
+                        'dropout{i}',
+                        nn.Dropout2d(p=dropout_probs[i]),
+                    )
 
         # Original conv shapes (from pytorch version by meijieru)
         # 64x16x64 -> 128x8x32 -> 256x4x16 -> 512x2x16
