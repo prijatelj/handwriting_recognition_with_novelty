@@ -49,6 +49,7 @@ class CharEncoder(NominalDataEncoder):
         # NDE
         return CharEncoder(blank, space_char, unknown_idx, list(nde.encoder))
 
+
 def load_char_encoder(filepath, blank, space_char, unknown_idx):
     """Loads the label set and creates char encoder"""
     nde = load_label_set(filepath)
