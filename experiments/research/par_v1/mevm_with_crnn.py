@@ -21,6 +21,75 @@ from exputils.data.labels import NominalDataEncoder
 from exputils.data.confusion_matrix import ConfusionMatrix
 
 from experiments.research.par_v1 import crnn_script, crnn_data
+from experiments.research.par_v1.grieggs import string_utils
+
+
+def predict_mevm(
+    crnn_repr,
+    mevm,
+    char_enc,
+    crnn_pass=None,
+    prob_novel=False,
+):
+    """Given a CRNN repr of data and MEVM, evaluate the paired models on the
+    provided data
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    list(np.ndarray(int)), list(np.ndarray(float))
+        Predictions of the CRNN and MEVM ordered by dataloader order of lines.
+        List entries correspond to line images' predicted transcripts, which
+        are represented by a numpy array of character encodings. These include
+        the repeats and are not decoded yet.
+
+        Also, the probability for every character by the MEVM is also returned
+        as a list of numpy arrays of a float per character in the line.
+    crnn_pass : list
+        list of the classes who when predicted by the CRNN are outputted as is
+        without going through the MEVM.
+    prob_novel : bool
+    """
+    # Feed repr thru MEVM, get max_probs, all maintaining line structure
+    probs = []
+    preds = []
+
+    # NOTE may be faster if the length of each line is calculated, all
+    # flattened, run through MEVM and then "reshape" into a list of the
+    # different length lines.
+    for i, labels_repr in enumerate(crnn_repr):
+        # Find the classes predicted by CRNN that do not go through MEVM
+        if crnn_pass is not None:
+            argmax_logits = logits[i].argmax(1)
+            if len(crnn_pass) > 1:
+                idx_pass = np.logical_not(np.logical_or(
+                    *[argmax_logits == char_enc.encoder[c] for c in crnn_pass]
+                ))
+            else:
+                idx_pass = argmax_logits != char_enc.encoder[crnn_pass[0]]
+
+            max_probs, mevm_idx = mevm.max_probabilities(
+                torch.tensor(labels_repr[idx_pass]),
+            )
+
+            # put the MEVM probs and preds back into order w/ pass thru samples
+            pred_probs = np.ones(len(labels_repr))
+            pred_probs[idx_pass] = max_probs
+            probs.append(pred_probs)
+
+            argmax_logits[idx_pass] = np.array(mevm_idx)[:, 0]
+            preds.append(argmax_logits)
+        else:
+            max_probs, mevm_idx = mevm.max_probabilities(
+                torch.tensor(labels_repr),
+            )
+
+            probs.append(np.array(max_probs))
+            preds.append(np.array(mevm_idx)[:, 0])
+
+    return preds, probs
 
 
 def predict_crnn_mevm(
@@ -61,44 +130,70 @@ def predict_crnn_mevm(
         layer=layer,
     )
 
-    # Feed repr thru MEVM, get max_probs, all maintaining line structure
-    probs = []
-    preds = []
+    return predict_mevm(layer_out, mevm, char_enc, crnn_pass)
 
-    # NOTE may be faster if the length of each line is calculated, all
-    # flattened, run through MEVM and then "reshape" into a list of the
-    # different length lines.
-    for i, labels_repr in enumerate(layer_out):
-        # Find the classes predicted by CRNN that do not go through MEVM
-        if crnn_pass is not None:
-            argmax_logits = logits[i].argmax(1)
-            if len(crnn_pass) > 1:
-                idx_pass = np.logical_not(np.logical_or(
-                    *[argmax_logits == char_enc.encoder[c] for c in crnn_pass]
-                ))
-            else:
-                idx_pass = argmax_logits != char_enc.encoder[crnn_pass[0]]
 
-            max_probs, mevm_idx = mevm.max_probabilities(
-                torch.tensor(labels_repr[idx_pass]),
-            )
+def mevm_decode(
+    preds,
+    mevm_enc,
+    probs=None,
+    unknown_threshold=0,
+    unknown_idx=None
+):
+    """Decodes the resulting timestep output from MEVM."""
+    # Convert from the MEVM's index enc to char_enc
+    if probs is not None and unknown_threshold > 0 and unknown_idx is not None:
+        # apply threshold to probs of each character to determine if unknown.
+        # If the probability is below threshold, then it is unknown.
 
-            # put the MEVM probs and preds back into order w/ pass thru samples
-            pred_probs = np.ones(len(labels_repr))
-            pred_probs[idx_pass] = max_probs
-            probs.append(pred_probs)
+        # NOTE that currently if unknown idx is set, that is the default
+        # unknown class,  so if it is set to # then all unknowns are assigned
+        # to #
+        for i, line in enumerate(preds):
+            preds[i] = mevm_enc.decode(line)
+            preds[i][line < unknown_threshold] = unknown_idx
+    else:
+        for i, line in enumerate(preds):
+            preds[i] = mevm_enc.decode(line)
 
-            argmax_logits[idx_pass] = np.array(mevm_idx)[:, 0]
-            preds.append(argmax_logits)
-        else:
-            max_probs, mevm_idx = mevm.max_probabilities(
-                torch.tensor(labels_repr),
-            )
+    return preds
 
-            probs.append(np.array(max_probs))
-            preds.append(np.array(mevm_idx)[:, 0])
 
-    return preds, probs
+def decode_timestep_output(preds, char_enc, probs=None):
+    """Decodes the timestep output and syncs w/ probs if given."""
+    # Decode in sync with probs: mean the sequential chars' probs of novelty
+    decoded_preds = []
+    if probs is not None:
+        decoded_probs = []
+
+    for i, logit in enumerate(preds):
+        pred_data = []
+        if probs is not None:
+            probs_data = []
+
+        for i in range(len(logit)):
+            if (
+                logit[i] != 0
+                and not ( i > 0 and logit[i] == logit[i - 1] )
+            ):
+                pred_data.append(logit[i])
+                if probs is not None:
+                    probs_data.append(probs[i])
+
+        decoded_preds.append(string_utils.label2str(
+            pred_data,
+            char_enc.encoder.inverse,
+            False,
+            blank_char=char_enc.blank_char,
+            blank=char_enc.blank_idx,
+        ))
+
+        if probs is not None:
+            decoded_probs.append(np.array(probs_data))
+
+    if probs is None:
+        return decoded_preds
+    return decoded_preds, decoded_probs
 
 
 def eval_crnn_mevm(
@@ -110,7 +205,7 @@ def eval_crnn_mevm(
     dtype,
     layer='rnn',
     decode='naive',
-    threshold=0,
+    unknown_threshold=0,
     crnn_pass=None,
 ):
     """Given a CRNN and MEVM, evaluate the paired models on the provided data
@@ -131,21 +226,7 @@ def eval_crnn_mevm(
         crnn_pass=crnn_pass,
     )
 
-    # Convert from the MEVM's index enc to char_enc
-    if threshold > 0:
-        # apply threshold to probs of each character to determine if unknown.
-        # If the probability is below threshold, then it is unknown.
-        raise NotImplementedError('Thresholding for unknowns DNE yet.')
-
-        # NOTE that currently if unknown idx is set, that is the default
-        # unknown class,  so if it is set to # then all unknowns are assigned
-        # to #
-        for i, line in enumerate(preds):
-            preds[i] = mevm_enc.decode(line)
-            preds[i][line < threshold] = char_enc.unknown_idx
-    else:
-        for i, line in enumerate(preds):
-            preds[i] = mevm_enc.decode(line)
+    preds = mevm_decode(preds, mevm_enc, probs, unknown_threshold)
 
     # Obtain ground truth from dataloader
     ground_truth = [x['gt'][0] for x in dataloader]
