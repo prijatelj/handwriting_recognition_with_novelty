@@ -243,6 +243,45 @@ def load_config_char_enc(config):
     return char_encoder
 
 
+def load_dataloader_only(
+    config,
+    char_encoder=None,
+    col_chars_path=None,
+    augmentation=False,
+    img_height=64,
+):
+    """Config is only the data specific portion of the config."""
+    # Handle image path prefixes in config
+    if 'normal_image_prefix' in config:
+        normal_image_prefix = config['normal_image_prefix']
+    else:
+        normal_image_prefix = ''
+
+    if 'antique_image_prefix' in config:
+        antique_image_prefix = config['antique_image_prefix']
+    else:
+        antique_image_prefix = ''
+
+    if 'noise_image_prefix' in config:
+        noise_image_prefix = config['noise_image_prefix']
+    else:
+        noise_image_prefix = ''
+
+    dataset = hw_dataset.HwDataset(
+        config['data_path'],
+        char_encoder,
+        img_height=img_height,
+        root_path=config['image_root_dir'],
+        augmentation=augmentation,
+        normal_image_prefix=normal_image_prefix,
+        antique_image_prefix=antique_image_prefix,
+        noise_image_prefix=noise_image_prefix,
+        col_chars_path=col_chars_path,
+    )
+
+    return dataloader
+
+
 def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=True):
     if 'augmentation' in config['model']['crnn']['train']:
         train_augmentation = config['model']['crnn']['train']['augmentation']
