@@ -76,12 +76,11 @@ def collate(batch, PADDING_CONSTANT=1):
     }
 
 
-def load_labels_file(filepath, sep=','):
+def load_labels_file(filepath, sep=',', quoting=csv.QUOTE_NONE):
     file_extension = filepath.rpartition('.')[-1]
     if file_extension in {'csv', 'tsv'}:
         with open(filepath) as f:
-            #data = json.load(f)
-            reader = csv.reader(f, delimiter=sep, quoting=csv.QUOTE_NONE)
+            reader = csv.reader(f, delimiter=sep, quoting=quoting)
 
             # remove headers
             next(reader)
@@ -101,7 +100,7 @@ class HwDataset(Dataset):
     def __init__(
         self,
         json_path,
-        char_encoder,
+        char_encoder=None,
         img_height=32,
         img_width=None,
         root_path=".",
@@ -189,14 +188,23 @@ class HwDataset(Dataset):
         img = img.astype(np.float32)
         img = img / 128.0 - 1.0
 
-        gt = item['gt']
-        gt_label = string_utils.str2label(
-            gt,
-            self.char_encoder.encoder,
-            self.char_encoder.unknown_idx,
-        )
+        if self.char_encoder is not None:
+            gt = item['gt']
+            gt_label = string_utils.str2label(
+                gt,
+                self.char_encoder.encoder,
+                self.char_encoder.unknown_idx,
+            )
+        else:
+            gt = None
+            gt_label = None
 
         if self.col_chars_path is not None:
+            if self.char_encoder is None:
+                raise ValueError(
+                    'col_chars_path cannot be given if char_encoder is None',
+                )
+
             # Given bbox_dir load the image's corresponding column characters
             col_chars_full_path = os.path.join(
                 self.col_chars_path,
@@ -209,7 +217,7 @@ class HwDataset(Dataset):
             col_chars = self.char_encoder.encode(np.load(col_chars_full_path))
 
             return {
-                "line_id":item['image_path'],
+                "line_id": item['image_path'],
                 "line_img": img,
                 "gt_label": gt_label,
                 "gt": gt,
@@ -217,7 +225,7 @@ class HwDataset(Dataset):
             }
 
         return {
-            "line_id":item['image_path'],
+            "line_id": item['image_path'],
             "line_img": img,
             "gt_label": gt_label,
             "gt": gt,
