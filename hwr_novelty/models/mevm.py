@@ -1,6 +1,6 @@
 """Wraps the MultipleEVM providing functions and functoinality expected from a
-SupervisedLearner. Also adds a NominalDataEncoder to map its inputs to its
-interla EVMs per class.
+SpervisedLearner. Also adds a NominalDataEncoder to map its inputs to its
+interal EVMs per class.
 """
 import logging
 
@@ -57,7 +57,7 @@ class MEVM(MultipleMEVM, SupervisedLearner):
         """Wraps the MultipleEVM's max_probabilities and uses the encoder to
         keep labels as expected by the user.
         """
-        pass
+        raise NotImplementedError()
 
     def fit(self, points, labels=None, extra_negatives=None):
         """Wraps the MultipleEVM's train() and uses the encoder to
@@ -85,23 +85,38 @@ class CRNNMEVM(object):
         The MEVM class that wraps the MultipleEVM class.
     """
 
-    def fit(self,):
-        pass
+    def __init__(crnn_kwargs, mevm_kwargs, char_enc):
+        self.crnn = CRNN(**crnn_kwargs)
+        self.mevm = MEVM(**mevm_kwargs)
+        if isinstance(char_enc, CharEncoder):
+            self.char_enc = char_enc
+        elif isinstance(char_enc, dict):
+            self.char_enc = CharEncoder(**char_enc)
+        else:
+            raise TypeError(f'Unexpected char_enc type: {type(char_enc)}')
 
-    def predict(self,):
-        pass
+    def fit(self,):
+        raise NotImplementedError()
+
+    def predict(self, images):
+        raise NotImplementedError()
 
     def save(self, crnn_filepath, mevm_filepath):
-        pass
+        self.crnn.save(crnn_filepath)
+        self.mevm.save(mevm_filepath)
 
-    @staticmethod
-    def load():
-        pass
+    # TODO current implementation does not make sense for a load func when the
+    # init handles this.
+    #@staticmethod
+    #def load(crnn_filepath, mevm_filepath):
+    #    self.crnn = CRNN.load(crnn_filepath)
+    #    self.MEVM.load(mevm_filepath)
+    #    raise NotImplementedError()
 
 
 class MEVMBasedHWR(object):
-    pass
+    raise NotImplementedError()
 
 
 class MEVMBasedHWRAdapter():
-    pass
+    raise NotImplementedError()
