@@ -98,6 +98,16 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--allow_missing_transcripts',
+        action='store_false',
+        help=' '.join([
+            'Allows there to be no transcript text in the labels, using an',
+            'empty string in their place.',
+        ])
+        dest='no_missing_transcripts',
+    )
+
+    parser.add_argument(
         '--save_delimiter',
         default='\t',
         help='The delimiter used in resulting TSV, default being tabs.',
@@ -240,11 +250,21 @@ if os.path.isfile(args.transcripts_filepath):
     # Check if any image in labels is missing a transcript
     na_transcript = pd.isna(labels['transcript'])
     if na_transcript.any():
-        raise KeyError(' '.join([
+        if args.no_missing_transcripts:
+            raise KeyError(' '.join([
+                'Missing transcriptions for some images! Total:',
+                f'{na_transcript.sum()}.The following do not',
+                f'have a provided transcript:\n{labels["file"][na_transcript]}',
+            ]))
+        logging.info(' '.join([
             'Missing transcriptions for some images! Total:',
             f'{na_transcript.sum()}.The following do not',
             f'have a provided transcript:\n{labels["file"][na_transcript]}',
         ]))
+
+        # Replace them with empty strings. The data loader will ignore these
+        # for transcription task.
+        labels['transcript'][na_transcript] = ''
     del na_transcript
 
     # Save the resulting char set as a CSV

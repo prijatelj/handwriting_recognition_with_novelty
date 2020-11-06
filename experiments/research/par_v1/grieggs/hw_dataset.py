@@ -84,7 +84,11 @@ def load_labels_file(filepath, sep=',', quoting=csv.QUOTE_NONE):
 
             # remove headers
             next(reader)
-            data = [{'gt': row[-1], 'image_path': row[0]} for row in reader]
+            # NOTE ignores None or Empty string transcriptions!
+            data = [
+                {'gt': row[-1], 'image_path': row[0]}
+                for row in reader if row[-1] is not None or row[-1] != ''
+            ]
     elif file_extension == 'json':
         with open(filepath, 'r') as openf:
             data = json.load(openf)
