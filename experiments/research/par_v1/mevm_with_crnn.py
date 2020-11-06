@@ -170,6 +170,7 @@ def decode_timestep_output(preds, char_enc, probs=None):
         pred_data = []
         if probs is not None:
             probs_data = []
+            probs_of_sequence = []
 
         for i in range(len(logit)):
             if (
@@ -178,7 +179,19 @@ def decode_timestep_output(preds, char_enc, probs=None):
             ):
                 pred_data.append(logit[i])
                 if probs is not None:
-                    probs_data.append(probs[i])
+                    # Add the past character's probs if a past char exists
+                    if probs_of_sequence:
+                        probs_data.append(np.mean(probs_of_sequence))
+
+                    # begin new list for the current character
+                    probs_of_sequence = [probs[i]]
+            elif (
+                logit[i] != 0
+                and probs is not None
+                and not ( i > 0 and logit[i] != logit[i - 1] )
+            ):
+                # Saves each char prob across a sequence of same characters
+                probs_of_sequence.append(probs[i])
 
         decoded_preds.append(string_utils.label2str(
             pred_data,
