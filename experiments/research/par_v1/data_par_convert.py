@@ -2,6 +2,7 @@
 import argparse
 from collections import Counter
 import csv
+import logging
 import os
 
 import pandas as pd
@@ -103,7 +104,7 @@ def parse_args():
         help=' '.join([
             'Allows there to be no transcript text in the labels, using an',
             'empty string in their place.',
-        ])
+        ]),
         dest='no_missing_transcripts',
     )
 
@@ -158,6 +159,10 @@ if os.path.isfile(args.repr_filepath):
         labels['bg_antique_provided'] = 0
         labels['noise_provided'] = 0
 
+        # Set the index to the unique image filenames for ease of mapping
+        # transcripts and other data
+        labels.index = labels['file']
+
         file_counter = Counter()
 
         for row in csv_reader:
@@ -168,7 +173,10 @@ if os.path.isfile(args.repr_filepath):
             file_counter[row[0]] += 1
 
             # Check if the writer matches
-            if str(labels['writer_id'][row[0]]) != row[1]:
+            if (
+                row[0] in labels['writer_id']
+                and str(labels['writer_id'][row[0]]) != row[1]
+            ):
                 raise ValueError(' '.join([
                     'writer_id for file in repr csv does not match the labels',
                     f'csv! writer_id in labels: {labels["writer_id"][row[0]]}',
@@ -176,8 +184,10 @@ if os.path.isfile(args.repr_filepath):
                 ]))
 
             # Add the repr provided information. Dupes expected, thus |=
-            labels['bg_antique_provided'][row[0]] |= int(row[2])
-            labels['noise_provided'][row[0]] |= int(row[3])
+            if row[0] in labels['bg_antique_provided']:
+                labels['bg_antique_provided'][row[0]] |= int(row[2])
+            if row[0] in labels['noise_provided']:
+                labels['noise_provided'][row[0]] |= int(row[3])
 
 # Add transcripts if any
 if os.path.isfile(args.transcripts_filepath):
