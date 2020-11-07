@@ -4,7 +4,10 @@ interal EVMs per class.
 """
 import logging
 
+import h5py
+
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM
+from evm_based_novelty_detector.EVM import EVM
 from exputils.data.labels import NominalDataEncoder
 
 from hwr_novelty.models.predictor import SupervisedClassifier
@@ -25,7 +28,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         """Performs the same save functionality as in MultipleEVM but adds a
         dataset for the encoder's ordered labels.
         """
-        super(MEVM, self).__init__(*args, **kwargs)
+        #super(MEVM, self).__init__(*args, **kwargs)
         if self._evms is None:
             raise RuntimeError("The model has not been trained yet")
         # open file for writing; create if not existent
@@ -39,7 +42,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         # Write labels for the encoder
         h5['labels'] = list(self.encoder.encoder)
 
-    def load(self, h5):
+    def load(self, h5, labels=None, labels_type=int):
         """Performs the same lod functionality as in MultipleEVM but loads the
         ordered labels from the h5 file for the encoder.
         """
@@ -55,15 +58,28 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
         # Load the ordered label into the NominalDataEncoder
         if 'labels' in h5.keys():
-            self.encoder = NominalDataEncoder(h5['labels'][:])
+            if labels is not None:
+                logging.info(' '.join([
+                    '`labels` key exists in the HDF5 MEVM state file, but',
+                    'labels was given explicitly to MEVM.load(). Ignoring the',
+                    'labels in the HDF5 file.',
+                ]))
+                self.encoder = NominalDataEncoder(labels)
+            else:
+                self.encoder = NominalDataEncoder(
+                    h5['labels'][:].astype(labels_type),
+                )
+        elif labels is not None:
+            self.encoder = NominalDataEncoder(labels)
         else:
-            logging.info(' '.join([
+            logging.warning(' '.join([
                 'No `labels` dataset available in given hdf5. Relying on the',
-                'evm model\'s labels if they exist.',
+                'evm model\'s labels if they exist. Will fail if the MEVM',
+                'state does not have any labels in each of its EVM.',
             ]))
 
             self.encoder = NominalDataEncoder(
-                [evm.label for evm in self.models],
+                [evm.label for evm in self._evms],
             )
 
     def predict(self, points):
@@ -74,7 +90,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
     def train(self, *args, **kwargs):
         super(MEVM, self).train(*args, **kwargs)
-        self.encoder = NominalDataEncoder([evm.label for evm in self.models])
+        self.encoder = NominalDataEncoder([evm.label for evm in self._evms])
 
     def fit(self, points, labels=None, extra_negatives=None):
         """Wraps the MultipleEVM's train() and uses the encoder to
