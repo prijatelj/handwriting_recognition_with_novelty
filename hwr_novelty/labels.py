@@ -1,6 +1,8 @@
 """Label managment for transcription and other related handwriting recognitoin
 tasks, e.g. style.
 """
+from dataclasses import dataclass
+
 from exputils.data.labels import NominalDataEncoder, load_label_set
 
 
