@@ -249,6 +249,7 @@ def load_dataloader_only(
     col_chars_path=None,
     augmentation=False,
     img_height=64,
+    batch_size=1,
 ):
     """Config is only the data specific portion of the config."""
     # Handle image path prefixes in config
@@ -279,7 +280,13 @@ def load_dataloader_only(
         col_chars_path=col_chars_path,
     )
 
-    return dataloader
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=1,
+        collate_fn=hw_dataset.collate,
+    )
 
 
 def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=True):
