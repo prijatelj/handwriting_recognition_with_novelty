@@ -7,16 +7,19 @@ import logging
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM
 from exputils.data.labels import NominalDataEncoder
 
-from hwr_novelty.predictor import SupervisedLearner
+from hwr_novelty.models.predictor import SupervisedClassifier
 
 
-class MEVM(MultipleMEVM, SupervisedLearner):
-    def __init__(self, *args, **kwargs):
+class MEVM(MultipleEVM, SupervisedClassifier):
+    def __init__(self, labels, *args, **kwargs):
         super(MEVM, self).__init__(*args, **kwargs)
 
         # Create a NominalDataEncoder to map class inputs to the MEVM internal
         # class represntation.
-        self.encoder = NominalDataEncoder([evm.label for evm in self.models])
+        if isinstance(labels, NominalDataEncoder):
+            self.encoder = labels
+        else:
+            self.encoder = NominalDataEncoder(labels)
 
     def save(self, h5):
         """Performs the same save functionality as in MultipleEVM but adds a
@@ -51,13 +54,27 @@ class MEVM(MultipleMEVM, SupervisedLearner):
             i += 1
 
         # Load the ordered label into the NominalDataEncoder
-        self.encoder = NominalDataEncoder(h5['labels'][:])
+        if 'labels' in h5.keys():
+            self.encoder = NominalDataEncoder(h5['labels'][:])
+        else:
+            logging.info(' '.join([
+                'No `labels` dataset available in given hdf5. Relying on the',
+                'evm model\'s labels if they exist.',
+            ]))
+
+            self.encoder = NominalDataEncoder(
+                [evm.label for evm in self.models],
+            )
 
     def predict(self, points):
         """Wraps the MultipleEVM's max_probabilities and uses the encoder to
         keep labels as expected by the user.
         """
         raise NotImplementedError()
+
+    def train(self, *args, **kwargs):
+        super(MEVM, self).train(*args, **kwargs)
+        self.encoder = NominalDataEncoder([evm.label for evm in self.models])
 
     def fit(self, points, labels=None, extra_negatives=None):
         """Wraps the MultipleEVM's train() and uses the encoder to
@@ -112,11 +129,3 @@ class CRNNMEVM(object):
     #    self.crnn = CRNN.load(crnn_filepath)
     #    self.MEVM.load(mevm_filepath)
     #    raise NotImplementedError()
-
-
-class MEVMBasedHWR(object):
-    raise NotImplementedError()
-
-
-class MEVMBasedHWRAdapter():
-    raise NotImplementedError()
