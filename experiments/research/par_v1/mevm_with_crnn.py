@@ -209,6 +209,60 @@ def decode_timestep_output(preds, char_enc, probs=None):
     return decoded_preds, decoded_probs
 
 
+def dist_to_uniformity(prob_vecs, axis=1):
+    """Returns the distance to uniformity which is the degree of uncertainty
+    for the given discrete probability vectors. This assumes that the given
+    discrete probability vectors each represent nominal data whose values or
+    events are mutually exclusive. This is the standard assumption in
+    traditional classification.
+
+    The distance to uniformity is the normalized Euclidean distance of each
+    probability vector to the uniform discrete probability vector within that
+    probability simplex (i.e. the center of the probability simplex). The
+    dimensions of the probability vector determines the corresponding
+    probability simplex. The Euclidean distance is normalized to be within the
+    range [0, 1] by dividing by the maximum possible distance of two points
+    within the probability simplex, which is the square root of 2.
+
+    The distance to uniformity is a point-estimate where the probability vector
+    is the single point. This does not provide a probability of uncertainty (or
+    credibility if Bayesian) of the probability vector itself. It is the degree
+    of uncertainty between the nominal values represented by that probability
+    vector.
+
+    An alternative to this is to compare the difference in entropy to the
+    maxmimum entropy possible given the uniform discrete probability vector.
+    This will work for probability vectors with a small number of dimensions,
+    but the maximum entropy possible approches infinity as the number of
+    dimensions increases. The Normalized euclidean distance avoids that issue,
+    but the reliance on the uniform prob vector of the dimension _may_ be more
+    restrictive than the entropy calcultion (I am uncertain on this at the
+    moment, I need to go through the math).
+
+    Parameters
+    ----------
+    prob_vecs : np.ndarray
+        A matrix of probability vectors whose distance to uniformity is to be
+        calculated. This means that the vectors along the given axis will be
+        treated as probability vectors, which means the sum of the vector's
+        elements must be equal to 1 and each element must be within the range
+        [0, 1]. This function does _not_ perform the check if the vectors are
+        actual probability vectors.
+
+    Returns
+    -------
+    np.ndarray
+        An array of distances to uniformity which represent the point-estimate
+        degree of uncertainty represented as the distance of the probability
+        vector to the uniform probability vector of the same dimensions.
+    """
+    return np.linalg.norm(
+        prob_vecs - np.full(prob_vecs.shape[axis], 1 / prob_vecs.shape[axis]),
+        ord=2,
+        axis=axis,
+    ) / np.sqrt(2)
+
+
 def eval_crnn_mevm(
     crnn,
     mevm,
