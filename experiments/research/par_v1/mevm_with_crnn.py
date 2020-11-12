@@ -259,13 +259,13 @@ def dist_to_uniformity(prob_vecs, axis=1):
     events are mutually exclusive. This is the standard assumption in
     traditional classification.
 
-    The distance to uniformity is the normalized Euclidean distance of each
+    The distance to uniformity is the Euclidean distance of each
     probability vector to the uniform discrete probability vector within that
     probability simplex (i.e. the center of the probability simplex). The
     dimensions of the probability vector determines the corresponding
-    probability simplex. The Euclidean distance is normalized to be within the
-    range [0, 1] by dividing by the maximum possible distance of two points
-    within the probability simplex, which is the square root of 2.
+    probability simplex. The Euclidean distance is within the
+    range [0, 1] due to the fartherst a point in the probability simplex can be
+    from the center is 1.
 
     The distance to uniformity is a point-estimate where the probability vector
     is the single point. This does not provide a probability of uncertainty (or
@@ -303,7 +303,7 @@ def dist_to_uniformity(prob_vecs, axis=1):
         prob_vecs - np.full(prob_vecs.shape[axis], 1 / prob_vecs.shape[axis]),
         ord=2,
         axis=axis,
-    ) / np.sqrt(2)
+    )
 
 
 def eval_crnn_mevm(
