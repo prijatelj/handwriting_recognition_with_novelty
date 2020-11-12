@@ -14,7 +14,7 @@ from hwr_novelty.models.predictor import SupervisedClassifier
 
 
 class MEVM(MultipleEVM, SupervisedClassifier):
-    def __init__(self, labels, *args, **kwargs):
+    def __init__(self, labels, max_unknown=None, *args, **kwargs):
         super(MEVM, self).__init__(*args, **kwargs)
 
         # Create a NominalDataEncoder to map class inputs to the MEVM internal
@@ -23,6 +23,8 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             self.encoder = labels
         else:
             self.encoder = NominalDataEncoder(labels)
+
+        self.max_unknown = max_unknown
 
     def save(self, h5):
         """Performs the same save functionality as in MultipleEVM but adds a
