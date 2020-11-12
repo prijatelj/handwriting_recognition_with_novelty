@@ -159,7 +159,7 @@ def mevm_decode(
     return preds
 
 
-def decode_timestep_output(preds, char_enc, probs=None,):
+def decode_timestep_output(preds, char_enc, probs=None):
     """Decodes the timestep output of a model like the CRNN and syncs w/ probs
     if given by calculating the mean probability of the character given its
     repeating sequence of occurence.
