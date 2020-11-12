@@ -159,16 +159,59 @@ def mevm_decode(
     return preds
 
 
-def decode_timestep_output(preds, char_enc, probs=None):
-    """Decodes the timestep output and syncs w/ probs if given."""
+def decode_timestep_output(preds, char_enc, probs=None,):
+    """Decodes the timestep output of a model like the CRNN and syncs w/ probs
+    if given by calculating the mean probability of the character given its
+    repeating sequence of occurence.
+
+    Parameters
+    ----------
+    preds : list(np.ndarray)
+        The list of predicted sequence of characters. The characters may be
+        represented as their integer encoding or as a probability vector whose
+        argmax indicates the chosen character integer encoding.
+    char_enc : CharEncoder
+        The character encoder that transforms the given character integer
+        encoding into its respective character and back.
+    probs : list(np.ndarray), optional
+        Only provided when the characters in `preds` is represented as an
+        integer encoding, probs represents a probability associated with that
+        character. As the predicted character sequence is decoded, the mean of
+        the sequential characters' probabilities is calculated and saved as
+        that charachter's new associated probability.
+
+    Returns
+    -------
+    list(str) | (list(str), list(np.ndarray))
+        Returns the list of strings representing the transcript text from the
+        original character prediction sequence (`preds`). If `probs` is given
+        or `preds` is given where each character is represented by a
+        probability vector, then along with the transcriptions, the probability
+        of each character is also returned. This probability per character is
+        the mean probability for the chosen character in a sequence.
+    """
     # Decode in sync with probs: mean the sequential chars' probs of novelty
     decoded_preds = []
     if probs is not None:
+        if len(np.squeeze(preds[0]).shape) > 1:
+            raise ValueError(' '.join([
+                'When `probs` is given, preds must be a list of 1-dimensional',
+                'numpy arrays.',
+            ]))
+        # probs is given and preds has a int per character prediction
         decoded_probs = []
+    elif len(np.squeeze(preds[0]).shape) > 1:
+        # probs is None and preds has a prob vector per character prediction
+        decoded_probs = []
+        probs = preds
+        preds = probs.argmax(axis=1)
+    else:
+        # probs is None and preds has a int encoding per character prediction
+        decoded_probs = None
 
     for i, logit in enumerate(preds):
         pred_data = []
-        if probs is not None:
+        if decoded_probs is not None:
             probs_data = []
             probs_of_sequence = []
 
@@ -178,16 +221,16 @@ def decode_timestep_output(preds, char_enc, probs=None):
                 and not ( i > 0 and logit[i] == logit[i - 1] )
             ):
                 pred_data.append(logit[i])
-                if probs is not None:
+                if decoded_probs is not None:
                     # Add the past character's probs if a past char exists
                     if probs_of_sequence:
-                        probs_data.append(np.mean(probs_of_sequence))
+                        probs_data.append(np.mean(probs_of_sequence, axis=0))
 
                     # begin new list for the current character
                     probs_of_sequence = [probs[i]]
             elif (
                 logit[i] != 0
-                and probs is not None
+                and decoded_probs is not None
                 and not ( i > 0 and logit[i] != logit[i - 1] )
             ):
                 # Saves each char prob across a sequence of same characters
@@ -201,10 +244,10 @@ def decode_timestep_output(preds, char_enc, probs=None):
             blank=char_enc.blank_idx,
         ))
 
-        if probs is not None:
+        if decoded_probs is not None:
             decoded_probs.append(np.array(probs_data))
 
-    if probs is None:
+    if decoded_probs is None:
         return decoded_preds
     return decoded_preds, decoded_probs
 
