@@ -204,7 +204,7 @@ def decode_timestep_output(preds, char_enc, probs=None):
         # probs is None and preds has a prob vector per character prediction
         decoded_probs = []
         probs = preds
-        preds = probs.argmax(axis=1)
+        preds = [prob.argmax(axis=1) for prob in probs]
     else:
         # probs is None and preds has a int encoding per character prediction
         decoded_probs = None
