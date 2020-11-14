@@ -289,11 +289,21 @@ def load_dataloader_only(
     )
 
 
-def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=True):
+def load_dataloader(
+    config,
+    char_encoder,
+    col_chars_path=None,
+    must_validate=True,
+):
     if 'augmentation' in config['model']['crnn']['train']:
         train_augmentation = config['model']['crnn']['train']['augmentation']
     else:
         train_augmentation = False
+
+    if 'shuffle' in config['model']['crnn']['train']:
+        train_shuffle = config['model']['crnn']['train']['shuffle']
+    else:
+        train_shuffle = False
 
     # Handle image path prefixes in config
     if 'normal_image_prefix' in config['data']['iam']:
@@ -323,12 +333,24 @@ def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=Tru
         col_chars_path=col_chars_path,
     )
 
+    if 'val' in config['model']['crnn']:
+        if 'augmentation' in config['model']['crnn']['val']:
+            test_augmentation = config['model']['crnn']['val']['augmentation']
+        else:
+            test_augmentation = False
+
+        if 'shuffle' in config['model']['crnn']['val']:
+            test_shuffle = config['model']['crnn']['val']['shuffle']
+        else:
+            test_shuffle = False
+
     try:
         test_dataset = hw_dataset.HwDataset(
             config['data']['iam']['val'],
             char_encoder,
             img_height=config['model']['crnn']['init']['input_height'],
             root_path=config['data']['iam']['image_root_dir'],
+            augmentation=test_augmentation,
             normal_image_prefix=normal_image_prefix,
             antique_image_prefix=antique_image_prefix,
             noise_image_prefix=noise_image_prefix,
@@ -360,7 +382,7 @@ def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=Tru
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=config['model']['crnn']['train']['batch_size'],
-        shuffle=False,
+        shuffle=train_shuffle,
         num_workers=1,
         collate_fn=hw_dataset.collate,
     )
@@ -371,7 +393,7 @@ def load_dataloader(config, char_encoder, col_chars_path=None, must_validate=Tru
         test_dataloader = DataLoader(
             test_dataset,
             batch_size=config['model']['crnn']['eval']['batch_size'],
-            shuffle=False,
+            shuffle=test_shuffle,
             num_workers=1,
             collate_fn=hw_dataset.collate,
         )
