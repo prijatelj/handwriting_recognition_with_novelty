@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn
 
@@ -138,9 +137,12 @@ class CRNN(nn.Module):
             # TODO figure out constant multiple value and why.
             # divide by 4 due to the convolution resulting in such.
             if legacy:
-                divisor = 4
+                divisor = 4.0
             else:
-                divisor = np.multiply([mp['kernel_size'] for mp in maxpool2d_args])
+                divisor = 1.0
+                for mp in maxpool2d_args:
+                    if divisor is not None:
+                        divisor *= mp['kernel_size']
             cnn_output_size = int(cnn_input_dims[-1] * input_height / divisor)
 
         cnn = nn.Sequential()
