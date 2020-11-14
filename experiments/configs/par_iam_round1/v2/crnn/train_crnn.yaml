@@ -1,0 +1,33 @@
+data:
+  iam:
+    train: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/v2/kfolds_strat/5folds_train-0.tsv'
+    val: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/v2/kfolds_strat/5folds_test-0.tsv'
+    normal_image_prefix: 'known_images/'
+    noise_image_prefix: 'new_bg_noise/'
+    antique_image_prefix: 'new_bg_antique/'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
+    labels: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/char_sets/par_v1_iam_CRNN_char_set.tsv'
+model:
+  crnn:
+    metric: CER
+    init:
+      num_channels: 3
+      num_classes: 80
+      hidden_size: 256
+      input_height: 64
+      #legacy: True
+    train:
+      learning_rate: 0.01
+      batch_size: 16
+      augmentation: True
+      shuffle: True
+      blank: 0 # ~
+      unknown_idx: 4 # #
+      space_char: ' ' # 1
+      epochs: 100000
+      max_epochs_no_improvement: 500
+    eval:
+      batch_size: 1
+      augmentation: True
+      shuffle: True
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/tmp_junk/crnn_normal_pnly_a_final_attempt/'
