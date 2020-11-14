@@ -23,7 +23,7 @@ def collate(batch, PADDING_CONSTANT=1):
     assert len(set([b['line_img'].shape[0] for b in batch])) == 1
     assert len(set([b['line_img'].shape[2] for b in batch])) == 1
 
-    """
+    #"""
     dim0 = batch[0]['line_img'].shape[0]
     dim1 = max([b['line_img'].shape[1] for b in batch])
     dim1 = dim1 + (dim0 - (dim1 % dim0))
@@ -34,26 +34,27 @@ def collate(batch, PADDING_CONSTANT=1):
         PADDING_CONSTANT,
     ).astype(np.float32)
     #"""
-    input_batch = []
+    #input_batch = []
 
     all_labels = []
     label_lengths = []
     line_ids = []
 
     for i in range(len(batch)):
-        #b_img = batch[i]['line_img']
-        input_batch.append(batch[i]['line_img'])
-        #input_batch[i,:,:b_img.shape[1],:] = b_img
+        #input_batch.append(batch[i]['line_img'])
+        b_img = batch[i]['line_img']
+        input_batch[i,:,:b_img.shape[1],:] = b_img
         line_ids.append(batch[i]['line_id'])
         l = batch[i]['gt_label']
         all_labels.append(l)
         label_lengths.append(len(l))
 
-    if len(input_batch) == 1:
-        input_batch = np.array(input_batch)
-    else:
-        input_batch = np.concatenate(input_batch)
-    logging.debug('shape of input_batch: %s', input_batch)
+    #if len(input_batch) == 1:
+    #    input_batch = np.array(input_batch)
+    #else:
+    #   Doesn't work when batch more than 1 cuz different lengths..
+    #   input_batch = np.concatenate(input_batch)
+    #logging.debug('shape of input_batch: %s', input_batch)
 
     all_labels = np.concatenate(all_labels)
     label_lengths = np.array(label_lengths)
