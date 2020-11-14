@@ -107,12 +107,12 @@ def load_labels_file(
                         'image_path': os.path.join(normal_prefix, row[0]),
                     })
 
-                    if row[noise_idx] == 1:
+                    if row[noise_idx] == '1':
                         data.append({
                             'gt': row[-1],
                             'image_path': os.path.join(noise_prefix, row[0]),
                         })
-                    if row[antique_idx] == 1:
+                    if row[antique_idx] == '1':
                         data.append({
                             'gt': row[-1],
                             'image_path': os.path.join(antique_prefix, row[0]),
