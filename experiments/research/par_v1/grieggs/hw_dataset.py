@@ -49,7 +49,12 @@ def collate(batch, PADDING_CONSTANT=1):
         all_labels.append(l)
         label_lengths.append(len(l))
 
-    input_batch = np.array(input_batch)
+    if len(input_batch) == 1:
+        input_batch = np.array(input_batch)
+    else:
+        input_batch = np.concatenate(input_batch)
+    logging.debug('shape of input_batch: %s', input_batch)
+
     all_labels = np.concatenate(all_labels)
     label_lengths = np.array(label_lengths)
 
