@@ -76,8 +76,20 @@ def collate(batch, PADDING_CONSTANT=1):
     }
 
 
-def load_labels_file(filepath, sep=None, quoting=csv.QUOTE_NONE):
+def load_labels_file(
+    filepath,
+    sep=None,
+    quoting=csv.QUOTE_NONE,
+    normal_prefix='',
+    noise_prefix='',
+    antique_prefix='',
+    noise_idx=-2,
+    antique_idx=-3,
+):
     file_extension = filepath.rpartition('.')[-1]
+
+    # TODO expand data given existence of True values for noise & antique
+    # TODO use pandas here for simplicity...
     if file_extension in {'csv', 'tsv'}:
         if sep is None:
             sep = ',' if file_extension == 'csv' else '\t'
@@ -87,10 +99,24 @@ def load_labels_file(filepath, sep=None, quoting=csv.QUOTE_NONE):
             # remove headers
             next(reader)
             # NOTE ignores None or Empty string transcriptions!
-            data = [
-                {'gt': row[-1], 'image_path': row[0]}
-                for row in reader if row[-1] is not None or row[-1] != ''
-            ]
+            data = []
+            for row in reader:
+                if row[-1] is not None and row[-1] != '':
+                    data.append({
+                        'gt': row[-1],
+                        'image_path': os.path.join(normal_prefix, row[0]),
+                    })
+
+                    if row[noise_idx] == 1:
+                        data.append({
+                            'gt': row[-1],
+                            'image_path': os.path.join(noise_prefix, row[0]),
+                        })
+                    if row[antique_idx] == 1:
+                        data.append({
+                            'gt': row[-1],
+                            'image_path': os.path.join(antique_prefix, row[0]),
+                        })
     elif file_extension == 'json':
         with open(filepath, 'r') as openf:
             data = json.load(openf)
@@ -118,7 +144,11 @@ class HwDataset(Dataset):
         noise_image_prefix='',
         col_chars_path=None,
      ):
-        data = load_labels_file(json_path)
+        data = load_labels_file(
+            json_path,
+            noise_prefix=noise_image_prefix,
+            antique_prefix=antique_image_prefix,
+        )
 
         # Path prefixes
         self.root_path = root_path
@@ -152,7 +182,7 @@ class HwDataset(Dataset):
         #   to such an expansion of the images. So it needs done in init.
         img_path = os.path.join(
             self.root_path,
-            self.normal_image_prefix,
+            #self.normal_image_prefix,
             item['image_path'],
         )
 
