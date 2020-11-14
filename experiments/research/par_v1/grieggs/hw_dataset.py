@@ -76,9 +76,11 @@ def collate(batch, PADDING_CONSTANT=1):
     }
 
 
-def load_labels_file(filepath, sep=',', quoting=csv.QUOTE_NONE):
+def load_labels_file(filepath, sep=None, quoting=csv.QUOTE_NONE):
     file_extension = filepath.rpartition('.')[-1]
     if file_extension in {'csv', 'tsv'}:
+        if sep is None:
+            sep = ',' if file_extension == 'csv' else '\t'
         with open(filepath) as f:
             reader = csv.reader(f, delimiter=sep, quoting=quoting)
 
@@ -110,7 +112,6 @@ class HwDataset(Dataset):
         root_path=".",
         augmentation=False,
         remove_errors=False,
-        sep='\t',
         random_seed=None,
         normal_image_prefix='',
         antique_image_prefix='',
