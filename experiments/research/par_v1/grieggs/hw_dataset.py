@@ -146,6 +146,7 @@ class HwDataset(Dataset):
      ):
         data = load_labels_file(
             json_path,
+            normal_prefix=normal_image_prefix,
             noise_prefix=noise_image_prefix,
             antique_prefix=antique_image_prefix,
         )
