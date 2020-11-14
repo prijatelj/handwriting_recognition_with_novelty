@@ -141,7 +141,7 @@ class CRNN(nn.Module):
             else:
                 divisor = 1.0
                 for mp in maxpool2d_args:
-                    if divisor is not None:
+                    if mp is not None:
                         divisor *= mp['kernel_size']
             cnn_output_size = int(cnn_input_dims[-1] * input_height / divisor)
 
