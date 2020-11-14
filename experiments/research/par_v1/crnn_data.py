@@ -333,14 +333,14 @@ def load_dataloader(
         col_chars_path=col_chars_path,
     )
 
-    if 'val' in config['model']['crnn']:
-        if 'augmentation' in config['model']['crnn']['val']:
-            test_augmentation = config['model']['crnn']['val']['augmentation']
+    if 'eval' in config['model']['crnn']:
+        if 'augmentation' in config['model']['crnn']['eval']:
+            test_augmentation = config['model']['crnn']['eval']['augmentation']
         else:
             test_augmentation = False
 
-        if 'shuffle' in config['model']['crnn']['val']:
-            test_shuffle = config['model']['crnn']['val']['shuffle']
+        if 'shuffle' in config['model']['crnn']['eval']:
+            test_shuffle = config['model']['crnn']['eval']['shuffle']
         else:
             test_shuffle = False
 
