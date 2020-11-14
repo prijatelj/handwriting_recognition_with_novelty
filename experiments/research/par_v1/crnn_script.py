@@ -250,6 +250,7 @@ def eval_crnn(
     deterministic=True,
     random_seed=None,
     return_col_chars=False,
+    skip_none_labels=True,
 ):
     """Evaluates CRNN and returns the CRNN output. Optionally, this is also
     used to obtain certain layer's outputs such as the penultimate RNN or CNN
@@ -329,6 +330,8 @@ def eval_crnn(
     for x in dataloader:
         if x is None:
             continue
+        if skip_none_labels and (x['gt'] is None or x['gt'] == ''):
+            logging.debug('Ground truth label = `%s`', x['gt'])
         with torch.no_grad():
             line_imgs = Variable(
                 x['line_imgs'].type(dtype),
