@@ -249,6 +249,12 @@ def decode_timestep_output(preds, char_enc, probs=None):
         ))
 
         if decoded_probs is not None:
+            if probs_of_sequence:
+                # Handle case where theres is only 1 non-zero predicted
+                # character and where the last addition to probs_of_sequence
+                # needs added.
+                probs_data.append(np.mean(probs_of_sequence, axis=0))
+
             if scalar_prob:
                 decoded_probs.append(np.array(probs_data))
             else:
