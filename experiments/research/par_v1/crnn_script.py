@@ -77,7 +77,7 @@ def train_crnn(
             ]))
 
             line_imgs = x['line_imgs']
-            """
+            #"""
             rem = line_imgs.shape[3] % 32
             if rem != 0:
                 imgshape = line_imgs.shape
