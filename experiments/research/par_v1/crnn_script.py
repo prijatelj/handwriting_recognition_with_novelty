@@ -77,6 +77,7 @@ def train_crnn(
             ]))
 
             line_imgs = x['line_imgs']
+            """
             rem = line_imgs.shape[3] % 32
             if rem != 0:
                 imgshape = line_imgs.shape
@@ -89,6 +90,7 @@ def train_crnn(
                 temp[:, :, :, :imgshape[3]] = line_imgs
                 line_imgs = temp
                 del temp
+            #"""
             line_imgs = Variable(line_imgs.type(dtype), requires_grad=False)
 
             labels = Variable(x['labels'], requires_grad=False)
