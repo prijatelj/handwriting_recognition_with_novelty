@@ -200,14 +200,17 @@ def decode_timestep_output(preds, char_enc, probs=None):
             ]))
         # probs is given and preds has a int per character prediction
         decoded_probs = []
+        scalar_prob = True
     elif len(np.squeeze(preds[0]).shape) > 1:
         # probs is None and preds has a prob vector per character prediction
         decoded_probs = []
         probs = preds
         preds = [prob.argmax(axis=1) for prob in probs]
+        scalar_prob = False
     else:
         # probs is None and preds has a int encoding per character prediction
         decoded_probs = None
+        scalar_prob = True
 
     for i, logit in enumerate(preds):
         pred_data = []
@@ -215,26 +218,27 @@ def decode_timestep_output(preds, char_enc, probs=None):
             probs_data = []
             probs_of_sequence = []
 
-        for i in range(len(logit)):
+        for j in range(len(logit)):
             if (
-                logit[i] != 0
-                and not ( i > 0 and logit[i] == logit[i - 1] )
+                logit[j] != 0
+                and not ( j > 0 and logit[j] == logit[j - 1] )
             ):
-                pred_data.append(logit[i])
+                pred_data.append(logit[j])
+
                 if decoded_probs is not None:
                     # Add the past character's probs if a past char exists
                     if probs_of_sequence:
                         probs_data.append(np.mean(probs_of_sequence, axis=0))
 
                     # begin new list for the current character
-                    probs_of_sequence = [probs[i]]
+                    probs_of_sequence = [probs[i][j]]
             elif (
-                logit[i] != 0
+                logit[j] != 0
                 and decoded_probs is not None
-                and not ( i > 0 and logit[i] != logit[i - 1] )
+                and not ( j > 0 and logit[j] != logit[j - 1] )
             ):
                 # Saves each char prob across a sequence of same characters
-                probs_of_sequence.append(probs[i])
+                probs_of_sequence.append(probs[i][j])
 
         decoded_preds.append(string_utils.label2str(
             pred_data,
@@ -245,7 +249,10 @@ def decode_timestep_output(preds, char_enc, probs=None):
         ))
 
         if decoded_probs is not None:
-            decoded_probs.append(np.array(probs_data))
+            if scalar_prob:
+                decoded_probs.append(np.array(probs_data))
+            else:
+                decoded_probs.append(np.vstack(probs_data))
 
     if decoded_probs is None:
         return decoded_preds

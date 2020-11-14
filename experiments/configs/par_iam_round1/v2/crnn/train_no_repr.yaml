@@ -10,20 +10,19 @@ model:
     metric: CER
     init:
       num_channels: 3
-      num_classes: 81
+      num_classes: 80
       hidden_size: 256
       input_height: 64
+      legacy: True
     train:
       learning_rate: 0.01
-      batch_size: 16
-      augmentation: True
+      batch_size: 1
+      augmentation: False
       blank: 0 # ~
-      unknown_idx: 80
+      unknown_idx: 4 # #
       space_char: ' ' # 1
       epochs: 100000
-      #thresh: 0.000001 # 1e-6
       max_epochs_no_improvement: 200
     eval:
       batch_size: 1
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/lr1e-2/5fold-0/crnn_ep855_continue/cont_ep23/'
-    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/models/v2/crnn/adadelta/lr1e-2/5fold-0/crnn_ep855_continue/_2020-10-15_21-23-59/crnn_ep23.pt'
+    load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_365/open_set/hwr/hwr_novelty_detector/round_1_unopt_states/transcript_crnn_state_113.pt'

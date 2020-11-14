@@ -335,6 +335,8 @@ def eval_crnn(
                 requires_grad=False,
             )
 
+            if layer is None:
+                preds = hw_crnn(line_imgs)
             if layer.lower() == 'rnn':
                 preds, layer_out = hw_crnn(line_imgs, return_rnn=True)
 
