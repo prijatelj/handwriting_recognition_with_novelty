@@ -26,3 +26,4 @@ model:
     eval:
       batch_size: 1
     load_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_365/open_set/hwr/hwr_novelty_detector/round_1_unopt_states/transcript_crnn_state_113.pt'
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/tmp_junk'
