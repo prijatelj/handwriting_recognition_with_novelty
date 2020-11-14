@@ -103,23 +103,14 @@ class CRNN(nn.Module):
         cnn_input_dims = [16, 32, 48, 64, 80]
         # [64, 128, 256, 256, 512, 512, 512]
 
-        # Set the cnn_output_size if not given explicitly
-        if cnn_output_size is None and input_height is None:
-            raise ValueError(' '.join([
-            'Must provide either cnn_output_size or input_height. Both were',
-            'unchanged from None.',
-            ]))
-        elif cnn_output_size is None and input_height is not None:
-            # TODO figure out constant multiple value and why.
-            # divide by 4 due to the convolution resulting in such.
-            cnn_output_size = int(cnn_input_dims[-1] * input_height / 4)
-
-        cnn = nn.Sequential()
-
         # CNN sequential architecture parameters
         # TODO consider replacing dicts w/ another ** expandable object that
         # can only take the values of some set of arguments. Perhaps a config
         # object for the CRNN.
+        # THIS HERE is why the multiple is 4, it must be before cnn_output_size
+        # and be used to calculate the multiple. when there are actually 3 as
+        # listed here, the multiple is 8 because each is 2. When not all apply
+        # due to the same naming,
         maxpool2d_args = [
             {'kernel_size': 2, 'stride': 2},
             {'kernel_size': 2, 'stride': 2},
@@ -135,6 +126,23 @@ class CRNN(nn.Module):
             maxpool_idx = [0, 1, 2, None, None]
 
         dropout_probs = [0, 0, 0.2, 0.2, 0.2]
+
+        # Set the cnn_output_size if not given explicitly
+        if cnn_output_size is None and input_height is None:
+            raise ValueError(' '.join([
+            'Must provide either cnn_output_size or input_height. Both were',
+            'unchanged from None.',
+            ]))
+        elif cnn_output_size is None and input_height is not None:
+            # TODO figure out constant multiple value and why.
+            # divide by 4 due to the convolution resulting in such.
+            if legacy:
+                divisor = 4
+            else:
+                divisor = np.multiply([mp['kernel_size'] for mp in maxpool2d_args])
+            cnn_output_size = int(cnn_input_dims[-1] * input_height / divisor)
+
+        cnn = nn.Sequential()
 
         # Construct the CRNN given architecture specification
         for i in range(len(maxpool2d_args)):
