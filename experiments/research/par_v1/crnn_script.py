@@ -337,7 +337,7 @@ def eval_crnn(
 
             if layer is None:
                 preds = hw_crnn(line_imgs)
-            if layer.lower() == 'rnn':
+            elif layer.lower() == 'rnn':
                 preds, layer_out = hw_crnn(line_imgs, return_rnn=True)
 
                 # Shape is then [timesteps, hidden layer width]
