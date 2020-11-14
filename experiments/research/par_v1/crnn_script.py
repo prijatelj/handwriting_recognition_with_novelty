@@ -373,7 +373,7 @@ def eval_crnn(
 
                 # Loop through the batch
                 for i, gt_line in enumerate(x['gt']):
-                    if skip_none_labels and (x['gt'] is None or x['gt'] == ''):
+                    if skip_none_labels and (gt_line is None or gt_line == ''):
                         count_skips += 1
                         logging.debug(
                             'No ground truth label. Count: %d; `%s`',
