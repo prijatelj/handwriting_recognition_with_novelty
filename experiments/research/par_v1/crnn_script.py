@@ -313,6 +313,8 @@ def eval_crnn(
         total_chars = 0.0
         total_words = 0.0
 
+        count_skips = 0
+
     hw_crnn.eval()
 
     layer_outs = []
@@ -330,8 +332,6 @@ def eval_crnn(
     for x in dataloader:
         if x is None:
             continue
-        if skip_none_labels and (x['gt'] is None or x['gt'] == ''):
-            logging.debug('Ground truth label = `%s`', x['gt'])
         with torch.no_grad():
             line_imgs = Variable(
                 x['line_imgs'].type(dtype),
@@ -373,6 +373,14 @@ def eval_crnn(
 
                 # Loop through the batch
                 for i, gt_line in enumerate(x['gt']):
+                    if skip_none_labels and (x['gt'] is None or x['gt'] == ''):
+                        count_skips += 1
+                        logging.debug(
+                            'No ground truth label. Count: %d; `%s`',
+                            count_skips,
+                            x['gt'],
+                        )
+                        continue
                     logits = out[i, ...]
 
                     pred, raw_pred = string_utils.naive_decode(logits)
