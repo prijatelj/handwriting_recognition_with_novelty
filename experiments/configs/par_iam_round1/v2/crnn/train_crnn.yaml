@@ -15,7 +15,7 @@ model:
       num_classes: 80
       hidden_size: 256
       input_height: 64
-      #legacy: True
+      legacy: True
     train:
       learning_rate: 0.01
       batch_size: 16
