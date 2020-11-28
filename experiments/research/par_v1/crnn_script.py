@@ -80,6 +80,10 @@ def train_crnn(
                 f'Output: |{ot}|',
             ]))
 
+            for ground_truth in x['gt']:
+                if ground_truth is None or ground_truth == '':
+                    raise ValueError('Ground Truth is None or empty string!')
+
             line_imgs = x['line_imgs']
             #"""
             rem = line_imgs.shape[3] % 32
@@ -115,15 +119,6 @@ def train_crnn(
 
             # Training Eval loop on training data
             for j in range(out.shape[0]):
-                if skip_none_labels and (gt_line is None or gt_line == ''):
-                    count_skips_train += 1
-                    logging.debug(
-                        'No ground truth label for train sample. Count: %d; `%s`',
-                        count_skips_train,
-                        x['gt'],
-                    )
-                    raise ValueError('Ground Truth is empty string!')
-
                 logits = out[j, ...]
 
                 pred, raw_pred = string_utils.naive_decode(logits)
