@@ -38,6 +38,7 @@ def train_crnn(
     base_message='',
     thresh=None,
     max_epochs_no_improvement=800,
+    skip_none_labels=True,
 ):
     """Streamline the training of the CRNN."""
     # Variables for training loop
@@ -62,6 +63,9 @@ def train_crnn(
         gt = ""
         ot = ""
         loss = 0.0
+
+        count_skips = 0
+        count_skips_train = 0
 
         logging.info("Train Set Size = %d", len(train_dataloader))
 
@@ -111,6 +115,15 @@ def train_crnn(
 
             # Training Eval loop on training data
             for j in range(out.shape[0]):
+                if skip_none_labels and (gt_line is None or gt_line == ''):
+                    count_skips_train += 1
+                    logging.debug(
+                        'No ground truth label for train sample. Count: %d; `%s`',
+                        count_skips_train,
+                        x['gt'],
+                    )
+                    raise ValueError('Ground Truth is empty string!')
+
                 logits = out[j, ...]
 
                 pred, raw_pred = string_utils.naive_decode(logits)
@@ -154,6 +167,7 @@ def train_crnn(
             logging.info("Validation Set Size = %d", len(test_dataloader))
 
             for x in tqdm(test_dataloader):
+
                 torch.no_grad()
                 line_imgs = Variable(
                     x['line_imgs'].type(dtype),
@@ -164,6 +178,14 @@ def train_crnn(
                 output_batch = preds.permute(1, 0, 2)
                 out = output_batch.data.cpu().numpy()
                 for i, gt_line in enumerate(x['gt']):
+                    if skip_none_labels and (gt_line is None or gt_line == ''):
+                        count_skips += 1
+                        logging.debug(
+                            'No ground truth label. Count: %d; `%s`',
+                            count_skips,
+                            x['gt'],
+                        )
+                        continue
                     logits = out[i, ...]
                     pred, raw_pred = string_utils.naive_decode(logits)
 
