@@ -69,14 +69,22 @@ model:
     train:
       # `train` is the config for training this model, as expected of machine
       # learning models. These are the expected arguments for passing to
-      # `Model.train()`.
+      # `Model.train()` or `Model.fit()`.
       learning_rate: 0.01
+      augmentation: True
+      batch_size: 16
     predict:
-      # `predict` is the configuration for initializing this model. These are
-      # the expected arguments for passing to `Model.predict()`. In the case of
-      # the CRNN, there are no prediction specific args. predict may be
-      # replaced with eval if the args only pertain to evaluation, not anytime
-      # predictions are made.
+      # `predict` is the configuration for predicting with this model, if there
+      # are any. These are the expected arguments for passing to
+      # `Model.predict()`. In the case of the CRNN, there are no prediction
+      # specific args. predict may be replaced with eval if the args only
+      # pertain to evaluation, not anytime predictions are made.
+    eval:
+      # `eval` is the configuration for evaluating this model. These pertain to
+      # how the data is fed to the model, regardless of how setup by the data
+      # config. So batch size belongs here.
+      metric: CER
+      batch_size: 1
 
     # `save_path` is the directory where the model's state is saved. In the
     # case of the CRNN, this is its weights.
@@ -89,6 +97,9 @@ model:
     # the model, such as `batch_size` carries over to both training and
     # prediction. And `metric` may be recorded both during training and
     # predictions or during eval.
-    metric: CER
     augmentation: True
     batch_size: 1
+
+# Down the line, it may be pertinent to add a separate eval section that
+# applies to all models.
+# eval:
