@@ -80,6 +80,10 @@ def train_crnn(
                 f'Output: |{ot}|',
             ]))
 
+            for ground_truth in x['gt']:
+                if ground_truth is None or ground_truth == '':
+                    raise ValueError('Ground Truth is None or empty string!')
+
             line_imgs = x['line_imgs']
             #"""
             rem = line_imgs.shape[3] % 32
