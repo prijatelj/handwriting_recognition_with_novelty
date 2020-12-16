@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
-#from exputils.data import BidirDict
+from exputils.data import NumpyJSONEncoder
 
 @dataclass
 class Summary:
@@ -15,11 +15,11 @@ class Summary:
     samples: int
     samples_per_doc: pd.Series
     samples_per_writer: pd.Series
-    writer_per_doc: BidirDict
+    #writer_per_doc: BidirDict
     #lines_per_d0c:
 
-    def doc_per_writer(self) -> dict:
-        return self.writer_per_doc.inverse()
+    #def doc_per_writer(self) -> dict:
+    #    return self.writer_per_doc.inverse()
 
 class IAMHandwriting(object):
     def __init__(self, filepath):
@@ -107,3 +107,40 @@ class IAMHandwriting(object):
             ))
 
         return folds
+
+if __name__ == '__main__':
+    # IAM
+    iamh_tr = IAMHandwriting(train_path)
+    iamh_val = IAMHandwriting(val_path)
+    iamh_te = IAMHandwriting(test_path)
+    ok = iamh_tr + iamh_val + iamh_te
+    folds = ok.kfold(5, seed=0)
+
+    for i, (train, test) in enumerate(folds):
+        with open(f'../tmp/paper/iam_splits/iam_split_{i}.txt', 'w') as f:
+            train, val = IAMHandwriting(train).kfold(5, seed=0)[0]
+            json.dump(
+                {
+                    'train': train,
+                    'val' : val,
+                    'test' : test,
+                },
+                f,
+                cls=NumpyJSONEncoder,
+                indent=4,
+            )
+
+    # RIMES
+    for i, (train, test) in enumerate(kf_gen):
+        with open(f'../tmp/paper/rimes_splits/rimes_split_{i}.txt', 'w') as f:
+            train2, val = next(KFold(5, shuffle=True, random_state=0).split(rimes[train]))
+            json.dump(
+                {
+                    'train': rimes[train][train2],
+                    'val' : rimes[train][val],
+                    'test' : rimes[test],
+                },
+                f,
+                cls=NumpyJSONEncoder,
+                indent=4,
+            )
