@@ -23,14 +23,17 @@ class Summary:
 
 class IAMHandwriting(object):
     def __init__(self, filepath):
-        with open(filepath, 'r') as openf:
-            labels_dict = json.load(openf)
+        if isinstance(filepath, np.ndarray):
+            self.files = filepath
+        else:
+            with open(filepath, 'r') as openf:
+                labels_dict = json.load(openf)
 
-        self.files = np.array([
-            os.path.splitext(
-                os.path.basename(x['image_path'])
-            )[0] for x in labels_dict
-        ])
+            self.files = np.array([
+                os.path.splitext(
+                    os.path.basename(x['image_path'])
+                )[0] for x in labels_dict
+            ])
 
         self.df = pd.DataFrame(
             [f.split('-') for f in self.files],
