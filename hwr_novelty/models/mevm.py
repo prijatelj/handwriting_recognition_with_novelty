@@ -30,20 +30,24 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         """Performs the same save functionality as in MultipleEVM but adds a
         dataset for the encoder's ordered labels.
         """
-        #super(MEVM, self).__init__(*args, **kwargs)
         if self._evms is None:
-            raise RuntimeError("The model has not been trained yet")
-        # open file for writing; create if not existent
+            raise RuntimeError("The model has not been trained yet.")
+
+        # Open file for writing; create if not existent
         if isinstance(h5, str):
             h5 = h5py.File(h5, 'w')
 
-        # write EVMs
+        # Write EVMs
         for i, evm in enumerate(self._evms):
             evm.save(h5.create_group("EVM-%d" % (i+1)))
 
         # Write labels for the encoder
         h5['labels'] = list(self.encoder.encoder)
 
+        # TODO Write training vars
+
+
+    # TODO make a @staticmethod
     def load(self, h5, labels=None, labels_type=int):
         """Performs the same lod functionality as in MultipleEVM but loads the
         ordered labels from the h5 file for the encoder.
@@ -84,11 +88,18 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                 [evm.label for evm in self._evms],
             )
 
+        # TODO Load training vars
+
     def predict(self, points):
-        """Wraps the MultipleEVM's max_probabilities and uses the encoder to
+        """Wraps the MultipleEVM's class_probabilities and uses the encoder to
         keep labels as expected by the user.
+
+        Returns
+        -------
         """
         raise NotImplementedError()
+
+        return
 
     def train(self, *args, **kwargs):
         super(MEVM, self).train(*args, **kwargs)
