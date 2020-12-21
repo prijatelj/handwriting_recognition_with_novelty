@@ -22,9 +22,9 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         # Create a NominalDataEncoder to map class inputs to the MEVM internal
         # class represntation.
         if isinstance(labels, NominalDataEncoder) or labels is None:
-            self.encoder = labels
+            self.label_enc = labels
         elif isinstance(labels, list) or isinstance(labels, np.ndarray):
-            self.encoder = NominalDataEncoder(labels)
+            self.label_enc = NominalDataEncoder(labels)
         else:
             raise TypeError(' '.join([
                 'Expected `labels` of types: None, list, np.ndarray, or',
@@ -49,10 +49,10 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             evm.save(h5.create_group("EVM-%d" % (i+1)))
 
         # Write labels for the encoder
-        if self.encoder is None:
+        if self.label_enc is None:
             logging.info('No labels to be saved.')
         else:
-            h5['labels'] = list(self.encoder.encoder)
+            h5['labels'] = list(self.label_enc.encoder)
 
         # Write training vars
         for attrib in ['tailsize', 'cover_threshold', 'distance_function',
@@ -63,7 +63,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
     @staticmethod
     def load(h5, labels=None, labels_type=int, train_hyperparams=None):
         """Performs the same lod functionality as in MultipleEVM but loads the
-        ordered labels from the h5 file for the encoder.
+        ordered labels from the h5 file for the label encoder.
         """
         if isinstance(h5, str):
             h5 = h5py.File(h5, 'r')
@@ -83,13 +83,13 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                     'labels was given explicitly to MEVM.load(). Ignoring the',
                     'labels in the HDF5 file.',
                 ]))
-                encoder = NominalDataEncoder(labels)
+                label_enc = NominalDataEncoder(labels)
             else:
-                encoder = NominalDataEncoder(
+                label_enc = NominalDataEncoder(
                     h5['labels'][:].astype(labels_type),
                 )
         elif labels is not None:
-            encoder = NominalDataEncoder(labels)
+            label_enc = NominalDataEncoder(labels)
         else:
             logging.warning(' '.join([
                 'No `labels` dataset available in given hdf5. Relying on the',
@@ -97,7 +97,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                 'state does not have any labels in each of its EVM.',
             ]))
 
-            encoder = NominalDataEncoder(
+            label_enc = NominalDataEncoder(
                 [evm.label for evm in _evms],
             )
 
@@ -120,7 +120,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                 f'recieved {type(train_hyperparams)}',
             ]))
 
-        mevm = MEVM(encoder, **train_hyperparams)
+        mevm = MEVM(label_enc, **train_hyperparams)
         mevm._evms = _evms
 
         return mevm
@@ -129,7 +129,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
     #    # NOTE this may be necessary if train or train_update are used instead
     #    # of fit to keep the encoder in sync!
     #    super(MEVM, self).train(*args, **kwargs)
-    #    self.encoder = NominalDataEncoder([evm.label for evm in self._evms])
+    #    self.label_enc = NominalDataEncoder([evm.label for evm in self._evms])
 
     def fit(self, points, labels=None, extra_negatives=None):
         """Wraps the MultipleEVM's train() and uses the encoder to
@@ -163,15 +163,15 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
         # Set encoder if labels is not None
         if labels is not None:
-            if self.encoder is not None:
+            if self.label_enc is not None:
                 logging.debug(
                     '`encoder` is not None and is being overwritten!',
                 )
 
             if isinstance(labels, NominalDataEncoder):
-                self.encoder = labels
+                self.label_enc = labels
             elif isinstance(labels, list) or isinstance(labels, np.ndarray):
-                self.encoder = NominalDataEncoder(labels)
+                self.label_enc = NominalDataEncoder(labels)
             else:
                 raise TypeError(' '.join([
                     'Expected `labels` of types: None, list, np.ndarray, or',

@@ -65,6 +65,10 @@ class SupervisedClassifier(SupervisedLearner):
     def __init__(self, *args, **kwargs):
         self.label_enc = NominalDataEncoder(*args, **kwargs)
 
+    @property
+    def labels(self):
+        return list(self.label_enc.encoder)
+
 
 class SupervisedTranscripter(SupervisedClassifier):
     """Abstract class for supervised learning predictors.
