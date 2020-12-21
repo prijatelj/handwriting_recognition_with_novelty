@@ -29,7 +29,7 @@ class FeatureExtractor(ABC):
         pass
 
 
-class HOGSExtractor(FeatureExtractor):
+class HOG(FeatureExtractor):
     """Histogram of Oriented Gradients feature extractor from images.
 
     Attributes
