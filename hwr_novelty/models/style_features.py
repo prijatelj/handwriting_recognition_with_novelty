@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from inspect import getargspec
 
 import numpy as np
+from ruamel.yaml import YAML
 from skimage.feature import hog
 
 
@@ -23,7 +24,7 @@ class FeatureExtractor(ABC):
 
     @staticmethod
     @abstractmethod
-    def load(self, filepath):
+    def load(filepath):
         """Load the feature extractor state from the given filepath."""
         pass
 
@@ -36,23 +37,19 @@ class HOGSExtractor(FeatureExtractor):
     See `skimage.feature.hog`
     """
     def __init__(self, *args, **kwargs):
-        # TODO would love a meta programming thing that obtains the params from
-        # an existing function, class, or callable that allows for assigning
-        # variables in the current local namespace or through self.var_name.
-
-        # TODO this is a good case of wanting to make a config and arg parser
-        # for 3rd party code, thus being able
         argspec = getargspec(hog)
 
         # NOTE atm `skimage.feature.hog` is all positional args.
-        if argspec.defaults is not None:
-            num_required = len(argspec.args) - len(argspec.defaults)
-        else:
-            num_required = len(argspec.args)
+        #if argspec.defaults is not None:
+        #    num_required = len(argspec.args) - len(argspec.defaults)
+        #else:
+        #    num_required = len(argspec.args)
+        num_required = 0
+        del argspec.args[0]
 
         on_kwargs = len(args) == 0
 
-        for i, arg in argspec.args:
+        for i, arg in enumerate(argspec.args):
             if i < num_required:
                 # Set the arg to required positional value (no default).
                 if not on_kwargs and i < len(args):
@@ -72,9 +69,22 @@ class HOGSExtractor(FeatureExtractor):
                 else:
                     setattr(self, arg, argspec.defaults[i - num_required])
 
-        # TODO allow use of **kwargs! the more useful one wrt configs.
-        # TODO check where kwargs starts in the positional args. The rest are
-        # expected as kwargs then or defaults.
+    def save(self, filepath):
+        """Save the HOG feature extractor state to the given filepath."""
+        raise NotImplementedError('Not yet.')
+
+    @staticmethod
+    def load(filepath):
+        """Load the HOG feature extractor state from the given filepath."""
+
+        ext = os.path.splitext(filepath)[-1]
+
+        if ext != 'yaml':
+            raise NotImplementedError(
+                'Only loading from a YAML file is supported.',
+            )
+
+        return
 
     def extract(
         self,
