@@ -5,6 +5,8 @@ interal EVMs per class.
 import logging
 
 import h5py
+import numpy as np
+import torch
 
 from evm_based_novelty_detector.MultipleEVM import MultipleEVM
 from evm_based_novelty_detector.EVM import EVM
@@ -14,15 +16,20 @@ from hwr_novelty.models.predictor import SupervisedClassifier
 
 
 class MEVM(MultipleEVM, SupervisedClassifier):
-    def __init__(self, labels, max_unknown=None, *args, **kwargs):
+    def __init__(self, labels=None, max_unknown=None, *args, **kwargs):
         super(MEVM, self).__init__(*args, **kwargs)
 
         # Create a NominalDataEncoder to map class inputs to the MEVM internal
         # class represntation.
-        if isinstance(labels, NominalDataEncoder):
+        if isinstance(labels, NominalDataEncoder) or labels is None:
             self.encoder = labels
-        else:
+        elif isinstance(labels, list) or isinstance(labels, np.ndarray):
             self.encoder = NominalDataEncoder(labels)
+        else:
+            raise TypeError(' '.join([
+                'Expected `labels` of types: None, list, np.ndarray, or',
+                'NominalDataEncoder, not of type {type(labels)}'
+            ]))
 
         self.max_unknown = max_unknown
 
@@ -42,13 +49,19 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             evm.save(h5.create_group("EVM-%d" % (i+1)))
 
         # Write labels for the encoder
-        h5['labels'] = list(self.encoder.encoder)
+        if self.encoder is None:
+            logging.info('No labels to be saved.')
+        else:
+            h5['labels'] = list(self.encoder.encoder)
 
-        # TODO Write training vars
+        # Write training vars
+        for attrib in ['tailsize', 'cover_threshold', 'distance_function',
+            'distance_multiplier', 'max_unknown',
+        ]:
+            h5[attrib] = getattr(self, attrib)
 
-
-    # TODO make a @staticmethod
-    def load(self, h5, labels=None, labels_type=int):
+    @staticmethod
+    def load(h5, labels=None, labels_type=int, train_hyperparams=None):
         """Performs the same lod functionality as in MultipleEVM but loads the
         ordered labels from the h5 file for the encoder.
         """
@@ -56,10 +69,10 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             h5 = h5py.File(h5, 'r')
 
         # load evms
-        self._evms = []
+        _evms = []
         i = 1
         while "EVM-%d" % i in h5:
-            self._evms.append(EVM(h5["EVM-%d" % (i)], log_level='debug'))
+            _evms.append(EVM(h5["EVM-%d" % (i)], log_level='debug'))
             i += 1
 
         # Load the ordered label into the NominalDataEncoder
@@ -70,13 +83,13 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                     'labels was given explicitly to MEVM.load(). Ignoring the',
                     'labels in the HDF5 file.',
                 ]))
-                self.encoder = NominalDataEncoder(labels)
+                encoder = NominalDataEncoder(labels)
             else:
-                self.encoder = NominalDataEncoder(
+                encoder = NominalDataEncoder(
                     h5['labels'][:].astype(labels_type),
                 )
         elif labels is not None:
-            self.encoder = NominalDataEncoder(labels)
+            encoder = NominalDataEncoder(labels)
         else:
             logging.warning(' '.join([
                 'No `labels` dataset available in given hdf5. Relying on the',
@@ -84,40 +97,123 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                 'state does not have any labels in each of its EVM.',
             ]))
 
-            self.encoder = NominalDataEncoder(
-                [evm.label for evm in self._evms],
+            encoder = NominalDataEncoder(
+                [evm.label for evm in _evms],
             )
 
-        # TODO Load training vars
+        # Load training vars if not given
+        if train_hyperparams is None:
+            # NOTE Able to specify which to load from h5 by passing a list.
+            train_hyperparams = [
+                'tailsize',
+                'cover_threshold',
+                'distance_function',
+                'distance_multiplier',
+                'max_unknown',
+            ]
 
-    def predict(self, points):
-        """Wraps the MultipleEVM's class_probabilities and uses the encoder to
-        keep labels as expected by the user.
+        if isinstance(train_hyperparams, list):
+            train_hyperparams = {attr: h5[attr] for attr in train_hyperparams}
+        elif not isinstance(train_hyperparams, dict):
+            raise TypeError(' '.join([
+                '`train_hyperparams` expected type: None, list, or dict, but',
+                f'recieved {type(train_hyperparams)}',
+            ]))
 
-        Returns
-        -------
-        """
-        raise NotImplementedError()
+        mevm = MEVM(encoder, **train_hyperparams)
+        mevm._evms = _evms
 
-        return
+        return mevm
 
-    def train(self, *args, **kwargs):
-        super(MEVM, self).train(*args, **kwargs)
-        self.encoder = NominalDataEncoder([evm.label for evm in self._evms])
+    #def train(self, *args, **kwargs):
+    #    # NOTE this may be necessary if train or train_update are used instead
+    #    # of fit to keep the encoder in sync!
+    #    super(MEVM, self).train(*args, **kwargs)
+    #    self.encoder = NominalDataEncoder([evm.label for evm in self._evms])
 
     def fit(self, points, labels=None, extra_negatives=None):
         """Wraps the MultipleEVM's train() and uses the encoder to
         """
-        # TODO depend on labels in the encoder, ow. update.
+        # If points and labels are aligned sequence pair (X, y): adjust form
+        if (
+            isinstance(points, np.ndarray)
+            and (isinstance(labels, list) or isinstance(labels, np.ndarray))
+            and len(points) == len(labels)
+        ):
+            # Adjust sequence pair into list of torch.Tensors and unique labels
+            unique = np.unique(labels)
+            points = [torch.Tensor(points[labels == u]) for u in unique]
+            labels = unique
+        elif isinstance(points, list):
+            if all([isinstance(pts, np.ndarray) for pts in points]):
+                # If list of np.ndarrays, turn into torch.Tensors
+                points = [torch.Tensor(pts) for pts in points]
+            elif not all([isinstance(pts, torch.Tensor) for pts in points]):
+                raise TypeError(' '.join([
+                    'expected points to be of types: list(np.ndarray),',
+                    'list(torch.tensor), or np.ndarray with labels as an',
+                    'aligned list or np.ndarray',
+                ]))
+        else:
+            raise TypeError(' '.join([
+                'expected points to be of types: list(np.ndarray),',
+                'list(torch.tensor), or np.ndarray with labels as an',
+                'aligned list or np.ndarray',
+            ]))
 
-        # TODO optionally allow for fit(x, y) functionality AND class_features
-        # as MEVM.train() expects
+        # Set encoder if labels is not None
+        if labels is not None:
+            if self.encoder is not None:
+                logging.debug(
+                    '`encoder` is not None and is being overwritten!',
+                )
 
-    # TODO def train(): wrap to update encoder
-    # TODO def train_update(): wrap to update encoder
+            if isinstance(labels, NominalDataEncoder):
+                self.encoder = labels
+            elif isinstance(labels, list) or isinstance(labels, np.ndarray):
+                self.encoder = NominalDataEncoder(labels)
+            else:
+                raise TypeError(' '.join([
+                    'Expected `labels` of types: None, list, np.ndarray, or',
+                    'NominalDataEncoder, not of type {type(labels)}'
+                ]))
 
-    # TODO basically include as much functionality as necessary for generalized
-    # trianing of a MEVM here.
+        # Points is now list(torch.Tensors) and encoder handled.
+
+        # TODO handle adjust of extra negatives as a list of labels to be known
+        # unknowns. For now, expects extra_negatives always of correct type.
+        self.train(points, labels, extra_negatives)
+
+    def predict(self, points, return_tensor=False):
+        """Wraps the MultipleEVM's class_probabilities and uses the encoder to
+        keep labels as expected by the user. Also adjusts the class
+        probabilities to include the unknown class.
+
+        Returns
+        -------
+        np.ndarray
+        """
+        if isinstance(points, np.ndarray):
+            points = torch.Tensor(points)
+        elif not isinstance(points, torch.Tensor):
+            raise TypeError(
+                'expected points to be of type: np.ndarray or torch.Tensor',
+            )
+
+        probs = self.class_probabilities(points)
+
+        if return_tensor:
+            raise NotImplementedError('Not yet.')
+
+        # Find probability of unknown as its own class
+        probs = np.array(probs)
+        max_probs_known = probs.max(axis=1)
+        unknown_probs = (1 - max_probs_known).reshape(-1, )
+
+        # Scale the rest of the known class probs by max prob known
+        probs *= max_probs_known.reshape(-1, 1)
+
+        return np.hstack((probs, unknown_probs))
 
 
 class CRNNMEVM(object):
