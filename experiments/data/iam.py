@@ -1,13 +1,16 @@
 """Data handler and analysis of the IAM Handwriting Database."""
 from copy import deepcopy
+from collections import namedtuple
+from dataclasses import dataclass
 import json
 import os
 
+import cv2
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
-from exputils.data import NumpyJSONEncoder
+from exputils.io import NumpyJSONEncoder
 
 @dataclass
 class Summary:
@@ -21,24 +24,46 @@ class Summary:
     #def doc_per_writer(self) -> dict:
     #    return self.writer_per_doc.inverse()
 
+@dataclass
+class HWRItem:
+    """Data class for the item returned by the HWR class get item."""
+    image: np.ndarray
+    text: str
+    path: str
+    writer: str
+    #repr
+
 class IAMHandwriting(object):
-    def __init__(self, filepath):
+    def __init__(self, filepath, key=None):
         if isinstance(filepath, np.ndarray):
-            self.files = filepath
+            self.ids = filepath
+            self.texts = None
+            self.files = None
         else:
             with open(filepath, 'r') as openf:
                 labels_dict = json.load(openf)
+                if key is not None:
+                    labels_dict = labels_dict[key]
 
-            self.files = np.array([
-                os.path.splitext(
-                    os.path.basename(x['image_path'])
-                )[0] for x in labels_dict
-            ])
+            files = []
+            texts = []
+            ids = []
+            for x in labels_dict:
+                path = x['image_path']
+                files.append(path)
+                ids.append(os.path.splitext(os.path.basename(path))[0])
+                texts.append(x['gt'])
+            self.ids = np.array(ids)
+            self.files = np.array(files)
+            self.texts = np.array(texts)
 
-        self.df = pd.DataFrame(
-            [f.split('-') for f in self.files],
-            columns=['doc', 'writer', 'line'],
-        )
+        if 'imes' in filepath:
+            self.df = None
+        else:
+            self.df = pd.DataFrame(
+                [f.split('-') for f in self.ids],
+                columns=['doc', 'writer', 'line'],
+            )
 
     def __add__(self, other):
         if type(self) != type(other):
@@ -50,6 +75,8 @@ class IAMHandwriting(object):
         df = deepcopy(self)
         df.df = self.df.append(other.df)
         df.files = np.concatenate((self.files, other.files))
+        df.texts = np.concatenate((self.texts, other.texts))
+        df.ids = np.concatenate((self.ids, other.ids))
         return df
 
     def doc_summary(self):
@@ -80,7 +107,7 @@ class IAMHandwriting(object):
         # 1st half is k fold stratified
         strat_idx= [val in label_set_strat for val in self.df[col]]
         strat_kfold = StratifiedKFold(kfold, shuffle, seed).split(
-            self.files[strat_idx],
+            self.ids[strat_idx],
             self.df[col][strat_idx],
         )
 
@@ -93,20 +120,76 @@ class IAMHandwriting(object):
             st_tr, st_te = next(strat_kfold)
             folds.append((
                 np.concatenate([
-                    self.files[st_tr],
-                    self.files[[
+                    self.ids[st_tr],
+                    self.ids[[
                         val in label_set_sep[sep_kf[0]] for val in self.df[col]
                     ]]
                 ]),
                 np.concatenate([
-                    self.files[st_te],
-                    self.files[[
+                    self.ids[st_te],
+                    self.ids[[
                         val in label_set_sep[sep_kf[1]] for val in self.df[col]
                     ]]
                 ]),
             ))
 
         return folds
+
+
+class IAM(object):
+    def __init__(
+        self,
+        filepath,
+        datasplit,
+        root_path,
+        img_height=32,
+        augmentation=False,
+    ):
+        iam_hw = IAMHandwriting(filepath, datasplit)
+        self.df = iam_hw.df
+        self.files = iam_hw.files
+        self.texts = iam_hw.texts
+        self.ids = iam_hw.ids
+
+        self.root_path = root_path
+        self.img_height = img_height
+        self.augmentation = augmentation
+
+    @property
+    def values(self):
+        return np.array(list(self))
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.root_path, self.files[idx])
+        image = cv2.imread(img_path)
+
+        # Resize image based on given image height
+        percent_x = float(self.img_height) / image.shape[0]
+        image = cv2.resize(
+            image,
+            (0,0),
+            fx=percent_x,
+            fy=percent_x,
+            interpolation=cv2.INTER_CUBIC,
+        )
+
+        if self.augmentation:
+            image = grid_distortion.warp_image(
+                image,
+                h_mesh_std=5,
+                w_mesh_std=10,
+                random_state=self.random_state,
+            )
+
+        image = image.astype(np.float32) / 128.0 - 1.0
+
+        return HWRItem(
+            image,
+            self.texts[idx],
+            img_path,
+            None if self.df is None else self.df['writer'][idx],
+        )
+
 
 if __name__ == '__main__':
     # IAM
