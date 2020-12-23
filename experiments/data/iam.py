@@ -12,6 +12,8 @@ from sklearn.model_selection import KFold, StratifiedKFold
 
 from exputils.io import NumpyJSONEncoder
 
+# TODO refactor and reorganize this.
+
 @dataclass
 class Summary:
     """Class for storing data summary info."""
@@ -33,7 +35,7 @@ class HWRItem:
     writer: str
     #repr
 
-class IAMHandwriting(object):
+class HWRHandwriting(object):
     def __init__(self, filepath, key=None):
         if isinstance(filepath, np.ndarray):
             self.ids = filepath
@@ -136,7 +138,7 @@ class IAMHandwriting(object):
         return folds
 
 
-class IAM(object):
+class HWR(object):
     def __init__(
         self,
         filepath,
@@ -145,7 +147,7 @@ class IAM(object):
         img_height=32,
         augmentation=False,
     ):
-        iam_hw = IAMHandwriting(filepath, datasplit)
+        iam_hw = HWRHandwriting(filepath, datasplit)
         self.df = iam_hw.df
         self.files = iam_hw.files
         self.texts = iam_hw.texts
@@ -192,16 +194,16 @@ class IAM(object):
 
 
 if __name__ == '__main__':
-    # IAM
-    iamh_tr = IAMHandwriting(train_path)
-    iamh_val = IAMHandwriting(val_path)
-    iamh_te = IAMHandwriting(test_path)
+    # HWR
+    iamh_tr = HWRHandwriting(train_path)
+    iamh_val = HWRHandwriting(val_path)
+    iamh_te = HWRHandwriting(test_path)
     ok = iamh_tr + iamh_val + iamh_te
     folds = ok.kfold(5, seed=0)
 
     for i, (train, test) in enumerate(folds):
         with open(f'../tmp/paper/iam_splits/iam_split_{i}.txt', 'w') as f:
-            train, val = IAMHandwriting(train).kfold(5, seed=0)[0]
+            train, val = HWRHandwriting(train).kfold(5, seed=0)[0]
             json.dump(
                 {
                     'train': train,
