@@ -1,1 +1,1 @@
-from hwr_novelty import models, labels
+from hwr_novelty import models, labels, generate
