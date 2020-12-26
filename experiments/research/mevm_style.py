@@ -62,7 +62,9 @@ def script_args(parser):
     )
 
     # TODO eventually will replace with proper config/arg parser
-    mevm = parser.add_arg
+    #mevm = parser.add_arg
+
+    # TODO make it easy to replace the iam and rimes split json for CRC script
 
 def parse_args():
     args = io.parse_args(custom_args=script_args)
@@ -103,14 +105,14 @@ def parse_args():
 
     # parse and fill mevm config
     args.mevm = argparse.Namespace()
-    args.mevm.save_path = None if 'save_path' not in config['mevm'] else config['mevm']['save_path']
-    args.mevm.load_path = None if 'load_path' not in config['mevm'] else config['mevm']['load_path']
+    args.mevm.save_path = None if 'save_path' not in config['model']['mevm'] else config['model']['mevm']['save_path']
+    args.mevm.load_path = None if 'load_path' not in config['model']['mevm'] else config['model']['mevm']['load_path']
 
     args.mevm.init = argparse.Namespace()
-    args.mevm.init.tailsize = config['mevm']['init']['tailsize']
-    args.mevm.init.cover_threshold = config['mevm']['init']['cover_threshold']
-    args.mevm.init.distance_multiplier = config['mevm']['init']['distance_multiplier']
-    args.mevm.init.distance_function = config['mevm']['init']['distance_function']
+    args.mevm.init.tailsize = config['model']['mevm']['init']['tailsize']
+    args.mevm.init.cover_threshold = config['model']['mevm']['init']['cover_threshold']
+    args.mevm.init.distance_multiplier = config['model']['mevm']['init']['distance_multiplier']
+    args.mevm.init.distance_function = config['model']['mevm']['init']['distance_function']
 
     return args
 
