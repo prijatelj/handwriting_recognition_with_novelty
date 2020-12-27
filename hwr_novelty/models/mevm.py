@@ -55,7 +55,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             labels = np.array(self.label_enc.encoder)
             h5.attrs['labels_dtype'] = str(labels.dtype)
 
-            if labels.dtype is np.str_ or labels.dtype is np.string_:
+            if labels.dtype.type is np.str_ or labels.dtype.type is np.string_:
                 h5.create_dataset(
                     'labels',
                     data=labels.astype(object),
