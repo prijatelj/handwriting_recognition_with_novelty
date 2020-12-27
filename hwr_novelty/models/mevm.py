@@ -52,16 +52,26 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         if self.label_enc is None:
             logging.info('No labels to be saved.')
         else:
-            h5['labels'] = [str(label) for label in self.label_enc.encoder]
+            labels = np.array(self.label_enc.encoder)
+            h5.attrs['labels_dtype'] = str(labels.dtype)
+
+            if labels.dtype is np.str_ or labels.dtype is np.string_:
+                h5.create_dataset(
+                    'labels',
+                    data=labels.astype(object),
+                    dtype=h5py.special_dtype(vlen=str),
+                )
+            else:
+                h5['labels'] = labels
 
         # Write training vars
         for attrib in ['tailsize', 'cover_threshold', 'distance_function',
             'distance_multiplier', 'max_unknown',
         ]:
-            h5[attrib] = getattr(self, attrib)
+            h5.attrs[attrib] = getattr(self, attrib)
 
     @staticmethod
-    def load(h5, labels=None, labels_type=int, train_hyperparams=None):
+    def load(h5, labels=None, labels_dtype=None, train_hyperparams=None):
         """Performs the same lod functionality as in MultipleEVM but loads the
         ordered labels from the h5 file for the label encoder.
         """
@@ -85,8 +95,10 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                 ]))
                 label_enc = NominalDataEncoder(labels)
             else:
+                if labels_dtype is None:
+                    labels_dtype = np.dtype(h5.attrs['labels_dtype'])
                 label_enc = NominalDataEncoder(
-                    h5['labels'][:].astype(labels_type),
+                    h5['labels'][:].astype(labels_dtype),
                 )
         elif labels is not None:
             label_enc = NominalDataEncoder(labels)
@@ -113,7 +125,9 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             ]
 
         if isinstance(train_hyperparams, list):
-            train_hyperparams = {attr: h5[attr] for attr in train_hyperparams}
+            train_hyperparams = {
+                attr: h5.attrs[attr] for attr in train_hyperparams
+            }
         elif not isinstance(train_hyperparams, dict):
             raise TypeError(' '.join([
                 '`train_hyperparams` expected type: None, list, or dict, but',
