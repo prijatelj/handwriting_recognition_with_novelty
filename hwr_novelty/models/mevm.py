@@ -68,7 +68,9 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         for attrib in ['tailsize', 'cover_threshold', 'distance_function',
             'distance_multiplier', 'max_unknown',
         ]:
-            h5.attrs[attrib] = getattr(self, attrib)
+            value = getattr(self, attrib)
+            if value is not None:
+                h5.attrs[attrib] = value
 
     @staticmethod
     def load(h5, labels=None, labels_dtype=None, train_hyperparams=None):
@@ -127,6 +129,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         if isinstance(train_hyperparams, list):
             train_hyperparams = {
                 attr: h5.attrs[attr] for attr in train_hyperparams
+                if attr in h5.attrs
             }
         elif not isinstance(train_hyperparams, dict):
             raise TypeError(' '.join([
