@@ -6,7 +6,7 @@ data:
     image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/IAM_aachen/IAM_lines/'
   rimes:
     path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/rimes_splits/rimes_split_0.json'
-    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/rimes/RIMES_2011_LINES/'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/RIMES_2011_LINES/'
   # TODO banglawriting
 model:
   hogs:
