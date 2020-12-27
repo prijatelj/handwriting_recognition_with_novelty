@@ -52,7 +52,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         if self.label_enc is None:
             logging.info('No labels to be saved.')
         else:
-            h5['labels'] = list(self.label_enc.encoder)
+            h5['labels'] = [str(label) for label in self.label_enc.encoder]
 
         # Write training vars
         for attrib in ['tailsize', 'cover_threshold', 'distance_function',
