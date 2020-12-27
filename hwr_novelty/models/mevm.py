@@ -148,6 +148,12 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             if all([isinstance(pts, np.ndarray) for pts in points]):
                 # If list of np.ndarrays, turn into torch.Tensors
                 points = [torch.Tensor(pts) for pts in points]
+
+                if labels is not None and len(points) != len(labels):
+                    raise ValueError(' '.join([
+                        'Given number of labels does not equal the number of',
+                        'classes represented by the list of points.',
+                    ]))
             elif not all([isinstance(pts, torch.Tensor) for pts in points]):
                 raise TypeError(' '.join([
                     'expected points to be of types: list(np.ndarray),',
@@ -177,6 +183,21 @@ class MEVM(MultipleEVM, SupervisedClassifier):
                     'Expected `labels` of types: None, list, np.ndarray, or',
                     'NominalDataEncoder, not of type {type(labels)}'
                 ]))
+
+        # Ensure extra_negatives is of expected form (no labels for these)
+        if (
+            (
+                isinstance(extra_negatives, np.ndarray)
+                and len(extra_negatives.shape) == 2
+            )
+            or isinstance(extra_negatives, list)
+        ):
+            extra_negatives = torch.Tensor(extra_negatives)
+        elif not isinstance(extra_negatives, torch.Tensor):
+            raise TypeError(' '.join([
+                'The extra_negatives must be either None, torch.Tensor of',
+                'shape 2, or an object broadcastable to such a torch.Tensor.',
+            ]))
 
         # Points is now list(torch.Tensors) and encoder handled.
 
