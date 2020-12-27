@@ -65,6 +65,19 @@ def script_args(parser):
     #mevm = parser.add_arg
 
     # TODO make it easy to replace the iam and rimes split json for CRC script
+    data = parser.add_argument_group('data', 'Data config')
+    data.add_argument(
+        '--iam_path',
+        default=None,
+        help='Path to IAM labels.',
+        dest='data.iam.path',
+    )
+    data.add_argument(
+        '--rimes_path',
+        default=None,
+        help='Path to RIMES labels.',
+        dest='data.rimes.path',
+    )
 
 def parse_args():
     args = io.parse_args(custom_args=script_args)
@@ -74,16 +87,18 @@ def parse_args():
         config = YAML(typ='safe').load(openf)
 
     # parse and make data config
-    args.data = argparse.Namespace()
+    #args.data = argparse.Namespace()
     args.data.datasplit = config['data']['datasplit']
     args.data.image_height = config['data']['image_height']
 
-    args.data.iam = argparse.Namespace()
-    args.data.iam.path = config['data']['iam']['path']
+    #args.data.iam = argparse.Namespace()
+    if args.data.iam.path is None:
+        args.data.iam.path = config['data']['iam']['path']
     args.data.iam.image_root_dir = config['data']['iam']['image_root_dir']
 
-    args.data.rimes = argparse.Namespace()
-    args.data.rimes.path = config['data']['rimes']['path']
+    #args.data.rimes = argparse.Namespace()
+    if args.data.rimes.path is None:
+        args.data.rimes.path = config['data']['rimes']['path']
     args.data.rimes.image_root_dir = config['data']['rimes']['image_root_dir']
 
     # Parse and make HOG config
