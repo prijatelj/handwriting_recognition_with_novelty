@@ -41,10 +41,12 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64):
     #   CRNN repr at RNN, at CNN
     #if feature_extraction == 'hog':
     hog = HOG(**vars(hogs.init))
-    points = [hog.extract(img, **vars(hogs.extract)) for img in images]
-    extra_negatives = [
+    points = np.array([
+        hog.extract(img, **vars(hogs.extract)) for img in images
+    ])
+    extra_negatives = np.array([
         hog.extract(img, **vars(hogs.extract)) for img in extra_negatives
-    ]
+    ])
     #elif feature_extraction in {'resnet50'}:
     #    raise NotImplementedError()
     #else:

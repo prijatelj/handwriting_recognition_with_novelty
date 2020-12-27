@@ -148,12 +148,6 @@ class MEVM(MultipleEVM, SupervisedClassifier):
             if all([isinstance(pts, np.ndarray) for pts in points]):
                 # If list of np.ndarrays, turn into torch.Tensors
                 points = [torch.Tensor(pts) for pts in points]
-
-                if labels is not None and len(points) != len(labels):
-                    raise ValueError(' '.join([
-                        'Given number of labels does not equal the number of',
-                        'classes represented by the list of points.',
-                    ]))
             elif not all([isinstance(pts, torch.Tensor) for pts in points]):
                 raise TypeError(' '.join([
                     'expected points to be of types: list(np.ndarray),',
@@ -169,6 +163,14 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
         # Set encoder if labels is not None
         if labels is not None:
+            if len(points) != len(labels):
+                raise ValueError(' '.join([
+                    'The given number of labels does not equal the number of',
+                    'classes represented by the list of points.',
+                    'If giving an aligned sequence pair of points and labels,',
+                    'then ensure `points` is of type `np.ndarray`.',
+                ]))
+
             if self.label_enc is not None:
                 logging.debug(
                     '`encoder` is not None and is being overwritten!',
