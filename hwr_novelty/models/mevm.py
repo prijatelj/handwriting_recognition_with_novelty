@@ -142,6 +142,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         ):
             # Adjust sequence pair into list of torch.Tensors and unique labels
             unique = np.unique(labels)
+            labels = np.array(labels)
             points = [torch.Tensor(points[labels == u]) for u in unique]
             labels = unique
         elif isinstance(points, list):
