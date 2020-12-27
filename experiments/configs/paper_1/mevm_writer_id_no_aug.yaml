@@ -1,11 +1,12 @@
 data:
+  image_height: 64
   datasplit: train
   iam:
-    path: '/home/commoner/Downloads/osr/sam_data/IAM_aachen'
-    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/iam_splits/iam_split_0_labels.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/IAM_aachen/IAM_lines/'
   rimes:
-    path: 'somewhere/filesystem/.json'
-    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/PAR/round_1/images/'
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/rimes_splits/rimes_split_0.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/rimes/RIMES_2011_LINES/'
   # TODO banglawriting
 model:
   hogs:
@@ -15,6 +16,7 @@ model:
       cells_per_block: [4, 4]
       block_norm: 'L2'
       feature_vector: False
+      multichannel: True
     extract:
       means: 1
   mevm:
