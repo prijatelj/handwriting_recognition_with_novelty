@@ -16,12 +16,12 @@ from experiments.data.iam import HWR
 
 
 
-def load_data(datasplit, iam, rimes, hogs):
+def load_data(datasplit, iam, rimes, hogs, image_height=64):
     #   IAM (known knowns)
-    iam_data = HWR(iam.path, datasplit, iam.image_root_dir)
+    iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
     #   RIMES (known unknowns)
-    rimes_data = HWR(rimes.path, datasplit, rimes.image_root_dir)
+    rimes_data = HWR(rimes.path, datasplit, rimes.image_root_dir, image_height)
 
     # TODO BangalWriting Lines for eval
 
@@ -40,10 +40,10 @@ def load_data(datasplit, iam, rimes, hogs):
     #   ResNet 50 (pytorch model repr)
     #   CRNN repr at RNN, at CNN
     #if feature_extraction == 'hog':
-    hog = HOG(**hogs.init)
-    points = [hog.extract(img, **hogs.extract) for img in images]
+    hog = HOG(**vars(hogs.init))
+    points = [hog.extract(img, **vars(hogs.extract)) for img in images]
     extra_negatives = [
-        hog.extract(img, **hogs.extract) for img in extra_negatives
+        hog.extract(img, **vars(hogs.extract)) for img in extra_negatives
     ]
     #elif feature_extraction in {'resnet50'}:
     #    raise NotImplementedError()
@@ -76,6 +76,7 @@ def parse_args():
     # parse and make data config
     args.data = argparse.Namespace()
     args.data.datasplit = config['data']['datasplit']
+    args.data.image_height = config['data']['image_height']
 
     args.data.iam = argparse.Namespace()
     args.data.iam.path = config['data']['iam']['path']
@@ -94,9 +95,27 @@ def parse_args():
     args.hogs.init.cells_per_block = config['model']['hogs']['init']['cells_per_block']
     args.hogs.init.block_norm = config['model']['hogs']['init']['block_norm']
     args.hogs.init.feature_vector = config['model']['hogs']['init']['feature_vector']
+    args.hogs.init.multichannel = config['model']['hogs']['init']['multichannel']
+
+    ''' Generalized config parsing for models, but missing defaults.
+    for model_id, margs in config['model'].items():
+        setattr(args, model_id, argparse.Namespace())
+
+        for func, fargs in margs.items():
+            model_obj = getattr(args, model_id)
+            if func in ['save_path', 'load_path']:
+                setattr(model_obj, func, fargs)
+                continue
+
+            setattr(model_obj, func, argparse.Namespace())
+
+            for attr, value in fargs.items():
+                setattr(getattr(model_obj, func), attr, value)
+    #'''
 
     args.hogs.extract = argparse.Namespace()
     args.hogs.extract.means = config['model']['hogs']['extract']['means']
+
     args.hogs.extract.concat_mean = (
         False if 'concat_mean' not in
         config['model']['hogs']['extract']
