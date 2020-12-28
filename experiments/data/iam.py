@@ -165,6 +165,9 @@ class HWR(object):
         img_path = os.path.join(self.root_path, self.files[idx])
         image = cv2.imread(img_path)
 
+        if image is None:
+            raise IOError(f'`image` is None. image path: {img_path}')
+
         # Resize image based on given image height
         percent_x = float(self.img_height) / image.shape[0]
         image = cv2.resize(
