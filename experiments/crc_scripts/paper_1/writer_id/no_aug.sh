@@ -15,7 +15,7 @@ BASE_SPLIT="/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten
 BASE_IAM="$BASE_SPLIT/paper_1/data/iam_splits"
 BASE_RIMES="$BASE_SPLIT/paper_1/data/rimes_splits"
 
-BASE_OUT="BASE_SPLIT/paper_1/writer_id/mevm"
+BASE_OUT="$BASE_SPLIT/paper_1/writer_id/mevm"
 
 # set up the environment
 module add conda
