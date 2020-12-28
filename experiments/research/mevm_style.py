@@ -193,7 +193,7 @@ if __name__ == '__main__':
         logging.info('Saving MEVM')
         mevm.save(io.create_filepath(args.mevm.save_path))
 
-    if args.results_path and (args.mevm.save_path or args.mevm.load_path):
+    if args.output.path and (args.mevm.save_path or args.mevm.load_path):
         #if args.load_probs:
         #    raise NotImplementedError()
         #else:
