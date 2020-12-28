@@ -24,27 +24,27 @@ conda activate osr_torch
 # Unique path addons per run
 if [ "$SGE_TASK_ID" -eq "1" ]; then
     IAM_PATH="$BASE_IAM/iam_split_0_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_0_labels.json"
+    RIMES_PATH="$BASE_RIMES/rimes_split_0.json"
     OUT_PATH="$BASE_OUT/split_0/mevm_split_0_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/split_0/mevm_split_0_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "2" ]; then
     IAM_PATH="$BASE_IAM/iam_split_1_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_1_labels.json"
+    RIMES_PATH="$BASE_RIMES/rimes_split_1.json"
     OUT_PATH="$BASE_OUT/split_1/mevm_split_1_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/split_1/mevm_split_1_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "3" ]; then
     IAM_PATH="$BASE_IAM/iam_split_2_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_2_labels.json"
+    RIMES_PATH="$BASE_RIMES/rimes_split_2.json"
     OUT_PATH="$BASE_OUT/split_2/mevm_split_2_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/split_2/mevm_split_2_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "4" ]; then
     IAM_PATH="$BASE_IAM/iam_split_3_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_3_labels.json"
+    RIMES_PATH="$BASE_RIMES/rimes_split_3.json"
     OUT_PATH="$BASE_OUT/split_3/mevm_split_3_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/split_3/mevm_split_3_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "5" ]; then
     IAM_PATH="$BASE_IAM/iam_split_4_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_4_labels.json"
+    RIMES_PATH="$BASE_RIMES/rimes_split_4.json"
     OUT_PATH="$BASE_OUT/split_4/mevm_split_4_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/split_4/mevm_split_4_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "6" ]; then
