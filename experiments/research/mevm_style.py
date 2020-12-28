@@ -88,6 +88,12 @@ def script_args(parser):
         help='Path to RIMES labels.',
         dest='data.rimes.path',
     )
+    #data.add_argument(
+    #    '--datasplit',
+    #    default=None,
+    #    help='Datasplit to use.',
+    #    dest='data.datasplit',
+    #)
 
     parser.add_argument(
         '--mevm_save',

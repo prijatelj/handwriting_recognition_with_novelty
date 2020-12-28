@@ -44,7 +44,7 @@ class HWRHandwriting(object):
         else:
             with open(filepath, 'r') as openf:
                 labels_dict = json.load(openf)
-                if key is not None:
+                if key is not None and isinstance(labels_dict, dict):
                     labels_dict = labels_dict[key]
 
             files = []
