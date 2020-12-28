@@ -52,6 +52,16 @@ elif [ "$SGE_TASK_ID" -eq "6" ]; then
     RIMES_PATH="$BASE_SPLIT/grieggs_data/RIMES_2011_LINES/training_2011_gt.json"
     OUT_PATH="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.hdf5"
+
+    python3 "$BASE_PATH/experiments/research/mevm_style.py" \
+        "$BASE_PATH/experiments/configs/paper_1/mevm_writer_id_no_aug.yaml" \
+        --log_level INFO \
+        --iam_path "$IAM_PATH" \
+        --iam_image_root_dir "$BASE_SPLIT/grieggs_data/IAM_aachen/" \
+        --rimes_path "$RIMES_PATH" \
+        --output_path "$OUT_PATH" \
+        --mevm_save "$MEVM_SAVE"
+    exit 0
 else
     echo "ERROR: Unexpected SGE_TASK_ID: $SGE_TASK_ID"
     exit 1
