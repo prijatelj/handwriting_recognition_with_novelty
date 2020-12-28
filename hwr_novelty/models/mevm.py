@@ -56,7 +56,8 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         if self.label_enc is None:
             logging.info('No labels to be saved.')
         else:
-            h5.attrs['labels_dtype'] = str(self.labels.dtype)
+            labels = self.labels
+            h5.attrs['labels_dtype'] = str(labels.dtype)
 
             if labels.dtype.type is np.str_ or labels.dtype.type is np.string_:
                 h5.create_dataset(
