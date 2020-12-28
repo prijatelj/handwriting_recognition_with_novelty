@@ -161,11 +161,14 @@ def parse_args():
 
     # parse and fill mevm config
     args.mevm = argparse.Namespace()
+
     if args.mevm_save is None:
         if 'save_path' in config['model']['mevm']:
             args.mevm.save_path = config['model']['mevm']['save_path']
         else:
             args.mevm.save_path = None
+    else:
+        args.mevm.save_path = args.mevm_save
 
     args.mevm.load_path = None if 'load_path' not in config['model']['mevm'] else config['model']['mevm']['load_path']
 
