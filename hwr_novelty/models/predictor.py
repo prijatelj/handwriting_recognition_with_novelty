@@ -6,28 +6,31 @@ from exputils.data.labels import NominalDataEncoder
 from hwr_novelty.labels import CharEncoder
 
 
-class Predictor(ABC):
-    """Abstract class for predictors."""
+class Stateful(ABC):
+    """Abstract class for a stateful object who needs save and load methods."""
     @abstractmethod
     def save(self, filepath):
-        """Given filepath, save the current state of the predictor."""
+        """Given filepath, save the current state of the object."""
         # TODO consider `save()`
-        pass
+        raise NotImplementedError()
 
     @staticmethod
     @abstractmethod
     def load(filepath):
-        """Given filepath, load the saved state of the predictor."""
+        """Given filepath, load the saved state of the object."""
         # TODO consider `load()` and make it a method of the class so
         # `predictor = Predictor.load(path, *args. **kwargs)`
-        pass
+        raise NotImplementedError()
 
+
+class Predictor(Stateful):
+    """Abstract class for predictors."""
     @abstractmethod
     def predict(self, features):
         """Given the current state of the predictor, predict the labels"""
 
         # TODO predict in batches
-        pass
+        raise NotImplementedError()
 
     # NOTE optional def eval()
 
@@ -48,7 +51,7 @@ class SupervisedLearner(Predictor):
         # TODO fit incrementally
         # TODO parameterize init, fit, and predict st they may be provided args
         # & kwargs as configs
-        pass
+        raise NotImplementedError()
 
 
 class SupervisedClassifier(SupervisedLearner):
@@ -95,7 +98,7 @@ class SupervisedTranscripter(SupervisedClassifier):
         # TODO fit incrementally
         # TODO parameterize init, fit, and predict st they may be provided args
         # & kwargs as configs
-        pass
+        raise NotImplementedError()
 
 
 class SupervisedClassifier(SupervisedLearner):
@@ -137,7 +140,7 @@ class SupervisedTranscripter(SupervisedClassifier):
         # TODO fit incrementally
         # TODO parameterize init, fit, and predict st they may be provided args
         # & kwargs as configs
-        pass
+        raise NotImplementedError()
 
 
 # TODO MEVM(MultipleMEVM, SupervisedLearner):
@@ -155,7 +158,7 @@ class SupervisedTranscripter(SupervisedClassifier):
 #    """
 #
 #    def __init__(self):
-#        pass
+#        raise NotImplementedError()
 #
 #
 #class CRNNMEVM(ANNMEVM):
@@ -172,7 +175,7 @@ class SupervisedTranscripter(SupervisedClassifier):
         # TODO fit incrementally
         # TODO parameterize init, fit, and predict st they may be provided args
         # & kwargs as configs
-        pass
+        raise NotImplementedError()
 
 
 # TODO MEVM(MultipleMEVM, SupervisedLearner):
@@ -190,7 +193,7 @@ class SupervisedTranscripter(SupervisedClassifier):
 #    """
 #
 #    def __init__(self):
-#        pass
+#        raise NotImplementedError()
 #
 #
 #class CRNNMEVM(ANNMEVM):
