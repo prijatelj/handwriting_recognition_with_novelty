@@ -65,17 +65,11 @@ def script_args(parser):
 
     out = parser.add_argument_group('output', 'Output config')
     parser.add_argument(
-        '--path',
+        '--output_path',
         default=None,
         help='output filepath.',
         dest='output.path',
     )
-
-
-
-    # TODO output args other than results path?
-
-
 
     # TODO eventually will replace with proper config/arg parser
     #mevm = parser.add_arg
@@ -93,6 +87,12 @@ def script_args(parser):
         default=None,
         help='Path to RIMES labels.',
         dest='data.rimes.path',
+    )
+
+    parser.add_argument(
+        '--mevm_save',
+        default=None,
+        help='Path to save trained MEVM.',
     )
 
 def parse_args():
@@ -155,7 +155,12 @@ def parse_args():
 
     # parse and fill mevm config
     args.mevm = argparse.Namespace()
-    args.mevm.save_path = None if 'save_path' not in config['model']['mevm'] else config['model']['mevm']['save_path']
+    if args.mevm_save is None:
+        if 'save_path' in config['model']['mevm']:
+            args.mevm.save_path = config['model']['mevm']['save_path']
+        else:
+            args.mevm.save_path = None
+
     args.mevm.load_path = None if 'load_path' not in config['model']['mevm'] else config['model']['mevm']['load_path']
 
     args.mevm.init = argparse.Namespace()
