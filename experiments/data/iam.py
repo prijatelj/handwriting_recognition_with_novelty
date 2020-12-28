@@ -59,7 +59,7 @@ class HWRHandwriting(object):
             self.files = np.array(files)
             self.texts = np.array(texts)
 
-        if 'imes' in filepath:
+        if 'imes' in filepath.lower():
             self.df = None
         else:
             self.df = pd.DataFrame(
