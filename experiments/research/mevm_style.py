@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
-        df = pd.DataFrame(probs, columns=mevm.labels)
+        df = pd.DataFrame(probs, columns=mevm.labels.tolist() + ['unknown'])
         df.to_csv(args.output.path, index=False)
 
 
