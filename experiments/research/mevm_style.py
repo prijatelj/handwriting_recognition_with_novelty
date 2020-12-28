@@ -83,10 +83,23 @@ def script_args(parser):
         dest='data.iam.path',
     )
     data.add_argument(
+        '--iam_image_root_dir',
+        default=None,
+        help='Path to root dir of IAM line images.',
+        dest='data.iam.image_root_dir',
+    )
+
+    data.add_argument(
         '--rimes_path',
         default=None,
         help='Path to RIMES labels.',
         dest='data.rimes.path',
+    )
+    data.add_argument(
+        '--rimes_image_root_dir',
+        default=None,
+        help='Path to root dir of RIMES line images.',
+        dest='data.rimes.image_root_dir',
     )
     #data.add_argument(
     #    '--datasplit',
@@ -116,12 +129,14 @@ def parse_args():
     #args.data.iam = argparse.Namespace()
     if args.data.iam.path is None:
         args.data.iam.path = config['data']['iam']['path']
-    args.data.iam.image_root_dir = config['data']['iam']['image_root_dir']
+    if args.data.iam.image_root_dir is None:
+        args.data.iam.image_root_dir = config['data']['iam']['image_root_dir']
 
     #args.data.rimes = argparse.Namespace()
     if args.data.rimes.path is None:
         args.data.rimes.path = config['data']['rimes']['path']
-    args.data.rimes.image_root_dir = config['data']['rimes']['image_root_dir']
+    if args.data.rimes.image_root_dir is None:
+        args.data.rimes.image_root_dir = config['data']['rimes']['image_root_dir']
 
     # Parse and make HOG config
     args.hogs = argparse.Namespace()
