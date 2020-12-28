@@ -233,7 +233,12 @@ if __name__ == '__main__':
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
         df = pd.DataFrame(probs, columns=mevm.labels.tolist() + ['unknown'])
+        # TODO add a column or index of the image ids.
         df.to_csv(io.create_filepath(args.output.path), index=False)
+
+        # TODO possibly set the value to 0 if None??? need to figure out why
+        # getting blank/empty probs values for benchmark faithful, split 1 and
+        # split 3...
 
 
         # TODO eval metrics (this should be a generalized and separate script)
