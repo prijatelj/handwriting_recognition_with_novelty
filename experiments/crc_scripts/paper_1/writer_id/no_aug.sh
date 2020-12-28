@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/train/logs/
-#$ -t 1-6
+#$ -t 6-6
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 
@@ -49,7 +49,7 @@ elif [ "$SGE_TASK_ID" -eq "5" ]; then
     MEVM_SAVE="$BASE_OUT/split_4/mevm_split_4_writer_id_no_aug.hdf5"
 elif [ "$SGE_TASK_ID" -eq "6" ]; then
     IAM_PATH="$BASE_SPLIT/grieggs_data/IAM_aachen/train.json"
-    RIMES_PATH="$BASE_SPLIT/grieggs_data/RIMES_2011_LINES/training_2011.json"
+    RIMES_PATH="$BASE_SPLIT/grieggs_data/RIMES_2011_LINES/training_2011_gt.json"
     OUT_PATH="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.csv"
     MEVM_SAVE="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.hdf5"
 else
