@@ -63,6 +63,20 @@ def script_args(parser):
         help='YAML experiment configuration file defining the model and data.',
     )
 
+    out = parser.add_argument_group('output', 'Output config')
+    parser.add_argument(
+        '--path',
+        default=None,
+        help='output filepath.',
+        dest='output.path',
+    )
+
+
+
+    # TODO output args other than results path?
+
+
+
     # TODO eventually will replace with proper config/arg parser
     #mevm = parser.add_arg
 
@@ -179,7 +193,7 @@ if __name__ == '__main__':
         logging.info('Saving MEVM')
         mevm.save(io.create_filepath(args.mevm.save_path))
 
-    if args.eval and (args.mevm.save_path or args.mevm.load_path):
+    if args.results_path and (args.mevm.save_path or args.mevm.load_path):
         #if args.load_probs:
         #    raise NotImplementedError()
         #else:
@@ -190,7 +204,7 @@ if __name__ == '__main__':
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
         df = pd.DataFrame(probs, columns=mevm.labels)
-        df.to_csv(**args.output)
+        df.to_csv(args.output.path, index=False)
 
 
         # TODO eval metrics (this should be a generalized and separate script)
