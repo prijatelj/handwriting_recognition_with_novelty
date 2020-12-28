@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/train/logs/
-#$ -t 6
+#$ -t 1-6
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 
@@ -58,8 +58,8 @@ else
 fi
 
 python3 "$BASE_PATH/experiments/research/mevm_style.py" \
-    "$BASE_PATH/experiments/configs/paper_1/memver_writer_id_no_aug.yaml" \
-    --log_level INFO
+    "$BASE_PATH/experiments/configs/paper_1/mevm_writer_id_no_aug.yaml" \
+    --log_level INFO \
     --iam_path "$IAM_PATH" \
     --rimes_path "$RIMES_PATH" \
     --output_path "$OUT_PATH" \

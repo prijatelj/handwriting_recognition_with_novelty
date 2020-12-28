@@ -17,7 +17,7 @@ setup(
         'hwr_novelty',
         'hwr_novelty.models',
         'hwr_novelty.models.losses',
-        #'hwr_novelty.generate',
+        'hwr_novelty.generate',
         #'hwr_novelty.preprocessing',
     ],
     #scripts

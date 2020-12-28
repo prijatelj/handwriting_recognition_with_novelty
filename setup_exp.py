@@ -17,6 +17,7 @@ setup(
     packages=[
         'experiments',
         'experiments.research',
+        'experiments.data',
         'experiments.research.par_v1',
         'experiments.research.par_v1.grieggs',
     ],
