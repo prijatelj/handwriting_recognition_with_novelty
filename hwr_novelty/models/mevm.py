@@ -33,6 +33,10 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
         self.max_unknown = max_unknown
 
+    @property
+    def labels(self):
+        return np.array(self.label_enc.encoder)
+
     def save(self, h5):
         """Performs the same save functionality as in MultipleEVM but adds a
         dataset for the encoder's ordered labels.
@@ -52,8 +56,7 @@ class MEVM(MultipleEVM, SupervisedClassifier):
         if self.label_enc is None:
             logging.info('No labels to be saved.')
         else:
-            labels = np.array(self.label_enc.encoder)
-            h5.attrs['labels_dtype'] = str(labels.dtype)
+            h5.attrs['labels_dtype'] = str(self.labels.dtype)
 
             if labels.dtype.type is np.str_ or labels.dtype.type is np.string_:
                 h5.create_dataset(
