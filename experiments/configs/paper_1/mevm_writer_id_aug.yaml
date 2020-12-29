@@ -1,0 +1,33 @@
+data:
+  image_height: 64
+  datasplit: train
+  augmentation:
+    elastic_transform:
+      mesh_std: [5, 10]
+      augs_per_item: 10
+      include_original: True
+  iam:
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/iam_splits/iam_split_0_labels.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/IAM_aachen/IAM_lines/'
+  rimes:
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/rimes_splits/rimes_split_0.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/RIMES_2011_LINES/'
+  # TODO banglawriting
+model:
+  hogs:
+    init:
+      orientations: 9
+      pixels_per_cell: [16, 16]
+      cells_per_block: [4, 4]
+      block_norm: 'L2'
+      feature_vector: False
+      multichannel: True
+    extract:
+      means: 1
+  mevm:
+    init:
+      tailsize: 1000
+      cover_threshold: 0.5
+      distance_multiplier: 0.5
+      distance_function: cosine
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/writer_id/mevm/mevm_writer_id_no_aug.hdf5'
