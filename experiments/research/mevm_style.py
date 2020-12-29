@@ -27,11 +27,14 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
 
 
     # Augmentation
-    if augmenter is not None and hasattr(augmenter, 'elastic_transform'):
-        augmenter_iam = ElasticTransform(iterable=iam_data, **vars(augmenter))
+    if hasattr(augmentation, 'elastic_transform'):
+        augmenter_iam = ElasticTransform(
+            iterable=iam_data,
+            **vars(augmentation),
+        )
         iam_data = augmenter_iam
 
-        augmenter_rimes = ElasticTransform(**vars(augmenter))
+        augmenter_rimes = ElasticTransform(**vars(augmentation))
         augmenter_rimes.set_iter(rimes_data)
         rimes_data = augmenter_rimes
 

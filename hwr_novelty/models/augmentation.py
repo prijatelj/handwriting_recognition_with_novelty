@@ -113,7 +113,7 @@ class StochasticAugmenter(Augmenter):
         return item
 
 
-class ElasticTransform(Augmenter):
+class ElasticTransform(StochasticAugmenter):
     """Performs the elastic transform on the given images via grid distortion.
 
     Attributes
