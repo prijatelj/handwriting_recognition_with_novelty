@@ -162,7 +162,9 @@ def parse_args():
         if 'elastic_transform' in config['data']['augmentation']:
             args.data.augmentation.elastic_transform = argparse.Namespace()
             #args.data.augmentation.elastic_transform.mesh_interval = config['data']['augmentation']['elastic_transform']['mesh_interval']
-            args.data.augmentation.elastic_transform.mesh_std = config['data']['augmentation']['elastic_transform']['mesh_std']
+            args.data.augmentation.elastic_transform.mesh_std = tuple(
+                config['data']['augmentation']['elastic_transform']['mesh_std']
+            )
 
             args.data.augmentation.elastic_transform.augs_per_item = config['data']['augmentation']['elastic_transform']['augs_per_item']
             args.data.augmentation.elastic_transform.include_original = config['data']['augmentation']['elastic_transform']['include_original']
