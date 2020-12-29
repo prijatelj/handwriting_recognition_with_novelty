@@ -157,9 +157,8 @@ class HWR(object):
         self.img_height = img_height
         self.augmentation = augmentation
 
-    @property
-    def values(self):
-        return np.array(list(self))
+    def __len__(self):
+        return len(self.df)
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.root_path, self.files[idx])
@@ -194,6 +193,10 @@ class HWR(object):
             img_path,
             None if self.df is None else self.df['writer'][idx],
         )
+
+    @property
+    def values(self):
+        return np.array(list(self))
 
 
 if __name__ == '__main__':
