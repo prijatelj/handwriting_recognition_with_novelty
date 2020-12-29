@@ -103,10 +103,11 @@ class StochasticAugmenter(Augmenter):
         """
         super(StochasticAugmenter, self).__getitem__(idx)
 
+        if idx >= len(self):
+            raise IndexError(f'Index `{idx}` out of range `{len(self)}`.')
+
         if self.include_original and idx < len(self.iterable):
             return self.iterable[idx]
-        elif idx < len(self.iterable):
-            raise IndexError(f'Index `{idx}` out of range `{len(self)}`.')
 
         item = self.iterable[idx % len(self.iterable)]
         item.image = self.augment(item.image)
