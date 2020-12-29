@@ -9,6 +9,7 @@ from ruamel.yaml import YAML
 
 from exputils import io
 
+from hwr_novelty.models.augmentation import ElasticTransform
 from hwr_novelty.models.mevm import MEVM
 from hwr_novelty.models.style_features import HOG
 
@@ -26,9 +27,13 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmenter=None):
 
 
     # Augmentation
-    if augmenter is not None:
-        augmenter.set_iter(iam_data)
-        iam_data = augmenter
+    if augmenter is not None and hasattr(augmenter, 'elastic_transform'):
+        augmenter_iam = ElasticTransform(iterable=iam_data, **vars(augmenter))
+        iam_data = augmenter_iam
+
+        augmenter_rimes = ElasticTransform(**vars(augmenter))
+        augmenter_rimes.set_iter(rimes_data)
+        rimes_data = augmenter_rimes
 
     # Obtain the labels from the data (writer id)
     images = []
@@ -36,11 +41,6 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmenter=None):
     for item in iam_data:
         images.append(item.image)
         labels.append(item.writer)
-
-    # Augmentation
-    if augmenter is not None:
-        augmenter.set_iter(rimes_data)
-        rimes_data = augmenter
 
     extra_negatives = [item.image for item in rimes_data]
     #bwl_data.df['writer'].values,
