@@ -17,11 +17,11 @@ from experiments.data.iam import HWR
 
 
 def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
-    logging.INFO('Loading IAM')
+    logging.info('Loading IAM')
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
-    logging.INFO('Loading RIMES')
+    logging.info('Loading RIMES')
     #   RIMES (known unknowns)
     rimes_data = HWR(rimes.path, datasplit, rimes.image_root_dir, image_height)
 
@@ -30,31 +30,31 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
 
     # Augmentation
     if hasattr(augmentation, 'elastic_transform'):
-        logging.INFO('Augmenting IAM')
+        logging.info('Augmenting IAM')
         iam_data = ElasticTransform(
             iterable=iam_data,
             **vars(augmentation.elastic_transform),
         )
 
-        logging.INFO('Augmenting RIMES')
+        logging.info('Augmenting RIMES')
         rimes_data = ElasticTransform(
             iterable=rimes_data,
             **vars(augmentation.elastic_transform),
         )
 
     # Obtain the labels from the data (writer id)
-    logging.INFO('Getting Labels from IAM.')
+    logging.info('Getting Labels from IAM.')
     images = []
     labels = []
     for item in iam_data:
         images.append(item.image)
         labels.append(item.writer)
 
-    logging.INFO('Setting RIMES as extra_negatives.')
+    logging.info('Setting RIMES as extra_negatives.')
     extra_negatives = [item.image for item in rimes_data]
     #bwl_data.df['writer'].values,
 
-    logging.INFO('Performing Feature Extraction')
+    logging.info('Performing Feature Extraction')
     # TODO feature extraction
     #   HOG mean
     #   HOG multi-mean
@@ -62,7 +62,7 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
     #   CRNN repr at RNN, at CNN
 
     #if feature_extraction == 'hog':
-    logging.INFO('Performing Feature Extraction: HOG')
+    logging.info('Performing Feature Extraction: HOG')
     hog = HOG(**vars(hogs.init))
     points = np.array([
         hog.extract(img, **vars(hogs.extract)) for img in images
