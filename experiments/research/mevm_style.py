@@ -16,7 +16,7 @@ from hwr_novelty.models.style_features import HOG
 from experiments.data.iam import HWR
 
 
-def load_data(datasplit, iam, rimes, hogs, image_height=64, augmenter=None):
+def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
