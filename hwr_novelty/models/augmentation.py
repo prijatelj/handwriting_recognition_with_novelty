@@ -70,7 +70,7 @@ class StochasticAugmenter(Augmenter):
         random_state=None,
         iterable=None,
     ):
-        super(StochasticAugmenter).__init__(iterable)
+        super(StochasticAugmenter, self).__init__(iterable)
 
         self.augs_per_item = augs_per_item
         self.include_original = include_original
@@ -89,7 +89,7 @@ class StochasticAugmenter(Augmenter):
             ]))
 
     def __len__(self):
-        return super(StochasticAugmenter).__len__() * (
+        return super(StochasticAugmenter, self).__len__() * (
             self.augs_per_item + 1 if self.include_original
             else self.augs_per_item
         )
@@ -101,7 +101,7 @@ class StochasticAugmenter(Augmenter):
         `include_original` is True, then the first `len(iterable)` items are
         the original items, unaugmented.
         """
-        super(StochasticAugmenter).__getitem__(idx)
+        super(StochasticAugmenter, self).__getitem__(idx)
 
         if self.include_original and idx < len(self.iterable):
             return self.iterable[idx]
@@ -147,7 +147,7 @@ class ElasticTransform(StochasticAugmenter):
         *args,
         **kwargs,
     ):
-        super(ElasticTransform).__init__(*args, **kwargs)
+        super(ElasticTransform, self).__init__(*args, **kwargs)
 
         if (
             isinstance(mesh_interval, tuple)
