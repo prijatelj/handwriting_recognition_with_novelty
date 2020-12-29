@@ -56,6 +56,61 @@ class Augmenter(Stateful):
         raise NotImplementedError()
 
 
+class StochasticAugmenter(Augmenter):
+    """An augmenter that uses a stochastic augmentation method thus needing its
+    random state and number of times the augmentation is applied to each item
+    in the original iterable.
+    """
+    def __init__(
+        self,
+        augs_per_item,
+        include_original=False,
+        random_state=None,
+        iterable=None,
+    ):
+        super(StochasticAugmenter).__init__(iterable)
+
+        self.augs_per_item = augs_per_item
+        self.include_original = include_original
+
+        if (
+            random_state is None
+            or isinstance(random_state, int)
+            or isinstance(random_state, np.random.RandomState)
+        ):
+            self.random_state = np.random.RandomState(random_state)
+        else:
+            raise TypeError(' '.join([
+                '`random_state` expected to be of type None, int, or',
+                'np.random.RandomState, but instead recieved argument of',
+                f'type: {type(random_state)}',
+            ]))
+
+    def __len__(self):
+        return super(StochasticAugmenter).__len__() * (
+            self.augs_per_item + 1 if self.include_original
+            else self.augs_per_item
+        )
+
+    def __getitem__(self, idx):
+        """Iterates through the original iterable of images and extends that
+        iterable to be of length: `len(iterable) * augs_per_item` or
+        `augs_per_item + 1` if `include_original` is True. If
+        `include_original` is True, then the first `len(iterable)` items are
+        the original items, unaugmented.
+        """
+        super(StochasticAugmenter).__getitem__(idx)
+
+        if self.include_original and idx < len(self.iterable):
+            return self.iterable[idx]
+        elif idx < len(self.iterable):
+            raise IndexError(f'Index `{idx}` out of range `{len(self)}`.')
+
+        item = self.iterable[idx % len(self.iterable)]
+        item.image = self.augment(item.image)
+        return item
+
+
 class ElasticTransform(Augmenter):
     """Performs the elastic transform on the given images via grid distortion.
 
@@ -82,20 +137,15 @@ class ElasticTransform(Augmenter):
     """
     def __init__(
         self,
-        augs_per_item,
-        include_original=False,
         mesh_interval=25,
         mesh_std=3.0,
         interpolation='linear',
         fit_interval_to_image=True,
         draw_grid_lines=False,
-        random_state=None,
-        iterable=None,
+        *args,
+        **kwargs,
     ):
-        super(ElasticTransform).__init__(iterable)
-
-        self.augs_per_item = augs_per_item
-        self.include_original = include_original
+        super(ElasticTransform).__init__(*args, **kwargs)
 
         if (
             isinstance(mesh_interval, tuple)
@@ -140,43 +190,6 @@ class ElasticTransform(Augmenter):
 
         self.fit_interval_to_image = fit_interval_to_image
         self.draw_grid_lines = draw_grid_lines
-
-        if (
-            random_state is None
-            or isinstance(random_state, int)
-            or isinstance(random_state, np.random.RandomState)
-        ):
-            self.random_state = np.random.RandomState(random_state)
-        else:
-            raise TypeError(' '.join([
-                '`random_state` expected to be of type None, int, or',
-                'np.random.RandomState, but instead recieved argument of',
-                f'type: {type(random_state)}',
-            ]))
-
-    def __len__(self):
-        return super(ElasticTransform).__len__() * (
-            self.augs_per_item + 1 if self.include_original
-            else self.augs_per_item
-        )
-
-    def __getitem__(self, idx):
-        """Iterates through the original iterable of images and extends that
-        iterable to be of length: `len(iterable) * augs_per_item` or
-        `augs_per_item + 1` if `include_original` is True. If
-        `include_original` is True, then the first `len(iterable)` items are
-        the original items, unaugmented.
-        """
-        super(ElasticTransform).__getitem__(idx)
-
-        if self.include_original and idx < len(self.iterable):
-            return self.iterable[idx]
-        elif idx < len(self.iterable):
-            raise IndexError(f'Index `{idx}` out of range `{len(self)}`.')
-
-        item = self.iterable[idx % len(self.iterable)]
-        item.image = self.augment(item.image)
-        return item
 
     def augment(self, image):
         height, width = image.shape[:2]
@@ -248,18 +261,17 @@ class ElasticTransform(Augmenter):
         raise NotImplementedError()
 
 
-# TODO class Noise(Augmenter):
+# TODO class Noise(StochasticAugmenter):
 #   Add noise to the image
 
-# TODO class Blur(Augmenter):
+# TODO class Blur(StochasticAugmenter):
 #   Blur the image.
 
-# TODO All of the above are stochastic changes, while this is constant. Perhaps
-# make a parent class that has the shared code between the above.
 # TODO class InvertColor(Augmenter):
 
 # TODO class Reflect(Augmenter):
 
-# TODO EffectMap: make it so the above effects only apply to parts of the image
-# given some distribution of effect. Binary for on/off, or gradient of effect
-# where applicable. e.g. partial noise, partial blur.
+# TODO EffectMap / EffectMask: make it so the above effects only apply to parts
+# of the image given some distribution of effect. Binary for on/off, or
+# gradient of effect where applicable. e.g. partial noise, partial blur.
+# Essentially a mask for the effects.
