@@ -28,15 +28,15 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
 
     # Augmentation
     if hasattr(augmentation, 'elastic_transform'):
-        augmenter_iam = ElasticTransform(
+        iam_data = ElasticTransform(
             iterable=iam_data,
-            **vars(augmentation),
+            **vars(augmentation.elastic_transform),
         )
-        iam_data = augmenter_iam
 
-        augmenter_rimes = ElasticTransform(**vars(augmentation))
-        augmenter_rimes.set_iter(rimes_data)
-        rimes_data = augmenter_rimes
+        rimes_data = ElasticTransform(
+            iterable=rimes_data,
+            **vars(augmentation.elastic_transform),
+        )
 
     # Obtain the labels from the data (writer id)
     images = []
