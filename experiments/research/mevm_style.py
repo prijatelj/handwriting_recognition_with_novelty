@@ -15,7 +15,7 @@ from hwr_novelty.models.style_features import HOG
 from experiments.data.iam import HWR
 
 
-def load_data(datasplit, iam, rimes, hogs, image_height=64):
+def load_data(datasplit, iam, rimes, hogs, image_height=64, augmenter=None):
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
@@ -24,12 +24,24 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64):
 
     # TODO BangalWriting Lines for eval
 
+
+    # Augmentation
+    if augmenter is not None:
+        augmenter.set_iter(iam_data)
+        iam_data = augmenter
+
     # Obtain the labels from the data (writer id)
     images = []
     labels = []
     for item in iam_data:
         images.append(item.image)
         labels.append(item.writer)
+
+    # Augmentation
+    if augmenter is not None:
+        augmenter.set_iter(rimes_data)
+        rimes_data = augmenter
+
     extra_negatives = [item.image for item in rimes_data]
     #bwl_data.df['writer'].values,
 
@@ -38,6 +50,7 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64):
     #   HOG multi-mean
     #   ResNet 50 (pytorch model repr)
     #   CRNN repr at RNN, at CNN
+
     #if feature_extraction == 'hog':
     hog = HOG(**vars(hogs.init))
     points = np.array([
@@ -136,6 +149,23 @@ def parse_args():
         args.data.rimes.path = config['data']['rimes']['path']
     if args.data.rimes.image_root_dir is None:
         args.data.rimes.image_root_dir = config['data']['rimes']['image_root_dir']
+
+    # Augmentation
+    if 'augmentation' in config['data']:
+        args.data.augmentation = argparse.Namespace()
+        # TODO want to perform these in order, so a list or ordered
+        # dict/namespace would be good.
+
+        if 'elastic_transform' in config['data']['augmentation']:
+            args.data.augmentation.elastic_transform = argparse.Namespace()
+            #args.data.augmentation.elastic_transform.mesh_interval = config['data']['augmentation']['elastic_transform']['mesh_interval']
+            args.data.augmentation.elastic_transform.mesh_std = config['data']['augmentation']['elastic_transform']['mesh_std']
+
+            args.data.augmentation.elastic_transform.augs_per_item = config['data']['augmentation']['elastic_transform']['augs_per_item']
+            args.data.augmentation.elastic_transform.include_original = config['data']['augmentation']['elastic_transform']['include_original']
+            args.data.augmentation.elastic_transform.random_state = 0
+
+        # TODO other augmenters
 
     # Parse and make HOG config
     args.hogs = argparse.Namespace()
