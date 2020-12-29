@@ -14,7 +14,7 @@ from hwr_novelty.models.predictor import Stateful
 #   these calsses so that they may be used outside of torch if desired.
 
 
-class Augmenter(Stateful):
+class StatefulIterable(Stateful):
     @abstractmethod
     def __init__(self, iterable=None):
         """Iterates through the given iterable, applying the augmentation."""
@@ -51,6 +51,8 @@ class Augmenter(Stateful):
             )
         self.iterable = iterable
 
+
+class Augmenter(StatefulIterable):
     @abstractmethod
     def augment(self, image):
         raise NotImplementedError()
