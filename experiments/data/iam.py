@@ -158,7 +158,7 @@ class HWR(object):
         self.augmentation = augmentation
 
     def __len__(self):
-        return len(self.df)
+        return len(self.files)
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.root_path, self.files[idx])
