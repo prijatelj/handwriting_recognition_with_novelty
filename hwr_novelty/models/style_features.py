@@ -1,32 +1,23 @@
 """The feature extraction of images for HWR style tasks."""
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from inspect import getargspec
 
 import numpy as np
 from ruamel.yaml import YAML
 from skimage.feature import hog
 
+from hwr_novelty.models.predictor import Stateful
 
-class FeatureExtractor(ABC):
+
+#class FeatureExtractor(StatefulIterable):
+class FeatureExtractor(Stateful):
     """Feature extraction abstract class."""
-
     @abstractmethod
-    def extract(self, sample):
+    def extract(self, image):
         """Every feature extractor will extract features from a sample or
         multiple samples at once.
         """
-        pass
-
-    @abstractmethod
-    def save(self, filepath):
-        """Save the feature extractor state to the given filepath."""
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def load(filepath):
-        """Load the feature extractor state from the given filepath."""
-        pass
+        raise NotImplementedError()
 
 
 class HOG(FeatureExtractor):
@@ -79,10 +70,10 @@ class HOG(FeatureExtractor):
 
         ext = os.path.splitext(filepath)[-1]
 
-        if ext != 'yaml':
-            raise NotImplementedError(
-                'Only loading from a YAML file is supported.',
-            )
+        #if ext != 'yaml':
+        raise NotImplementedError()
+        #    'Only loading from a YAML file is supported.',
+        #)
 
         return
 
@@ -91,13 +82,6 @@ class HOG(FeatureExtractor):
         img,
         means=1,
         concat_mean=False,
-        #orientations=9,
-        #pixels_per_cell=(16, 16),
-        #cells_per_block=(4, 4),
-        #block_norm='L2',
-        #visualize=True, FALSE
-        #feature_vector=False,
-        #**kwargs,
     ):
         """Forward pass of a single image through the Histogram of Oriented
         Gradients for the style tasks.
@@ -108,14 +92,14 @@ class HOG(FeatureExtractor):
             An image used as input to HOGs with 1 channel expected and whose
             elements range from [0, 1].
         means : int, optional
-            The number of equal splits of the image where each split results in a
-            mean of their corresponding HOGs. This allows for multiple means across
-            variable lengthed images, resulting in more sequence information in the
-            line of text represented in the image.
+            The number of equal splits of the image where each split results in
+            a mean of their corresponding HOGs. This allows for multiple means
+            across variable lengthed images, resulting in more sequence
+            information in the line of text represented in the image.
         concat_mean : bool, optional
-            Takes the mean of all HOGs and concatenates the other means to the end
-            of that one. This only occurs if `means` >= 1, otherwise this does
-            nothing and this returns the mean of all HOGs.
+            Takes the mean of all HOGs and concatenates the other means to the
+            end of that one. This only occurs if `means` >= 1, otherwise this
+            does nothing and this returns the mean of all HOGs.
         pixels_per_cell : int, optional
             pixels per cell to use in the Histogram of Oriented Gradients
             calculation.
