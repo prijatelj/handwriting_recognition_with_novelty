@@ -1,6 +1,5 @@
 """Classes that augment the given image in different ways."""
 from abc import abstractmethod
-from collections import Iterable
 
 import cv2
 import numpy as np
@@ -10,18 +9,24 @@ from hwr_novelty.models.predictor import Stateful
 
 
 # TODO make torch DataLoader versions of these that can be chained together.
+#   Perhaps, make a generic class that allows the user to give the function
+#   `augment()`. And make another class that combines torch.DataLoader with
+#   these calsses so that they may be used outside of torch if desired.
 
 
 class Augmenter(Stateful):
     @abstractmethod
     def __init__(self, iterable=None):
         """Iterates through the given iterable, applying the augmentation."""
-        if iterable is None or isinstance(iterable, Iterable):
-            self.iterable = iterable
-        else:
-            raise TypeError(
-                f'`iterable` must be an Iterable or None, not {type(iterable)}'
-            )
+        try:
+            iter(iterable)
+        except TypeError:
+            if iterable is not None:
+                raise TypeError(' '.join([
+                    '`iterable` must be an iterable object or None,',
+                    f'not {type(iterable)}',
+                ]))
+        self.iterable = iterable
 
     @abstractmethod
     def __len__(self):
@@ -38,12 +43,13 @@ class Augmenter(Stateful):
 
     def set_iter(self, iterable):
         """Iterates through the given iterable, applying the augmentation."""
-        if isinstance(iterable, Iterable):
-            self.iterable = iterable
-        else:
+        try:
+            iter(iterable)
+        except TypeError:
             raise TypeError(
-                f'`iterable` must be an Iterable, not {type(iterable)}'
+                f'`iterable` must be an iterable object, not {type(iterable)}'
             )
+        self.iterable = iterable
 
     @abstractmethod
     def augment(self, image):
@@ -240,3 +246,20 @@ class ElasticTransform(Augmenter):
     @staticmethod
     def load(filepath):
         raise NotImplementedError()
+
+
+# TODO class Noise(Augmenter):
+#   Add noise to the image
+
+# TODO class Blur(Augmenter):
+#   Blur the image.
+
+# TODO All of the above are stochastic changes, while this is constant. Perhaps
+# make a parent class that has the shared code between the above.
+# TODO class InvertColor(Augmenter):
+
+# TODO class Reflect(Augmenter):
+
+# TODO EffectMap: make it so the above effects only apply to parts of the image
+# given some distribution of effect. Binary for on/off, or gradient of effect
+# where applicable. e.g. partial noise, partial blur.
