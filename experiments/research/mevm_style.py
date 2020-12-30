@@ -94,6 +94,12 @@ def script_args(parser):
         dest='output.path',
     )
 
+    parser.add_argument(
+        '--augs_per_item',
+        default=None,
+        help='Number of augmentations per item.',
+    )
+
     # TODO eventually will replace with proper config/arg parser
     #mevm = parser.add_arg
 
@@ -177,7 +183,10 @@ def parse_args():
                 float(mesh_std[1]),
             )
 
-            args.data.augmentation.elastic_transform.augs_per_item = config['data']['augmentation']['elastic_transform']['augs_per_item']
+            if args.augs_per_item is not None:
+                args.data.augmentation.elastic_transform.augs_per_item = args.augs_per_item
+            else:
+                args.data.augmentation.elastic_transform.augs_per_item = config['data']['augmentation']['elastic_transform']['augs_per_item']
             args.data.augmentation.elastic_transform.include_original = config['data']['augmentation']['elastic_transform']['include_original']
             args.data.augmentation.elastic_transform.random_state = 0
 
