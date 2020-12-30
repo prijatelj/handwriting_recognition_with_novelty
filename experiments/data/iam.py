@@ -33,7 +33,7 @@ class HWRItem:
     text: str
     path: str
     writer: str
-    #repr
+    represent: str = None
 
 class HWRHandwriting(object):
     def __init__(self, filepath, key=None):
