@@ -1,5 +1,8 @@
 """Classes that augment the given image in different ways."""
 from abc import abstractmethod
+from collections import OrderedDict
+import inspect
+import sys
 
 import cv2
 import numpy as np
@@ -15,7 +18,6 @@ from hwr_novelty.models.predictor import Stateful
 
 
 class StatefulIterable(Stateful):
-    @abstractmethod
     def __init__(self, iterable=None):
         """Iterates through the given iterable, applying the augmentation."""
         try:
@@ -28,7 +30,6 @@ class StatefulIterable(Stateful):
                 ]))
         self.iterable = iterable
 
-    @abstractmethod
     def __len__(self):
         """Iterates through the given iterable, applying the augmentation."""
         if self.iterable is None:
@@ -53,6 +54,13 @@ class StatefulIterable(Stateful):
 
 
 class Augmenter(StatefulIterable):
+    def __getitem__(self, idx):
+        super(Augmenter, self).__getitem__(idx)
+
+        item = self.iterable[idx]
+        item.image = self.augment(item.image)
+        return item
+
     @abstractmethod
     def augment(self, image):
         raise NotImplementedError()
@@ -264,15 +272,129 @@ class ElasticTransform(StochasticAugmenter):
         raise NotImplementedError()
 
 
-# TODO class Noise(StochasticAugmenter):
-#   Add noise to the image
+class Noise(StochasticAugmenter):
+    """Add uniform noise to the image."""
+    def __init__(self, min_val=0, max_val=255, *args, **kwargs):
+        super(Noise, self).__init__(*args, **kwargs)
 
-# TODO class Blur(StochasticAugmenter):
-#   Blur the image.
+        self.min_val = min_val
+        self.max_val = max_val
 
-# TODO class InvertColor(Augmenter):
+    def augment(self, image):
+        return cv2.randu(image, self.min_val, self.max_val)
 
-# TODO class Reflect(Augmenter):
+
+class Blur(StochasticAugmenter):
+    """Gaussian blur the image."""
+    def __init__(self, ksize, sigmaX, sigmaY=0, *args, **kwargs):
+        super(Blur, self).__init__(*args, **kwargs)
+
+        self.ksize = ksize
+        self.sigmaX = sigmaX
+        self.sigmaY = sigmaY
+
+    def augment(self, image):
+        return cv2.GaussianBlur(image, self.ksize, self.sigmaX, self.sigmaY)
+
+
+class InvertColor(Augmenter):
+    def __init__(self, iterable=None):
+        super(InvertColor, self).__init__(iterable)
+
+    def __getitem__(self, idx):
+        return self.augment(self.iterable[idx])
+
+    def augment(self, image):
+        return 255 - image
+
+    def save(self, filepath):
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
+        raise NotImplementedError()
+
+
+class Reflect(Augmenter):
+    def __init__(self, axis, iterable=None):
+        super(Reflect, self).__init__(iterable)
+        self.axis = axis
+
+    def __getitem__(self, idx):
+        return self.augment(self.iterable[idx])
+
+    def augment(self, image):
+        return np.flip(image, axis=self.axis)
+
+    def save(self, filepath):
+        # TODO possibly make augmenter not stateful and just added it on a per
+        # situation basis, given how simple some of these are, but then again
+        # perhaps some of these don't need to be augmenters anyways.
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
+        raise NotImplementedError()
+
+
+class SplitAugmenters(Augmenter):
+    """Given multiple augmenters, performs them equally on the iterable's
+    items.  This does not expand the given iterable, but rather modifies
+    different items within it as balanced as possible given the augmenters.
+    """
+    def __init__(self, augmenters, include_original=True, iterable=None):
+        super(SplitAugmenters, self).__init__(iterable)
+
+        self.include_original = include_original
+        augmenters = OrderedDict(augmenters)
+
+        # TODO multiply the size of the iterable. Giving same text and writer
+        # to different backgrounds.
+
+        class_members = {name: value for name, value in inspect.getmembers(
+            sys.modules[__name__],
+            lambda member: (
+                inspect.isclass(member)
+                and member.__module__ == __name__
+                and issubclass(member, Augmenter)
+            ),
+        )}
+        for key, args in augmenters.items():
+            if issubclass(args, Augmenter):
+                continue
+            if key not in class_members:
+                raise KeyError(
+                    f'Given key for an augmenter that does not exist: {key}'
+                )
+
+            augmenters[key] = class_members[key](**augmenters[key])
+
+        self.augmenters = list(augmenters.values())
+
+    def __getitem__(self, idx):
+        if self.include_original:
+            mod_idx = idx % (len(self.augmenters) + 1)
+
+            if mod_idx == len(self.augmenters):
+                item = self.iterable[idx]
+                item.represent = 'no_aug'
+                return item
+        else:
+            mod_idx = idx % len(self.augmenters)
+
+        augmenter = self.augmenters[mod_idx]
+
+        item = self.iterable[idx]
+        item.image = augmenter.augment(item.image)
+
+        name = augmenter.__name__
+        if name == 'Reflect':
+            name = f'{name}_{augmenter.axis}'
+        item.represent = name
+        return item
+
+    def augment(self, image, aug):
+        return aug.augment(image)
 
 # TODO EffectMap / EffectMask: make it so the above effects only apply to parts
 # of the image given some distribution of effect. Binary for on/off, or
