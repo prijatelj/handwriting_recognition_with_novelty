@@ -97,6 +97,7 @@ def script_args(parser):
     parser.add_argument(
         '--augs_per_item',
         default=None,
+        type=int,
         help='Number of augmentations per item.',
     )
 
