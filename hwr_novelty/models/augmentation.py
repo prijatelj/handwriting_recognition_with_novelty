@@ -384,7 +384,7 @@ class SplitAugmenters(Augmenter):
             lambda member: (
                 inspect.isclass(member)
                 and member.__module__ == __name__
-                and issubclass(type(member), Augmenter)
+                and issubclass(member, Augmenter)
             ),
         )}
         for key, args in augmenters.items():
