@@ -3,6 +3,7 @@ from copy import deepcopy
 from collections import namedtuple
 from dataclasses import dataclass
 import json
+import logging
 import os
 
 import cv2
@@ -146,6 +147,7 @@ class HWR(object):
         root_path,
         img_height=32,
         augmentation=False,
+        norm_neg1_to_1=False,
     ):
         iam_hw = HWRHandwriting(filepath, datasplit)
         self.df = iam_hw.df
@@ -156,6 +158,7 @@ class HWR(object):
         self.root_path = root_path
         self.img_height = img_height
         self.augmentation = augmentation
+        self.norm_neg1_to_1 = norm_neg1_to_1
 
     def __len__(self):
         return len(self.files)
@@ -185,7 +188,8 @@ class HWR(object):
                 random_state=self.random_state,
             )
 
-        image = image.astype(np.float32) / 128.0 - 1.0
+        if self.norm_neg1_to_1:
+            image = image.astype(np.float32) / 128.0 - 1.0
 
         return HWRItem(
             image,

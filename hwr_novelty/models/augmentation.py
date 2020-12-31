@@ -281,6 +281,14 @@ class Noise(StochasticAugmenter):
         self.std = std
 
     def augment(self, image):
+        if len(image.shape) != 3:
+            raise ValueError(
+                f'`image` shape expected to be 3 dims BGR, not {image.shape}'
+            )
+        if image.dtype != 'uint8':
+            raise ValueError(
+                f'`image` dtype expected to be uint8. BGR. not {image.dtype}'
+            )
         noise = np.zeros(image.shape[:2])
         cv2.randn(noise, self.mean, self.std)
         noise = np.stack([noise]*3, axis=-1)
@@ -331,6 +339,14 @@ class InvertColor(Augmenter):
         return self.augment(self.iterable[idx])
 
     def augment(self, image):
+        if len(image.shape) != 3:
+            raise ValueError(
+                f'`image` shape expected to be 3 dims BGR, not {image.shape}'
+            )
+        if image.dtype != 'uint8':
+            raise ValueError(
+                f'`image` dtype expected to be uint8. BGR. not {image.dtype}'
+            )
         return 255 - image
 
     def save(self, filepath):
