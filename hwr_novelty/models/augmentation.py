@@ -305,7 +305,7 @@ class Blur(StochasticAugmenter):
     def __init__(self, ksize, sigmaX, sigmaY=0, *args, **kwargs):
         super(Blur, self).__init__(*args, **kwargs)
 
-        self.ksize = ksize
+        self.ksize = tuple(ksize)
         self.sigmaX = sigmaX
         self.sigmaY = sigmaY
 
