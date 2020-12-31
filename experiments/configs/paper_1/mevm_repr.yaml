@@ -7,7 +7,7 @@ data:
     #  augs_per_item: 2
     #  include_original: True
     SplitAugmenters: # No duplication
-      known_unknown: [Reflect_0, Blur]
+      known_unknowns: [Reflect_0, Blur]
       train: # The augmenters to include in training
         # No Aug is included by default
         Noise:

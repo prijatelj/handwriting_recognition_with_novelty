@@ -60,7 +60,7 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
         labels = []
         extra_negatives = []
         for item in iam_data:
-            if item.represent in augmentation.known_unknown:
+            if item.represent in augmentation.known_unknowns:
                 extra_negatives.append(item.image)
             else:
                 images.append(item.image)
@@ -68,7 +68,7 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
 
         logging.info('Getting Labels from RIMES.')
         for item in rimes_data:
-            if item.represent in augmentation.known_unknown:
+            if item.represent in augmentation.known_unknowns:
                 extra_negatives.append(item.image)
             else:
                 images.append(item.image)
