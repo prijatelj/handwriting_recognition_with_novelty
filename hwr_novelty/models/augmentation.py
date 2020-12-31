@@ -445,7 +445,7 @@ class SplitAugmenters(Augmenter):
         item = self.iterable[idx]
         item.image = augmenter.augment(item.image)
 
-        name = augmenter.__name__
+        name = type(augmenter).__name__
         if name == 'Reflect':
             name = f'{name}_{augmenter.axis}'
         item.represent = name
