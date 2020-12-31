@@ -177,6 +177,13 @@ def script_args(parser):
         help='Path to save trained MEVM.',
     )
 
+    parser.add_argument(
+        '--tailsize',
+        default=None,
+        type=int,
+        help='Tailsize of MEVM.',
+    )
+
 def parse_args():
     args = io.parse_args(custom_args=script_args)
 
@@ -285,7 +292,10 @@ def parse_args():
     args.mevm.load_path = None if 'load_path' not in config['model']['mevm'] else config['model']['mevm']['load_path']
 
     args.mevm.init = argparse.Namespace()
-    args.mevm.init.tailsize = config['model']['mevm']['init']['tailsize']
+    if args.tailsize is None:
+        args.mevm.init.tailsize = config['model']['mevm']['init']['tailsize']
+    else:
+        args.mevm.init.tailsize = args.tailsize
     args.mevm.init.cover_threshold = config['model']['mevm']['init']['cover_threshold']
     args.mevm.init.distance_multiplier = config['model']['mevm']['init']['distance_multiplier']
     args.mevm.init.distance_function = config['model']['mevm']['init']['distance_function']
