@@ -337,12 +337,34 @@ class Reflect(Augmenter):
         raise NotImplementedError()
 
 
+class Antique(StochasticAugmenter):
+    """Given the image, assumed to be grayscale/binary with white background,
+    the text line image is blended with a random selection from a set of
+    background paper images. A slice from the random selected background image
+    that fits the line image is applied to the line image. This is to simulate
+    text on antique papers.
+    """
+    def __init__(self, *args, **kwargs):
+        super(Antique, self).__init__(*args, **kwargs)
+        # TODO
+        raise NotImplementedError()
+
+    def augment(self):
+        # TODO
+        raise NotImplementedError()
+
+
 class SplitAugmenters(Augmenter):
     """Given multiple augmenters, performs them equally on the iterable's
     items.  This does not expand the given iterable, but rather modifies
     different items within it as balanced as possible given the augmenters.
     """
-    def __init__(self, augmenters, include_original=True, iterable=None):
+    def __init__(
+        self,
+        augmenters,
+        include_original=True,
+        iterable=None,
+    ):
         super(SplitAugmenters, self).__init__(iterable)
 
         self.include_original = include_original
