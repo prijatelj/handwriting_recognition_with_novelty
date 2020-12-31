@@ -9,7 +9,7 @@ from ruamel.yaml import YAML
 
 from exputils import io
 
-from hwr_novelty.models.augmentation import ElasticTransform
+from hwr_novelty.models.augmentation import ElasticTransform, SplitAugmenters
 from hwr_novelty.models.mevm import MEVM
 from hwr_novelty.models.style_features import HOG
 
@@ -30,28 +30,61 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
 
     # Augmentation
     if hasattr(augmentation, 'elastic_transform'):
-        logging.info('Augmenting IAM')
+        logging.info('Elastic Transform IAM')
         iam_data = ElasticTransform(
             iterable=iam_data,
             **vars(augmentation.elastic_transform),
         )
 
-        logging.info('Augmenting RIMES')
+        logging.info('Elastic Transform RIMES')
         rimes_data = ElasticTransform(
             iterable=rimes_data,
             **vars(augmentation.elastic_transform),
         )
 
-    # Obtain the labels from the data (writer id)
-    logging.info('Getting Labels from IAM.')
-    images = []
-    labels = []
-    for item in iam_data:
-        images.append(item.image)
-        labels.append(item.writer)
+    if hasattr(augmentation, 'SplitAugmenters'):
+        logging.info('Split Augmenting IAM')
+        iam_data = SplitAugmenters(
+            iterable=iam_data,
+            augmenters=augmentation.SplitAugmenters.train,
+        )
+        logging.info('Split Augmenting RIMES')
+        rimes_data = SplitAugmenters(
+            iterable=rimes_data,
+            augmenters=augmentation.SplitAugmenters.train,
+        )
 
-    logging.info('Setting RIMES as extra_negatives.')
-    extra_negatives = [item.image for item in rimes_data]
+        # Obtain the labels from the data (writer id)
+        logging.info('Getting Labels from IAM.')
+        images = []
+        labels = []
+        extra_negatives = []
+        for item in iam_data:
+            if item.represent in augmentation.known_unknown:
+                extra_negatives.append(item.image)
+            else:
+                images.append(item.image)
+                labels.append(item.represent)
+
+        logging.info('Getting Labels from RIMES.')
+        for item in rimes_data:
+            if item.represent in augmentation.known_unknown:
+                extra_negatives.append(item.image)
+            else:
+                images.append(item.image)
+                labels.append(item.represent)
+    else:
+        # Obtain the labels from the data (writer id)
+        logging.info('Getting Labels from IAM.')
+        images = []
+        labels = []
+        for item in iam_data:
+            images.append(item.image)
+            labels.append(item.writer)
+
+        logging.info('Setting RIMES as extra_negatives.')
+        extra_negatives = [item.image for item in rimes_data]
+
     #bwl_data.df['writer'].values,
 
     logging.info('Performing Feature Extraction')
@@ -191,7 +224,16 @@ def parse_args():
             args.data.augmentation.elastic_transform.include_original = config['data']['augmentation']['elastic_transform']['include_original']
             args.data.augmentation.elastic_transform.random_state = 0
 
-        # TODO other augmenters
+        if 'SplitAugmenters' in config['data']['augmentation']:
+            args.data.augmentation.SplitAugmenters = argparse.Namespace()
+
+            args.data.augmentation.SplitAugmenters.known_unknowns = config['data']['augmentation']['SplitAugmenters']['known_unknowns']
+
+            args.data.augmentation.SplitAugmenters.train = config['data']['augmentation']['SplitAugmenters']['train']
+
+            # TODO Can ignore val and test for now. Necesary for eval.
+            # keep the rest as dictionaries as SplitAugmenters expects it.
+
 
     # Parse and make HOG config
     args.hogs = argparse.Namespace()
