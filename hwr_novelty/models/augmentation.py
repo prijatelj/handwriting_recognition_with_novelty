@@ -384,11 +384,11 @@ class SplitAugmenters(Augmenter):
             lambda member: (
                 inspect.isclass(member)
                 and member.__module__ == __name__
-                and issubclass(member, Augmenter)
+                and issubclass(type(member), Augmenter)
             ),
         )}
         for key, args in augmenters.items():
-            if issubclass(args, Augmenter):
+            if issubclass(type(args), Augmenter):
                 continue
             if key not in class_members:
                 raise KeyError(
