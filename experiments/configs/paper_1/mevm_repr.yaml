@@ -11,12 +11,16 @@ data:
       train: # The augmenters to include in training
         # No Aug is included by default
         Noise:
+          augs_per_item: 1
           mean: 0
           std: 10
         #Antique:
+        #  augs_per_item: 1
+        #  background_dir: path/to/background_images/
         Reflect:
           axis: 0
         Blur:
+          augs_per_item: 1
           ksize: [0, 0]
           sigmaX: 3
       val: # Along w/ train, the augmenters to include in validation
