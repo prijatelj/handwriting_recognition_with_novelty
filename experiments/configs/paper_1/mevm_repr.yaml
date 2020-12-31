@@ -1,0 +1,51 @@
+data:
+  image_height: 64
+  datasplit: train
+  augmentation:
+    #elastic_transform: # While x2 augs works for the 5 folds, it does not for the benchmark faithful set due to out of memory.
+    #  mesh_std: [5, 10]
+    #  augs_per_item: 2
+    #  include_original: True
+    SplitAugmenters: # No duplication
+      known_unknown: [Reflect_0, Blur]
+      train: # The augmenters to include in training
+        # No Aug is included by default
+        Noise:
+          mean: 0
+          std: 10
+        #Antique:
+        Reflect:
+          axis: 0
+        Blur:
+          ksize: [0, 0]
+          sigmaX: 3
+      val: # Along w/ train, the augmenters to include in validation
+        Reflect:
+          axis: 1
+      test: # Along w/ train & val, the augmenters to include in test
+        InvertColor: True
+  iam:
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/iam_splits/iam_split_0_labels.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/IAM_aachen/IAM_lines/'
+  rimes:
+    path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/rimes_splits/rimes_split_0.json'
+    image_root_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/grieggs_data/RIMES_2011_LINES/'
+  # TODO banglawriting
+model:
+  hogs:
+    init:
+      orientations: 9
+      pixels_per_cell: [16, 16]
+      cells_per_block: [4, 4]
+      block_norm: 'L2'
+      feature_vector: False
+      multichannel: True
+    extract:
+      means: 1
+  mevm:
+    init:
+      tailsize: 1000
+      cover_threshold: 0.5
+      distance_multiplier: 0.5
+      distance_function: cosine
+    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/writer_id/mevm/mevm_writer_id_no_aug.hdf5'
