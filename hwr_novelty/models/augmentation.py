@@ -289,6 +289,16 @@ class Noise(StochasticAugmenter):
         result = (np.minimum(np.maximum(result, 0), 1) * 255).astype('uint8')
         return image + result
 
+    def save(self, filepath):
+        # TODO possibly make augmenter not stateful and just added it on a per
+        # situation basis, given how simple some of these are, but then again
+        # perhaps some of these don't need to be augmenters anyways.
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
+        raise NotImplementedError()
+
 
 class Blur(StochasticAugmenter):
     """Gaussian blur the image."""
@@ -301,6 +311,16 @@ class Blur(StochasticAugmenter):
 
     def augment(self, image):
         return cv2.GaussianBlur(image, self.ksize, self.sigmaX, self.sigmaY)
+
+    def save(self, filepath):
+        # TODO possibly make augmenter not stateful and just added it on a per
+        # situation basis, given how simple some of these are, but then again
+        # perhaps some of these don't need to be augmenters anyways.
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
+        raise NotImplementedError()
 
 
 class InvertColor(Augmenter):
@@ -357,6 +377,16 @@ class Antique(StochasticAugmenter):
 
     def augment(self):
         # TODO
+        raise NotImplementedError()
+
+    def save(self, filepath):
+        # TODO possibly make augmenter not stateful and just added it on a per
+        # situation basis, given how simple some of these are, but then again
+        # perhaps some of these don't need to be augmenters anyways.
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
         raise NotImplementedError()
 
 
