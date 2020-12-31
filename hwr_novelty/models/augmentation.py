@@ -273,15 +273,21 @@ class ElasticTransform(StochasticAugmenter):
 
 
 class Noise(StochasticAugmenter):
-    """Add uniform noise to the image."""
-    def __init__(self, min_val=0, max_val=255, *args, **kwargs):
+    """Add Gaussian noise to the image."""
+    def __init__(self, mean=0, std=10, *args, **kwargs):
         super(Noise, self).__init__(*args, **kwargs)
 
-        self.min_val = min_val
-        self.max_val = max_val
+        self.mean = mean
+        self.std = std
 
     def augment(self, image):
-        return cv2.randu(image, self.min_val, self.max_val)
+        noise = np.zeros(image.shape[:2])
+        cv2.randn(noise, self.mean, self.std)
+        noise = np.stack([noise]*3, axis=-1)
+        result = (image / 255) + noise
+        # Ensure the range [0, 255]
+        result = (np.minimum(np.maximum(result, 0), 1) * 255).astype('uint8')
+        return image + result
 
 
 class Blur(StochasticAugmenter):
@@ -417,6 +423,16 @@ class SplitAugmenters(Augmenter):
 
     def augment(self, image, aug):
         return aug.augment(image)
+
+    def save(self, filepath):
+        # TODO possibly make augmenter not stateful and just added it on a per
+        # situation basis, given how simple some of these are, but then again
+        # perhaps some of these don't need to be augmenters anyways.
+        raise NotImplementedError()
+
+    @staticmethod
+    def load(filepath):
+        raise NotImplementedError()
 
 # TODO EffectMap / EffectMask: make it so the above effects only apply to parts
 # of the image given some distribution of effect. Binary for on/off, or
