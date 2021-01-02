@@ -107,13 +107,13 @@ def load_data(
         ann = TorchANNExtractor(**vars(feature_extraction.init))
         points = np.concatenate([
             ann.extract(torch.Tensor(
-                np.expand_dims(image, 0).transpose([0, 3, 1, 2])
+                np.expand_dims(image, 0).transpose([0, 3, 1, 2]).copy()
             ).type(torch.FloatTensor))
             for image in images
         ])
         extra_negatives = np.concatenate([
             ann.extract(torch.Tensor(
-                np.expand_dims(image, 0).transpose([0, 3, 1, 2])
+                np.expand_dims(image, 0).transpose([0, 3, 1, 2]).copy()
             ).type(torch.FloatTensor))
             for image in extra_negatives
         ])
