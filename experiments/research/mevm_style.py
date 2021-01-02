@@ -11,12 +11,19 @@ from exputils import io
 
 from hwr_novelty.models.augmentation import ElasticTransform, SplitAugmenters
 from hwr_novelty.models.mevm import MEVM
-from hwr_novelty.models.style_features import HOG
+from hwr_novelty.models.style_features import HOG, TorchANNExtractor
 
 from experiments.data.iam import HWR
 
 
-def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
+def load_data(
+    datasplit,
+    iam,
+    rimes,
+    feature_extraction,
+    image_height=64,
+    augmentation=None,
+):
     logging.info('Loading IAM')
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
@@ -94,21 +101,22 @@ def load_data(datasplit, iam, rimes, hogs, image_height=64, augmentation=None):
     #   ResNet 50 (pytorch model repr)
     #   CRNN repr at RNN, at CNN
 
-    #if feature_extraction == 'hog':
-    logging.info('Performing Feature Extraction: HOG')
-    hog = HOG(**vars(hogs.init))
-    points = np.array([
-        hog.extract(img, **vars(hogs.extract)) for img in images
-    ])
-    extra_negatives = np.array([
-        hog.extract(img, **vars(hogs.extract)) for img in extra_negatives
-    ])
-    #elif feature_extraction in {'resnet50'}:
-    #    raise NotImplementedError()
-    #else:
-    #    raise ValueError(
-    #        f'Unexpected value for `feature_extraction`: {feature_extraction}',
-    #    )
+    if hasattr(feature_extraction.init, 'network'):
+        logging.info('Performing Feature Extraction: Pretrained Torch ANN')
+        ann = TorchANNExtractor(**vars(feature_extraction.init))
+        points = ann.extract(images)
+        extra_negatives = ann.extract(extra_negatives)
+    else:
+        logging.info('Performing Feature Extraction: HOG')
+        hog = HOG(**vars(feature_extraction.init))
+        points = np.array([
+            hog.extract(img, **vars(feature_extraction.extract))
+            for img in images
+        ])
+        extra_negatives = np.array([
+            hog.extract(img, **vars(feature_extraction.extract))
+            for img in extra_negatives
+        ])
 
     return points, labels, extra_negatives
 
@@ -243,40 +251,50 @@ def parse_args():
 
 
     # Parse and make HOG config
-    args.hogs = argparse.Namespace()
+    if 'hogs' in config['model']:
+        args.hogs = argparse.Namespace()
 
-    args.hogs.init = argparse.Namespace()
-    args.hogs.init.orientations = config['model']['hogs']['init']['orientations']
-    args.hogs.init.pixels_per_cell = config['model']['hogs']['init']['pixels_per_cell']
-    args.hogs.init.cells_per_block = config['model']['hogs']['init']['cells_per_block']
-    args.hogs.init.block_norm = config['model']['hogs']['init']['block_norm']
-    args.hogs.init.feature_vector = config['model']['hogs']['init']['feature_vector']
-    args.hogs.init.multichannel = config['model']['hogs']['init']['multichannel']
+        args.hogs.init = argparse.Namespace()
+        args.hogs.init.orientations = config['model']['hogs']['init']['orientations']
+        args.hogs.init.pixels_per_cell = config['model']['hogs']['init']['pixels_per_cell']
+        args.hogs.init.cells_per_block = config['model']['hogs']['init']['cells_per_block']
+        args.hogs.init.block_norm = config['model']['hogs']['init']['block_norm']
+        args.hogs.init.feature_vector = config['model']['hogs']['init']['feature_vector']
+        args.hogs.init.multichannel = config['model']['hogs']['init']['multichannel']
 
-    ''' Generalized config parsing for models, but missing defaults.
-    for model_id, margs in config['model'].items():
-        setattr(args, model_id, argparse.Namespace())
+        ''' Generalized config parsing for models, but missing defaults.
+        for model_id, margs in config['model'].items():
+            setattr(args, model_id, argparse.Namespace())
 
-        for func, fargs in margs.items():
-            model_obj = getattr(args, model_id)
-            if func in ['save_path', 'load_path']:
-                setattr(model_obj, func, fargs)
-                continue
+            for func, fargs in margs.items():
+                model_obj = getattr(args, model_id)
+                if func in ['save_path', 'load_path']:
+                    setattr(model_obj, func, fargs)
+                    continue
 
-            setattr(model_obj, func, argparse.Namespace())
+                setattr(model_obj, func, argparse.Namespace())
 
-            for attr, value in fargs.items():
-                setattr(getattr(model_obj, func), attr, value)
-    #'''
+                for attr, value in fargs.items():
+                    setattr(getattr(model_obj, func), attr, value)
+        #'''
 
-    args.hogs.extract = argparse.Namespace()
-    args.hogs.extract.means = config['model']['hogs']['extract']['means']
+        args.hogs.extract = argparse.Namespace()
+        args.hogs.extract.means = config['model']['hogs']['extract']['means']
 
-    args.hogs.extract.concat_mean = (
-        False if 'concat_mean' not in
-        config['model']['hogs']['extract']
-        else config['model']['hogs']['extract']['means']
-    )
+        args.hogs.extract.concat_mean = (
+            False if 'concat_mean' not in
+            config['model']['hogs']['extract']
+            else config['model']['hogs']['extract']['means']
+        )
+    elif 'feature_extraction' in config['model']:
+        # keeping it hogs cuz hot patch.
+        args.hogs = argparse.Namespace()
+        args.hogs.init = argparse.Namespace()
+        args.hogs.init.network = config['model']['feature_extraction']['init']['network']
+    else:
+        raise KeyError(
+            'missing feature extraction or `hogs` in config `models`.'
+        )
 
     # parse and fill mevm config
     args.mevm = argparse.Namespace()
@@ -315,7 +333,7 @@ if __name__ == '__main__':
     # Load data and feature extract
     logging.info('Loading Data')
     points, labels, extra_negatives = load_data(
-        hogs=args.hogs,
+        feature_extraction=args.hogs,
         **vars(args.data),
     )
 

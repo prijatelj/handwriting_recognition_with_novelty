@@ -5,6 +5,8 @@ from inspect import getargspec
 import numpy as np
 from ruamel.yaml import YAML
 from skimage.feature import hog
+from torch.nn import Identity
+from torchvision import models
 
 from hwr_novelty.models.predictor import Stateful
 
@@ -124,6 +126,31 @@ class HOG(FeatureExtractor):
             return np.concatenate([mean_hog] + hog_steps)
         return np.concatenate(hog_steps)
 
+
 # TODO ANN pretrained (e.g. ResNet50 on ImageNet) repr as an encoding
+class TorchANNExtractor(FeatureExtractor):
+    """Load a pretrained torch network and obtain the desired layer encoding of
+    the input as the feature extraction of that input.
+    """
+    def __init__(self, network, layer='fc', pretrained=True):
+        if not isinstance(network, str)
+            raise TypeError(
+                f'`network` is expected to be a str, not {type(network)}',
+            )
+        if not hasattr(models, network):
+            raise ValueError('`network` is not a valid torchvision model.'
+
+        self.network = getattr(models, network)(pretrained=pretrained)
+
+        if hasattr(self.network, layer):
+            raise NotImplementedError(
+                f'`layer` is not an attribute of `network`. `layer` = {layer}'
+            )
+
+        setattr(self.network, layer, Identity())
+
+    def extract(self, image):
+        return self.network(image).detach.numpy()
+
 
 # TODO CRNN layer repr (CNN or RNN)
