@@ -105,13 +105,13 @@ def load_data(
     if hasattr(feature_extraction.init, 'network'):
         logging.info('Performing Feature Extraction: Pretrained Torch ANN')
         ann = TorchANNExtractor(**vars(feature_extraction.init))
-        points = np.array([
+        points = np.concatenate([
             ann.extract(torch.Tensor(
                 np.expand_dims(image, 0).transpose([0, 3, 1, 2])
             ).type(torch.FloatTensor))
             for image in images
         ])
-        extra_negatives = np.array([
+        extra_negatives = np.concatenate([
             ann.extract(torch.Tensor(
                 np.expand_dims(image, 0).transpose([0, 3, 1, 2])
             ).type(torch.FloatTensor))

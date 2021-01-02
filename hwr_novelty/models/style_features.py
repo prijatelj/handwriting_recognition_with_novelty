@@ -151,7 +151,7 @@ class TorchANNExtractor(FeatureExtractor):
         setattr(self.network, layer, Identity())
 
     def extract(self, image):
-        return self.network(image).detach.numpy()
+        return self.network(image).detach().numpy()
 
     def save(self, filepath):
         """Save the HOG feature extractor state to the given filepath."""
