@@ -105,9 +105,11 @@ def load_data(
     if hasattr(feature_extraction.init, 'network'):
         logging.info('Performing Feature Extraction: Pretrained Torch ANN')
         ann = TorchANNExtractor(**vars(feature_extraction.init))
-        points = ann.extract([torch.Tensor(image) for image in images])
-        extra_negatives = ann.extract([
-            torch.Tensor(image) for image in extra_negatives
+        points = np.array([
+            ann.extract(torch.Tensor(image)) for image in images
+        ])
+        extra_negatives = np.array([
+            ann.extract(torch.Tensor(image)) for image in extra_negatives
         ])
     else:
         logging.info('Performing Feature Extraction: HOG')
