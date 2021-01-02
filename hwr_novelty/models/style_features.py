@@ -143,7 +143,7 @@ class TorchANNExtractor(FeatureExtractor):
 
         self.network = getattr(models, network)(pretrained=pretrained)
 
-        if hasattr(self.network, layer):
+        if not hasattr(self.network, layer):
             raise NotImplementedError(
                 f'`layer` is not an attribute of `network`. `layer` = {layer}'
             )
