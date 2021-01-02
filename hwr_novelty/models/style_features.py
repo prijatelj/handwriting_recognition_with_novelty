@@ -1,6 +1,7 @@
 """The feature extraction of images for HWR style tasks."""
 from abc import abstractmethod
 from inspect import getargspec
+import os
 
 import numpy as np
 from ruamel.yaml import YAML
@@ -133,12 +134,12 @@ class TorchANNExtractor(FeatureExtractor):
     the input as the feature extraction of that input.
     """
     def __init__(self, network, layer='fc', pretrained=True):
-        if not isinstance(network, str)
+        if not isinstance(network, str):
             raise TypeError(
                 f'`network` is expected to be a str, not {type(network)}',
             )
         if not hasattr(models, network):
-            raise ValueError('`network` is not a valid torchvision model.'
+            raise ValueError('`network` is not a valid torchvision model.')
 
         self.network = getattr(models, network)(pretrained=pretrained)
 
