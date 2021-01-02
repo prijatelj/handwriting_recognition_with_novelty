@@ -153,5 +153,14 @@ class TorchANNExtractor(FeatureExtractor):
     def extract(self, image):
         return self.network(image).detach.numpy()
 
+    def save(self, filepath):
+        """Save the HOG feature extractor state to the given filepath."""
+        raise NotImplementedError('Not yet.')
+
+    @staticmethod
+    def load(filepath):
+        """Load the HOG feature extractor state from the given filepath."""
+        raise NotImplementedError('Not yet.')
+
 
 # TODO CRNN layer repr (CNN or RNN)
