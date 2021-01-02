@@ -106,10 +106,16 @@ def load_data(
         logging.info('Performing Feature Extraction: Pretrained Torch ANN')
         ann = TorchANNExtractor(**vars(feature_extraction.init))
         points = np.array([
-            ann.extract(torch.Tensor(image)) for image in images
+            ann.extract(torch.Tensor(
+                np.expand_dims(image, 0).transpose([0, 3, 1, 2])
+            ).type(torch.FloatTensor))
+            for image in images
         ])
         extra_negatives = np.array([
-            ann.extract(torch.Tensor(image)) for image in extra_negatives
+            ann.extract(torch.Tensor(
+                np.expand_dims(image, 0).transpose([0, 3, 1, 2])
+            ).type(torch.FloatTensor))
+            for image in extra_negatives
         ])
     else:
         logging.info('Performing Feature Extraction: HOG')
