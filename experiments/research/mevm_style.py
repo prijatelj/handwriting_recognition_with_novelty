@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pandas as pd
 from ruamel.yaml import YAML
+import torch
 
 from exputils import io
 
@@ -104,8 +105,10 @@ def load_data(
     if hasattr(feature_extraction.init, 'network'):
         logging.info('Performing Feature Extraction: Pretrained Torch ANN')
         ann = TorchANNExtractor(**vars(feature_extraction.init))
-        points = ann.extract(images)
-        extra_negatives = ann.extract(extra_negatives)
+        points = ann.extract([torch.Tensor(image) for image in images])
+        extra_negatives = ann.extract([
+            torch.Tensor(image) for image in extra_negatives
+        ])
     else:
         logging.info('Performing Feature Extraction: HOG')
         hog = HOG(**vars(feature_extraction.init))
