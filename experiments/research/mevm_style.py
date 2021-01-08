@@ -100,6 +100,8 @@ def load_data(
         logging.info('Setting RIMES as extra_negatives.')
         extra_negatives = [item.image for item in rimes_data]
 
+        # TODO save the labels for extra_negatives for eval!!!!
+
     #bwl_data.df['writer'].values,
     set_trace()
 
@@ -162,6 +164,13 @@ def script_args(parser):
         type=int,
         help='Number of augmentations per item.',
     )
+
+    parser.add_argument(
+        '--torch_extract',
+        default=None,
+        help='Specify the feature extraction method using a Torch ANN.',
+    )
+
 
     # TODO eventually will replace with proper config/arg parser
     #mevm = parser.add_arg
@@ -286,7 +295,16 @@ def parse_args():
 
 
     # Parse and make HOG config
-    if 'hogs' in config['model']:
+    if args.torch_extract is not None:
+        if args.torch_extract == 'resnet50':
+            args.hogs = argparse.Namespace()
+            args.hogs.init = argparse.Namespace()
+            args.hogs.init.network = 'resnet50'
+        else:
+            raise NotImplementedError(
+                f'args.torch_extract == {args.torch_extract}',
+            )
+    elif 'hogs' in config['model']:
         args.hogs = argparse.Namespace()
 
         args.hogs.init = argparse.Namespace()
@@ -392,6 +410,9 @@ if __name__ == '__main__':
         # Calc and save the probs
         logging.info('Predicting prob vecs with MEVM')
         probs = mevm.predict(points)
+
+        # TODO save results on "known unknown"s
+        extra_neg_probs = mevm.predict(extra_negatives)
 
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
