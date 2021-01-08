@@ -46,6 +46,7 @@ model:
       multichannel: True
     extract:
       means: 1
+      multiplier: 10
   mevm:
     init:
       tailsize: 1000
