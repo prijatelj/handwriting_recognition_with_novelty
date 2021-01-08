@@ -201,6 +201,12 @@ def script_args(parser):
     )
 
     parser.add_argument(
+        '--mevm_load',
+        default=None,
+        help='Path to save trained MEVM.',
+    )
+
+    parser.add_argument(
         '--tailsize',
         default=None,
         type=int,
@@ -322,7 +328,13 @@ def parse_args():
     else:
         args.mevm.save_path = args.mevm_save
 
-    args.mevm.load_path = None if 'load_path' not in config['model']['mevm'] else config['model']['mevm']['load_path']
+    if args.mevm_load is None:
+        if 'load_path' in config['model']['mevm']:
+            args.mevm.load_path = config['model']['mevm']['load_path']
+        else:
+            args.mevm.load_path = None
+    else:
+        args.mevm.load_path = args.mevm_load
 
     args.mevm.init = argparse.Namespace()
     if args.tailsize is None:
