@@ -52,4 +52,4 @@ model:
       cover_threshold: 0.5
       distance_multiplier: 0.5
       distance_function: cosine
-    save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/writer_id/mevm/mevm_writer_id_no_aug.hdf5'
+    #save_path: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/writer_id/mevm/mevm_writer_id_no_aug.hdf5'
