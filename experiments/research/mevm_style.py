@@ -16,6 +16,8 @@ from hwr_novelty.models.style_features import HOG, TorchANNExtractor
 
 from experiments.data.iam import HWR
 
+from IPython.terminal.debugger import set_trace
+
 
 def load_data(
     datasplit,
@@ -99,6 +101,7 @@ def load_data(
         extra_negatives = [item.image for item in rimes_data]
 
     #bwl_data.df['writer'].values,
+    set_trace()
 
     logging.info('Performing Feature Extraction')
     # TODO feature extraction
@@ -133,6 +136,8 @@ def load_data(
             hog.extract(img, **vars(feature_extraction.extract))
             for img in extra_negatives
         ])
+
+    set_trace()
 
     return points, labels, extra_negatives, paths
 
@@ -401,6 +406,8 @@ if __name__ == '__main__':
         df = df[[columns[-1]] + columns[:-1]]
 
         df.to_csv(io.create_filepath(args.output.path), index=True)
+
+        set_trace()
 
         # TODO possibly set the value to 0 if None??? need to figure out why
         # getting blank/empty probs values for benchmark faithful, split 1 and
