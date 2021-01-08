@@ -6,7 +6,7 @@
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/eval/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/eval/logs/
-#$ -t 6-6
+#$ -t 6-23
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 
@@ -21,37 +21,21 @@ BASE_OUT="$BASE_SPLIT/paper_1/writer_id/mevm"
 module add conda
 conda activate osr_torch
 
+if [ "$SGE_TASK_ID" -lt "12" ]; then
+    DATASPLIT="train"
+elif [ "$SGE_TASK_ID" -lt "18" ]; then
+    DATASPLIT="val"
+else
+    DATASPLIT="test"
+fi
+
 # Unique path addons per run
-if [ "$SGE_TASK_ID" -eq "1" ]; then
-    IAM_PATH="$BASE_IAM/iam_split_0_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_0.json"
-    OUT_PATH="$BASE_OUT/split_0/mevm_split_0_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/split_0/mevm_split_0_writer_id_no_aug.hdf5"
-elif [ "$SGE_TASK_ID" -eq "2" ]; then
-    IAM_PATH="$BASE_IAM/iam_split_1_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_1.json"
-    OUT_PATH="$BASE_OUT/split_1/mevm_split_1_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/split_1/mevm_split_1_writer_id_no_aug.hdf5"
-elif [ "$SGE_TASK_ID" -eq "3" ]; then
-    IAM_PATH="$BASE_IAM/iam_split_2_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_2.json"
-    OUT_PATH="$BASE_OUT/split_2/mevm_split_2_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/split_2/mevm_split_2_writer_id_no_aug.hdf5"
-elif [ "$SGE_TASK_ID" -eq "4" ]; then
-    IAM_PATH="$BASE_IAM/iam_split_3_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_3.json"
-    OUT_PATH="$BASE_OUT/split_3/mevm_split_3_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/split_3/mevm_split_3_writer_id_no_aug.hdf5"
-elif [ "$SGE_TASK_ID" -eq "5" ]; then
-    IAM_PATH="$BASE_IAM/iam_split_4_labels.json"
-    RIMES_PATH="$BASE_RIMES/rimes_split_4.json"
-    OUT_PATH="$BASE_OUT/split_4/mevm_split_4_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/split_4/mevm_split_4_writer_id_no_aug.hdf5"
-elif [ "$SGE_TASK_ID" -eq "6" ]; then
+MODO=$(($SGE_TASK_ID % 6))
+if [ "$MODO" -eq "5" ]; then
     IAM_PATH="$BASE_SPLIT/grieggs_data/IAM_aachen/train.json"
     RIMES_PATH="$BASE_SPLIT/grieggs_data/RIMES_2011_LINES/training_2011_gt.json"
     OUT_PATH="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug_eval"
-    MEVM_SAVE="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.hdf5"
+    MEVM_LOAD="$BASE_OUT/bfaithful/mevm_bfaithful_writer_id_no_aug.hdf5"
 
     python3 "$BASE_PATH/experiments/research/mevm_style.py" \
         "$BASE_PATH/experiments/configs/paper_1/mevm_writer_id_no_aug.yaml" \
@@ -59,12 +43,15 @@ elif [ "$SGE_TASK_ID" -eq "6" ]; then
         --iam_path "$IAM_PATH" \
         --iam_image_root_dir "$BASE_SPLIT/grieggs_data/IAM_aachen/" \
         --rimes_path "$RIMES_PATH" \
-        --output_path "$OUT_PATH" \
-        --mevm_save "$MEVM_SAVE"
+        --output_path "$OUT_PATH"/"$DATASPLIT".csv \
+        --mevm_load "$MEVM_LOAD" \
+        --datasplit "$DATASPLIT"
     exit 0
 else
-    echo "ERROR: Unexpected SGE_TASK_ID: $SGE_TASK_ID"
-    exit 1
+    IAM_PATH="$BASE_IAM/"iam_split_"$MODO"_labels.json
+    RIMES_PATH="$BASE_RIMES/"rimes_split_"$MODO".json
+    OUT_PATH="$BASE_OUT/"split_"$MODO"/mevm_split_"$MODO"_writer_id_no_aug_eval
+    MEVM_LOAD="$BASE_OUT/"split_"$MODO"/mevm_split_"$MODO"_writer_id_no_aug.hdf5
 fi
 
 python3 "$BASE_PATH/experiments/research/mevm_style.py" \
@@ -72,24 +59,6 @@ python3 "$BASE_PATH/experiments/research/mevm_style.py" \
     --log_level INFO \
     --iam_path "$IAM_PATH" \
     --rimes_path "$RIMES_PATH" \
-    --output_path "$OUT_PATH/train.csv" \
-    --mevm_load "$MEVM_SAVE" \
-    --datasplit "train"
-
-python3 "$BASE_PATH/experiments/research/mevm_style.py" \
-    "$BASE_PATH/experiments/configs/paper_1/mevm_writer_id_no_aug.yaml" \
-    --log_level INFO \
-    --iam_path "$IAM_PATH" \
-    --rimes_path "$RIMES_PATH" \
-    --output_path "$OUT_PATH/val.csv" \
-    --mevm_load "$MEVM_SAVE" \
-    --datasplit "val"
-
-python3 "$BASE_PATH/experiments/research/mevm_style.py" \
-    "$BASE_PATH/experiments/configs/paper_1/mevm_writer_id_no_aug.yaml" \
-    --log_level INFO \
-    --iam_path "$IAM_PATH" \
-    --rimes_path "$RIMES_PATH" \
-    --output_path "$OUT_PATH/test.csv" \
-    --mevm_load "$MEVM_SAVE" \
-    --datasplit "test"
+    --output_path "$OUT_PATH"/"$DATASPLIT".csv \
+    --mevm_load "$MEVM_LOAD" \
+    --datasplit "$DATASPLIT"
