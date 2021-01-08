@@ -73,6 +73,7 @@ def load_data(
             else:
                 images.append(item.image)
                 labels.append(item.represent)
+                paths.append(item.path)
 
         logging.info('Getting Labels from RIMES.')
         for item in rimes_data:
@@ -81,14 +82,17 @@ def load_data(
             else:
                 images.append(item.image)
                 labels.append(item.represent)
+                paths.append(item.path)
     else:
         # Obtain the labels from the data (writer id)
         logging.info('Getting Labels from IAM.')
         images = []
         labels = []
+        paths = []
         for item in iam_data:
             images.append(item.image)
             labels.append(item.writer)
+            paths.append(item.path)
 
         logging.info('Setting RIMES as extra_negatives.')
         extra_negatives = [item.image for item in rimes_data]
@@ -129,7 +133,7 @@ def load_data(
             for img in extra_negatives
         ])
 
-    return points, labels, extra_negatives
+    return points, labels, extra_negatives, paths
 
 
 def script_args(parser):
@@ -343,13 +347,10 @@ if __name__ == '__main__':
 
     # Load data and feature extract
     logging.info('Loading Data')
-    points, labels, extra_negatives = load_data(
+    points, labels, extra_negatives, paths = load_data(
         feature_extraction=args.hogs,
         **vars(args.data),
     )
-
-    # TODO train the MEVMs on augmentated data: elastic transform
-    # TODO train the MEVMs on augmentated data: Repr classification task
 
     #if args.train:
     if args.mevm.save_path:
@@ -369,8 +370,16 @@ if __name__ == '__main__':
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
         df = pd.DataFrame(probs, columns=mevm.labels.tolist() + ['unknown'])
-        # TODO add a column or index of the image ids.
-        df.to_csv(io.create_filepath(args.output.path), index=False)
+
+        df['gt'] = labels
+        df['path'] = paths
+
+        df = df.set_index('path')
+
+        columns = list(df.columns)
+        df = df[[columns[-1]] + columns[:-1]]
+
+        df.to_csv(io.create_filepath(args.output.path), index=True)
 
         # TODO possibly set the value to 0 if None??? need to figure out why
         # getting blank/empty probs values for benchmark faithful, split 1 and
