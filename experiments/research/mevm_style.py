@@ -16,8 +16,6 @@ from hwr_novelty.models.style_features import HOG, TorchANNExtractor
 
 from experiments.data.iam import HWR
 
-from IPython.terminal.debugger import set_trace
-
 
 def load_data(
     datasplit,
@@ -69,10 +67,14 @@ def load_data(
         images = []
         labels = []
         extra_negatives = []
+        extra_neg_labels = []
+        extra_neg_paths = []
         paths = []
         for item in iam_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
                 extra_negatives.append(item.image)
+                extra_neg_labels.append(item.represent)
+                extra_neg_paths.append(item.path)
             else:
                 images.append(item.image)
                 labels.append(item.represent)
@@ -82,6 +84,7 @@ def load_data(
         for item in rimes_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
                 extra_negatives.append(item.image)
+                extra_neg_paths.append(item.path)
             else:
                 images.append(item.image)
                 labels.append(item.represent)
@@ -98,12 +101,17 @@ def load_data(
             paths.append(item.path)
 
         logging.info('Setting RIMES as extra_negatives.')
-        extra_negatives = [item.image for item in rimes_data]
+        extra_negatives = []
+        extra_neg_paths = []
+        extra_neg_labels = ['rimes'] * len(extra_negatives)
+
+        for item in rimes_data:
+            extra_negatives.append(item.image)
+            extra_neg_paths.append(item.path)
 
         # TODO save the labels for extra_negatives for eval!!!!
 
     #bwl_data.df['writer'].values,
-    set_trace()
 
     logging.info('Performing Feature Extraction')
     # TODO feature extraction
@@ -139,9 +147,8 @@ def load_data(
             for img in extra_negatives
         ])
 
-    set_trace()
-
-    return points, labels, extra_negatives, paths
+    return points, labels, paths + extra_neg_paths, \
+        extra_negatives, extra_neg_labels
 
 
 def script_args(parser):
@@ -391,7 +398,7 @@ if __name__ == '__main__':
 
     # Load data and feature extract
     logging.info('Loading Data')
-    points, labels, extra_negatives, paths = load_data(
+    points, labels, paths, extra_negatives, extra_neg_labels = load_data(
         feature_extraction=args.hogs,
         **vars(args.data),
     )
@@ -411,14 +418,19 @@ if __name__ == '__main__':
         logging.info('Predicting prob vecs with MEVM')
         probs = mevm.predict(points)
 
-        # TODO save results on "known unknown"s
         extra_neg_probs = mevm.predict(extra_negatives)
+
+        if np.isnan(probs).all() and np.isnan(extra_neg_probs).all():
+            raise ValueError('`NaN` exists in ALL probs and extra_neg_probs!')
 
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
-        df = pd.DataFrame(probs, columns=mevm.labels.tolist() + ['unknown'])
+        df = pd.DataFrame(
+            np.concatenate(probs, extra_neg_probs),
+            columns=mevm.labels.tolist() + ['unknown'],
+        )
 
-        df['gt'] = labels
+        df['gt'] = labels + extra_neg_labels
         df['path'] = paths
 
         df = df.set_index('path')
@@ -428,7 +440,10 @@ if __name__ == '__main__':
 
         df.to_csv(io.create_filepath(args.output.path), index=True)
 
-        set_trace()
+        if np.isnan(probs).any() or np.isnan(extra_neg_probs).any():
+            # After saving the results to check which cases worked and which
+            # did not, raise the error.
+            raise ValueError('`NaN` exists in probs or extra_neg_probs!')
 
         # TODO possibly set the value to 0 if None??? need to figure out why
         # getting blank/empty probs values for benchmark faithful, split 1 and
