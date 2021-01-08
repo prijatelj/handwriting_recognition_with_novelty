@@ -85,7 +85,7 @@ class HOG(FeatureExtractor):
         img,
         means=1,
         concat_mean=False,
-        multiplier=None,
+        additive=None,
     ):
         """Forward pass of a single image through the Histogram of Oriented
         Gradients for the style tasks.
@@ -110,8 +110,9 @@ class HOG(FeatureExtractor):
         """
         hog_descriptor = hog(img, **vars(self))
 
-        if multiplier is not None:
-            hog_descriptor *= multiplier
+        if additive is not None:
+            # To avoid vectors whose elements are all near zero
+            hog_descriptor += additive
 
         if means <= 1 or concat_mean:
             # Only one mean of all HOGs for the image
