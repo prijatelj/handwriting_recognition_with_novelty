@@ -67,6 +67,7 @@ def load_data(
         images = []
         labels = []
         extra_negatives = []
+        paths = []
         for item in iam_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
                 extra_negatives.append(item.image)
