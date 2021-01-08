@@ -252,11 +252,11 @@ class MEVM(MultipleEVM, SupervisedClassifier):
 
         # Find probability of unknown as its own class
         probs = np.array(probs)
-        max_probs_known = probs.max(axis=1)
-        unknown_probs = (1 - max_probs_known).reshape(-1, 1)
+        max_probs_known = probs.max(axis=1).reshape(-1, 1)
+        unknown_probs = 1 - max_probs_known
 
         # Scale the rest of the known class probs by max prob known
-        probs *= max_probs_known.reshape(-1, 1)
+        probs *= max_probs_known
 
         return np.hstack((probs, unknown_probs))
 
