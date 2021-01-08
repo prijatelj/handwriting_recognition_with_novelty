@@ -226,15 +226,11 @@ def parse_args():
 
     if args.data.datasplit is None:
         if 'datasplit' in config['data']:
-            args.data.datasplit = config['model']['mevm']['load_path']
+            args.data.datasplit = config['data']['datasplit']
         else:
             raise ValueError(
                 '`datasplit` must be provided as an arg or in the config',
             )
-            args.mevm.load_path = None
-    else:
-        args.mevm.load_path = args.mevm_load
-    args.data.datasplit = config['data']['datasplit']
     args.data.image_height = config['data']['image_height']
 
     #args.data.iam = argparse.Namespace()
