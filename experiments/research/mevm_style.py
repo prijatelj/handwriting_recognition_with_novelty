@@ -187,12 +187,13 @@ def script_args(parser):
         help='Path to root dir of RIMES line images.',
         dest='data.rimes.image_root_dir',
     )
-    #data.add_argument(
-    #    '--datasplit',
-    #    default=None,
-    #    help='Datasplit to use.',
-    #    dest='data.datasplit',
-    #)
+
+    data.add_argument(
+        '--datasplit',
+        default=None,
+        help='Datasplit to use.',
+        dest='data.datasplit',
+    )
 
     parser.add_argument(
         '--mevm_save',
@@ -222,6 +223,17 @@ def parse_args():
 
     # parse and make data config
     #args.data = argparse.Namespace()
+
+    if args.data.datasplit is None:
+        if 'datasplit' in config['data']:
+            args.data.datasplit = config['model']['mevm']['load_path']
+        else:
+            raise ValueError(
+                '`datasplit` must be provided as an arg or in the config',
+            )
+            args.mevm.load_path = None
+    else:
+        args.mevm.load_path = args.mevm_load
     args.data.datasplit = config['data']['datasplit']
     args.data.image_height = config['data']['image_height']
 
