@@ -84,6 +84,7 @@ def load_data(
         for item in rimes_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
                 extra_negatives.append(item.image)
+                extra_neg_labels.append(item.represent)
                 extra_neg_paths.append(item.path)
             else:
                 images.append(item.image)
@@ -103,13 +104,12 @@ def load_data(
         logging.info('Setting RIMES as extra_negatives.')
         extra_negatives = []
         extra_neg_paths = []
-        extra_neg_labels = ['rimes'] * len(extra_negatives)
 
         for item in rimes_data:
             extra_negatives.append(item.image)
             extra_neg_paths.append(item.path)
 
-        # TODO save the labels for extra_negatives for eval!!!!
+        extra_neg_labels = ['rimes'] * len(extra_negatives)
 
     #bwl_data.df['writer'].values,
 
