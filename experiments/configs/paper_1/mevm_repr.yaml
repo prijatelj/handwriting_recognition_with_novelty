@@ -14,9 +14,9 @@ data:
           augs_per_item: 1
           mean: 0
           std: 10
-        #Antique:
-        #  augs_per_item: 1
-        #  background_dir: path/to/background_images/
+        Antique:
+          augs_per_item: 1
+          backgrounds_dir: '/afs/crc.nd.edu/user/d/dprijate/scratch_22/open_set/data/handwritten_text_recognition/paper_1/data/antique_backgrounds/'
         Reflect:
           axis: 0
         Blur:

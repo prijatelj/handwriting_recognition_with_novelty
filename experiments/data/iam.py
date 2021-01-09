@@ -27,6 +27,7 @@ class Summary:
     #def doc_per_writer(self) -> dict:
     #    return self.writer_per_doc.inverse()
 
+
 @dataclass
 class HWRItem:
     """Data class for the item returned by the HWR class get item."""
@@ -35,6 +36,7 @@ class HWRItem:
     path: str
     writer: str
     represent: str = None
+
 
 class HWRHandwriting(object):
     def __init__(self, filepath, key=None):

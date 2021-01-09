@@ -1,7 +1,9 @@
 """Classes that augment the given image in different ways."""
 from abc import abstractmethod
 from collections import OrderedDict
+import glob
 import inspect
+import os
 import sys
 
 import cv2
@@ -386,14 +388,90 @@ class Antique(StochasticAugmenter):
     that fits the line image is applied to the line image. This is to simulate
     text on antique papers.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, backgrounds_dir, grayscale=True, *args, **kwargs):
         super(Antique, self).__init__(*args, **kwargs)
-        # TODO
-        raise NotImplementedError()
 
-    def augment(self):
-        # TODO
-        raise NotImplementedError()
+        # TODO Load the images from the backgrounds directory
+        self.background_images = []
+        for img_path in glob.iglob(os.path.join(backgrounds_dir, '*')):
+            if grayscale:
+                image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+
+                # We by default expect BGR for all other images, thus repeat
+                image = np.repeat(np.expand_dims(image, 2), 3, 2)
+            else:
+                image = cv2.imread(img_path)
+
+            if image is None:
+                raise IOError(
+                    f'Read image is None. Invalid filepath: {img_path}',
+                )
+
+            self.background_images.append(image)
+
+    def augment(
+        self,
+        image,
+        bg_image_id=None,
+        approach='minimum',
+        color=[255, 255, 255]
+    ):
+        # Set offsets to random part of background
+        if bg_image_id is None:
+            bg_image = self.background_images[
+                self.random_state.randint(len(self.background_images))
+            ]
+        else:
+            bg_image = self.background_images[bg_image_id]
+
+        if bg_image.shape[1] >= image.shape[1]:
+            x_offset = int(
+                self.random_state.random()
+                * (bg_image.shape[1] - image.shape[1])
+            )
+        else:
+            x_offset = 0
+
+        if bg_image.shape[0] >= image.shape[0]:
+            y_offset = int(
+                self.random_state.random()
+                * (bg_image.shape[0] - image.shape[0])
+            )
+        else:
+            y_offset = 0
+            bg_image_select = bg_image[
+                y_offset:y_offset + image.shape[0],
+                x_offset:x_offset + image.shape[1],
+                :,
+            ]
+
+        if image.shape[0:2] != bg_image.shape[0:2]:
+            bg_image_select = cv2.resize(
+                bg_image_select,
+                (image.shape[1], image.shape[0]),
+            )
+            blended = np.copy(image)
+
+        for i in range(image.shape[2]):
+            if approach == "minimum":
+                blended[:, :, i] = np.minimum(
+                    image[:, :, i],
+                    bg_image_select[:, :, i],
+                )
+            elif approach == "factor":
+                img = np.copy(image[:, :, i])
+
+                # Darker is letters
+                factor = (255 - img) / 255.0
+                blended[:, :, i] = bg_image_select[:, :, i] \
+                    * (1 - factor) + img * factor
+            else:
+                img = np.copy(image[:, :, i])
+                blended[:, :, i] = bg_image_select[:, :, i]
+                blended[:, :, i][img < 250] = color[i] \
+                    * ((255 - img) / 255.0).astype(np.uint8)[img < 250]
+
+        return blended
 
     def save(self, filepath):
         # TODO possibly make augmenter not stateful and just added it on a per
