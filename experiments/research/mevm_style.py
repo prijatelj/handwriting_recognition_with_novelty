@@ -166,6 +166,13 @@ def script_args(parser):
     )
 
     parser.add_argument(
+        '--output_points',
+        default=None,
+        help='output points filepath.',
+        dest='output.points',
+    )
+
+    parser.add_argument(
         '--augs_per_item',
         default=None,
         type=int,
@@ -402,6 +409,18 @@ if __name__ == '__main__':
         feature_extraction=args.hogs,
         **vars(args.data),
     )
+
+    if args.output.points is not None:
+        df = pd.DataFrame(np.concatenate(points, extra_negatives))
+
+        df['gt'] = labels + extra_neg_labels
+        df['path'] = paths
+
+        df = df.set_index('path')
+
+        columns = list(df.columns)
+        df = df[[columns[-1]] + columns[:-1]]
+        df.to_csv(io.create_filepath(args.output.points), index=True)
 
     #if args.train:
     if args.mevm.save_path:
