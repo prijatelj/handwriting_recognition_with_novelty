@@ -411,7 +411,7 @@ if __name__ == '__main__':
     )
 
     if args.output.points is not None:
-        df = pd.DataFrame(np.concatenate(points, extra_negatives))
+        df = pd.DataFrame(np.concatenate((points, extra_negatives)))
 
         df['gt'] = labels + extra_neg_labels
         df['path'] = paths
@@ -445,7 +445,7 @@ if __name__ == '__main__':
         # Save resulting prob vectors
         logging.info('Saving resulting prob vecs with MEVM')
         df = pd.DataFrame(
-            np.concatenate(probs, extra_neg_probs),
+            np.concatenate((probs, extra_neg_probs)),
             columns=mevm.labels.tolist() + ['unknown'],
         )
 
