@@ -439,11 +439,12 @@ class Antique(StochasticAugmenter):
             )
         else:
             y_offset = 0
-            bg_image_select = bg_image[
-                y_offset:y_offset + image.shape[0],
-                x_offset:x_offset + image.shape[1],
-                :,
-            ]
+
+        bg_image_select = bg_image[
+            y_offset:y_offset + image.shape[0],
+            x_offset:x_offset + image.shape[1],
+            :,
+        ]
 
         if image.shape[0:2] != bg_image.shape[0:2]:
             bg_image_select = cv2.resize(
