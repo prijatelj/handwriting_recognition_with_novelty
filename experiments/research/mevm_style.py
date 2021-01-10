@@ -101,6 +101,8 @@ def load_data(
                     or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
+                elif 'train2011-1404/10564.png' in item.path:
+                    continue
                 extra_negatives.append(item.image)
                 extra_neg_labels.append(item.represent)
                 extra_neg_paths.append(item.path)
@@ -111,6 +113,8 @@ def load_data(
                     or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
+                elif 'train2011-1404/10564.png' in item.path:
+                    continue
                 images.append(item.image)
                 labels.append(item.represent)
                 paths.append(item.path)
@@ -127,6 +131,7 @@ def load_data(
                 or np.isnan(item.image).any()
             ):
                 raise ValueError(f'this image be broke: {item.path}')
+
             images.append(item.image)
             labels.append(item.writer)
             paths.append(item.path)
@@ -142,6 +147,8 @@ def load_data(
                 or np.isnan(item.image).any()
             ):
                 raise ValueError(f'this image be broke: {item.path}')
+            elif 'train2011-1404/10564.png' in item.path:
+                continue
             extra_negatives.append(item.image)
             extra_neg_paths.append(item.path)
 
