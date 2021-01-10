@@ -181,13 +181,9 @@ def load_data(
     else:
         logging.info('Performing Feature Extraction: HOG')
         hog = HOG(**vars(feature_extraction.init))
-        points = np.array([
-            hog.extract(img, **vars(feature_extraction.extract))
-            for img in images
-        ])
+        points = np.array([hog.extract(img) for img in images])
         extra_negatives = np.array([
-            hog.extract(img, **vars(feature_extraction.extract))
-            for img in extra_negatives
+            hog.extract(img) for img in extra_negatives
         ])
 
     return points, labels, paths + extra_neg_paths, \
@@ -403,29 +399,28 @@ def parse_args():
                     setattr(getattr(model_obj, func), attr, value)
         #'''
 
-        args.hogs.extract = argparse.Namespace()
         if args.hog_means is None:
-            args.hogs.extract.means = config['model']['hogs']['extract']['means']
+            args.hogs.init.means = config['model']['hogs']['init']['means']
         else:
-            args.hogs.extract.means = args.hog_means
+            args.hogs.init.means = args.hog_means
 
         if args.hog_concat_mean is False:
-            if 'concat_mean' in config['model']['hogs']['extract']:
-                args.hogs.extract.concat_mean = config['model']['hogs']['extract']['concat_mean']
+            if 'concat_mean' in config['model']['hogs']['init']:
+                args.hogs.init.concat_mean = config['model']['hogs']['init']['concat_mean']
             else:
-                args.hogs.extract.concat_mean = False
+                args.hogs.init.concat_mean = False
         else:
-            args.hogs.extract.means = args.hog_concat_mean
+            args.hogs.init.means = args.hog_concat_mean
 
-        args.hogs.extract.concat_mean = (
+        args.hogs.init.additive = (
             None if 'additive' not in
-            config['model']['hogs']['extract']
-            else config['model']['hogs']['extract']['additive']
+            config['model']['hogs']['init']
+            else config['model']['hogs']['init']['additive']
         )
-        args.hogs.extract.concat_mean = (
+        args.hogs.init.multiplier = (
             None if 'multiplier' not in
-            config['model']['hogs']['extract']
-            else config['model']['hogs']['extract']['multiplier']
+            config['model']['hogs']['init']
+            else config['model']['hogs']['init']['multiplier']
         )
     elif 'feature_extraction' in config['model']:
         # keeping it hogs cuz hot patch.

@@ -11,16 +11,13 @@ data:
 model:
   hogs:
     init:
+      means: 1
       orientations: 9
       pixels_per_cell: [16, 16]
       cells_per_block: [4, 4]
       block_norm: 'L2'
       feature_vector: False
       multichannel: True
-    extract:
-      means: 1
-      #additive: 1.1
-      #multiplier: 1000
   mevm:
     init:
       tailsize: 1000

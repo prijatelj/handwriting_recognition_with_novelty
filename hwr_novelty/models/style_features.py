@@ -31,7 +31,22 @@ class HOG(FeatureExtractor):
     ----------
     See `skimage.feature.hog`
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        means=1,
+        concat_mean=False,
+        additive=None,
+        multiplier=None,
+        *args,
+        **kwargs,
+    ):
+        # Save this class' specific attribs first
+        self.means = means
+        self.concat_mean = concat_mean
+        self.additive = additive
+        self.multiplier = multiplier
+
+        # Get the args of skimage.feature.hog
         argspec = getargspec(hog)
 
         # NOTE atm `skimage.feature.hog` is all positional args.
@@ -84,8 +99,8 @@ class HOG(FeatureExtractor):
     def extract(
         self,
         img,
-        means=1,
-        concat_mean=False,
+        means=None,
+        concat_mean=None,
         additive=None,
         multiplier=None,
     ):
@@ -110,6 +125,11 @@ class HOG(FeatureExtractor):
             pixels per cell to use in the Histogram of Oriented Gradients
             calculation.
         """
+        means = means if means is not None else self.means
+        concat_mean = concat_mean if concat_mean is not None else self.concat_mean
+        additive = additive if additive is not None else self.additive
+        multiplier = multiplier if multiplier is not None else self.multiplier
+
         hog_descriptor = hog(img, **vars(self))
 
         if means <= 1 or concat_mean:
