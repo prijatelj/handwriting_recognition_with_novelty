@@ -86,6 +86,7 @@ class HOG(FeatureExtractor):
         means=1,
         concat_mean=False,
         additive=None,
+        multiplier=None,
     ):
         """Forward pass of a single image through the Histogram of Oriented
         Gradients for the style tasks.
@@ -110,23 +111,38 @@ class HOG(FeatureExtractor):
         """
         hog_descriptor = hog(img, **vars(self))
 
-        if additive is not None:
-            # To avoid vectors whose elements are all near zero
-            hog_descriptor += additive
-
         if means <= 1 or concat_mean:
             # Only one mean of all HOGs for the image
             mean_hog = np.mean(hog_descriptor, axis=1).flatten()
+
+            if additive is not None:
+                # To avoid vectors whose elements are all near zero
+                mean_hog += additive
+
+            if multiplier is not None:
+                # To avoid vectors whose elements are all near zero
+                mean_hog *= multiplier
 
             if not concat_mean:
                 return mean_hog
 
         # Histogram of oriented gradients with multiple means
         indices = np.linspace(0, hog_descriptor.shape[1], means)
-        hog_steps = [
-            np.mean(hog_descriptor[:, indices[i]:idx], axis=1).flatten()
-            for i, idx in enumerate(indices[1:])
-        ]
+        hog_steps = []
+        for i, idx in enumerate(indices[1:]):
+            next_mean_hog = np.mean(
+                hog_descriptor[:, indices[i]:idx], axis=1
+            ).flatten()
+
+            if additive is not None:
+                # To avoid vectors whose elements are all near zero
+                next_mean_hog += additive
+
+            if multiplier is not None:
+                # To avoid vectors whose elements are all near zero
+                next_mean_hog *= multiplier
+
+            hog_steps.append(next_mean_hog)
 
         if concat_mean:
             return np.concatenate([mean_hog] + hog_steps)
