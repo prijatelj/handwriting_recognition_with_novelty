@@ -1,6 +1,7 @@
 """The feature extraction of images for HWR style tasks."""
 from abc import abstractmethod
 from inspect import getargspec
+import logging
 import os
 
 import numpy as np
@@ -116,10 +117,12 @@ class HOG(FeatureExtractor):
             mean_hog = np.mean(hog_descriptor, axis=1).flatten()
 
             if additive is not None:
+                logging.debug('added {additive} to the mean hog.')
                 # To avoid vectors whose elements are all near zero
                 mean_hog += additive
 
             if multiplier is not None:
+                logging.debug('multiplied {multiplier} to the mean hog.')
                 # To avoid vectors whose elements are all near zero
                 mean_hog *= multiplier
 
