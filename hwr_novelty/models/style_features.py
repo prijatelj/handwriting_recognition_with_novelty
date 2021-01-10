@@ -46,6 +46,12 @@ class HOG(FeatureExtractor):
         self.additive = additive
         self.multiplier = multiplier
 
+        # Hotfix, TODO the below meta args setting needs to be generalized...
+        kwargs.pop('means', None)
+        kwargs.pop('concat_mean', None)
+        kwargs.pop('additive', None)
+        kwargs.pop('multiplier', None)
+
         # Get the args of skimage.feature.hog
         argspec = getargspec(hog)
 
