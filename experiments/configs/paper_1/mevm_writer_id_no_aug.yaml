@@ -19,7 +19,7 @@ model:
       multichannel: True
     extract:
       means: 1
-      additive: 1.1
+      #additive: 1.1
       #multiplier: 1000
   mevm:
     init:
