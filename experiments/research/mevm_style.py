@@ -75,7 +75,7 @@ def load_data(
                 if (
                     item.image is None
                     or not np.isfinite(item.image).all()
-                    or np.isnan(image).any()
+                    or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
                 extra_negatives.append(item.image)
@@ -85,7 +85,7 @@ def load_data(
                 if (
                     item.image is None
                     or not np.isfinite(item.image).all()
-                    or np.isnan(image).any()
+                    or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
                 images.append(item.image)
@@ -98,7 +98,7 @@ def load_data(
                 if (
                     item.image is None
                     or not np.isfinite(item.image).all()
-                    or np.isnan(image).any()
+                    or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
                 extra_negatives.append(item.image)
@@ -108,7 +108,7 @@ def load_data(
                 if (
                     item.image is None
                     or not np.isfinite(item.image).all()
-                    or np.isnan(image).any()
+                    or np.isnan(item.image).any()
                 ):
                     raise ValueError(f'this image be broke: {item.path}')
                 images.append(item.image)
@@ -124,7 +124,7 @@ def load_data(
             if (
                 item.image is None
                 or not np.isfinite(item.image).all()
-                or np.isnan(image).any()
+                or np.isnan(item.image).any()
             ):
                 raise ValueError(f'this image be broke: {item.path}')
             images.append(item.image)
@@ -139,7 +139,7 @@ def load_data(
             if (
                 item.image is None
                 or not np.isfinite(item.image).all()
-                or np.isnan(image).any()
+                or np.isnan(item.image).any()
             ):
                 raise ValueError(f'this image be broke: {item.path}')
             extra_negatives.append(item.image)
