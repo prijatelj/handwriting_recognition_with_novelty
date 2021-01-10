@@ -114,7 +114,7 @@ class HOG(FeatureExtractor):
 
         if means <= 1 or concat_mean:
             # Only one mean of all HOGs for the image
-            mean_hog = np.mean(hog_descriptor, axis=1).flatten()
+            mean_hog = np.mean(hog_descriptor, axis=1).ravel()
 
             if additive is not None:
                 logging.debug('added {additive} to the mean hog.')
@@ -138,7 +138,7 @@ class HOG(FeatureExtractor):
             next_mean_hog = np.mean(
                 hog_descriptor[:, indices[i]:idx],
                 axis=1,
-            ).flatten()
+            ).ravel()
 
             if additive is not None:
                 # To avoid vectors whose elements are all near zero
