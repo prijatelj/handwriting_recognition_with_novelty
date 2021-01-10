@@ -351,7 +351,17 @@ def parse_args():
         args.hogs.extract.concat_mean = (
             False if 'concat_mean' not in
             config['model']['hogs']['extract']
-            else config['model']['hogs']['extract']['means']
+            else config['model']['hogs']['extract']['concat_mean']
+        )
+        args.hogs.extract.concat_mean = (
+            None if 'additive' not in
+            config['model']['hogs']['extract']
+            else config['model']['hogs']['extract']['additive']
+        )
+        args.hogs.extract.concat_mean = (
+            None if 'multiplier' not in
+            config['model']['hogs']['extract']
+            else config['model']['hogs']['extract']['multiplier']
         )
     elif 'feature_extraction' in config['model']:
         # keeping it hogs cuz hot patch.
