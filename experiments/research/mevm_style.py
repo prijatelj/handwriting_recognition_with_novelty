@@ -410,7 +410,7 @@ def parse_args():
             else:
                 args.hogs.init.concat_mean = False
         else:
-            args.hogs.init.means = args.hog_concat_mean
+            args.hogs.init.concat_mean = args.hog_concat_mean
 
         args.hogs.init.additive = (
             None if 'additive' not in
