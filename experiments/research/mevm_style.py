@@ -295,6 +295,20 @@ def script_args(parser):
         help='Concat the entire mean to the multi-mean HOG feature extraction.'
     )
 
+    parser.add_argument(
+        '--hog_additive',
+        default=None,
+        type=float,
+        help='The value to add to the end of the hog means.',
+    )
+
+    parser.add_argument(
+        '--hog_multiplier',
+        default=None,
+        type=float,
+        help='The value to multiply with the hog means, after addition.',
+    )
+
 
 
 def parse_args():
@@ -412,16 +426,25 @@ def parse_args():
         else:
             args.hogs.init.concat_mean = args.hog_concat_mean
 
-        args.hogs.init.additive = (
-            None if 'additive' not in
-            config['model']['hogs']['init']
-            else config['model']['hogs']['init']['additive']
-        )
-        args.hogs.init.multiplier = (
-            None if 'multiplier' not in
-            config['model']['hogs']['init']
-            else config['model']['hogs']['init']['multiplier']
-        )
+
+        if args.hog_additive is None:
+            args.hogs.init.additive = (
+                None if 'additive' not in
+                config['model']['hogs']['init']
+                else config['model']['hogs']['init']['additive']
+            )
+        else:
+            args.hogs.init.additive = args.hog_additive
+
+        if args.hog_multiplier is None:
+            args.hogs.init.multiplier = (
+                None if 'multiplier' not in
+                config['model']['hogs']['init']
+                else config['model']['hogs']['init']['multiplier']
+            )
+        else:
+            args.hogs.init.multiplier = args.hog_multiplier
+
     elif 'feature_extraction' in config['model']:
         # keeping it hogs cuz hot patch.
         args.hogs = argparse.Namespace()
