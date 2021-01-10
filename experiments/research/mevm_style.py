@@ -293,6 +293,14 @@ def script_args(parser):
         help='Number of sequential means of HOGs to calculate.',
     )
 
+    parser.add_argument(
+        '--hog_concat_mean',
+        action='store_true',
+        help='Concat the entire mean to the multi-mean HOG feature extraction.'
+    )
+
+
+
 def parse_args():
     args = io.parse_args(custom_args=script_args)
 
@@ -401,11 +409,14 @@ def parse_args():
         else:
             args.hogs.extract.means = args.hog_means
 
-        args.hogs.extract.concat_mean = (
-            False if 'concat_mean' not in
-            config['model']['hogs']['extract']
-            else config['model']['hogs']['extract']['concat_mean']
-        )
+        if args.hog_concat_mean is False:
+            if 'concat_mean' in config['model']['hogs']['extract']:
+                args.hogs.extract.concat_mean = config['model']['hogs']['extract']['concat_mean']
+            else:
+                args.hogs.extract.concat_mean = False
+        else:
+            args.hogs.extract.means = args.hog_concat_mean
+
         args.hogs.extract.concat_mean = (
             None if 'additive' not in
             config['model']['hogs']['extract']
