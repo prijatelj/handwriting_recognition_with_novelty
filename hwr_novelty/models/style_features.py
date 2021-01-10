@@ -130,11 +130,14 @@ class HOG(FeatureExtractor):
                 return mean_hog
 
         # Histogram of oriented gradients with multiple means
-        indices = np.linspace(0, hog_descriptor.shape[1], means)
+        indices = np.round(
+            np.linspace(0, hog_descriptor.shape[1], means)
+        ).astype(int)
         hog_steps = []
         for i, idx in enumerate(indices[1:]):
             next_mean_hog = np.mean(
-                hog_descriptor[:, indices[i]:idx], axis=1
+                hog_descriptor[:, indices[i]:idx],
+                axis=1,
             ).flatten()
 
             if additive is not None:
