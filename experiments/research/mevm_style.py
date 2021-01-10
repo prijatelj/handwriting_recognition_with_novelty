@@ -72,13 +72,21 @@ def load_data(
         paths = []
         for item in iam_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
-                if item.image is None or not np.isfinite(item.image).all():
+                if (
+                    item.image is None
+                    or not np.isfinite(item.image).all()
+                    or np.isna(image).any()
+                ):
                     raise ValueError(f'this image be broke: {item.path}')
                 extra_negatives.append(item.image)
                 extra_neg_labels.append(item.represent)
                 extra_neg_paths.append(item.path)
             else:
-                if item.image is None or not np.isfinite(item.image).all():
+                if (
+                    item.image is None
+                    or not np.isfinite(item.image).all()
+                    or np.isna(image).any()
+                ):
                     raise ValueError(f'this image be broke: {item.path}')
                 images.append(item.image)
                 labels.append(item.represent)
@@ -87,13 +95,21 @@ def load_data(
         logging.info('Getting Labels from RIMES.')
         for item in rimes_data:
             if item.represent in augmentation.SplitAugmenters.known_unknowns:
-                if item.image is None or not np.isfinite(item.image).all():
+                if (
+                    item.image is None
+                    or not np.isfinite(item.image).all()
+                    or np.isna(image).any()
+                ):
                     raise ValueError(f'this image be broke: {item.path}')
                 extra_negatives.append(item.image)
                 extra_neg_labels.append(item.represent)
                 extra_neg_paths.append(item.path)
             else:
-                if item.image is None or not np.isfinite(item.image).all():
+                if (
+                    item.image is None
+                    or not np.isfinite(item.image).all()
+                    or np.isna(image).any()
+                ):
                     raise ValueError(f'this image be broke: {item.path}')
                 images.append(item.image)
                 labels.append(item.represent)
@@ -105,7 +121,11 @@ def load_data(
         labels = []
         paths = []
         for item in iam_data:
-            if item.image is None or not np.isfinite(item.image).all():
+            if (
+                item.image is None
+                or not np.isfinite(item.image).all()
+                or np.isna(image).any()
+            ):
                 raise ValueError(f'this image be broke: {item.path}')
             images.append(item.image)
             labels.append(item.writer)
@@ -116,7 +136,11 @@ def load_data(
         extra_neg_paths = []
 
         for item in rimes_data:
-            if item.image is None or not np.isfinite(item.image).all():
+            if (
+                item.image is None
+                or not np.isfinite(item.image).all()
+                or np.isna(image).any()
+            ):
                 raise ValueError(f'this image be broke: {item.path}')
             extra_negatives.append(item.image)
             extra_neg_paths.append(item.path)
