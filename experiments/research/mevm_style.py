@@ -286,6 +286,13 @@ def script_args(parser):
         help='Tailsize of MEVM.',
     )
 
+    parser.add_argument(
+        '--hog_means',
+        default=None,
+        type=int,
+        help='Number of sequential means of HOGs to calculate.',
+    )
+
 def parse_args():
     args = io.parse_args(custom_args=script_args)
 
@@ -389,7 +396,10 @@ def parse_args():
         #'''
 
         args.hogs.extract = argparse.Namespace()
-        args.hogs.extract.means = config['model']['hogs']['extract']['means']
+        if args.hog_means is None:
+            args.hogs.extract.means = config['model']['hogs']['extract']['means']
+        else:
+            args.hogs.extract.means = args.hog_means
 
         args.hogs.extract.concat_mean = (
             False if 'concat_mean' not in
