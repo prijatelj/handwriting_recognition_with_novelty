@@ -133,7 +133,7 @@ class HOG(FeatureExtractor):
 
         # Hotfix, TODO the meta args setting needs to be generalized &
         # optionally set the wrapped func into a dict as an attrib of the class
-        kwargs = vars(self)
+        kwargs = vars(self).copy()
         kwargs.pop('means', None)
         kwargs.pop('concat_mean', None)
         kwargs.pop('additive', None)
