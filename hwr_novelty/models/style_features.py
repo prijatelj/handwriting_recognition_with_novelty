@@ -46,12 +46,6 @@ class HOG(FeatureExtractor):
         self.additive = additive
         self.multiplier = multiplier
 
-        # Hotfix, TODO the below meta args setting needs to be generalized...
-        kwargs.pop('means', None)
-        kwargs.pop('concat_mean', None)
-        kwargs.pop('additive', None)
-        kwargs.pop('multiplier', None)
-
         # Get the args of skimage.feature.hog
         argspec = getargspec(hog)
 
@@ -136,7 +130,16 @@ class HOG(FeatureExtractor):
         additive = additive if additive is not None else self.additive
         multiplier = multiplier if multiplier is not None else self.multiplier
 
-        hog_descriptor = hog(img, **vars(self))
+
+        # Hotfix, TODO the meta args setting needs to be generalized &
+        # optionally set the wrapped func into a dict as an attrib of the class
+        kwargs = vars(self)
+        kwargs.pop('means', None)
+        kwargs.pop('concat_mean', None)
+        kwargs.pop('additive', None)
+        kwargs.pop('multiplier', None)
+
+        hog_descriptor = hog(img, **kwargs)
 
         if means <= 1 or concat_mean:
             # Only one mean of all HOGs for the image
