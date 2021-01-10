@@ -171,6 +171,8 @@ class HWR(object):
 
         if image is None:
             raise IOError(f'`image` is None. image path: {img_path}')
+        elif not np.isfinite(image).all():
+            raise ValueError(f'`image` is not finte. image path: {img_path}')
 
         # Resize image based on given image height
         percent_x = float(self.img_height) / image.shape[0]
