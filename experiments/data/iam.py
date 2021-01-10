@@ -173,7 +173,7 @@ class HWR(object):
             raise IOError(f'`image` is None. image path: {img_path}')
         elif not np.isfinite(image).all():
             raise ValueError(f'`image` is not finte. image path: {img_path}')
-        elif np.isna(image).any():
+        elif np.isnan(image).any():
             raise ValueError(f'`image` contains NA. image path: {img_path}')
 
         # Resize image based on given image height
