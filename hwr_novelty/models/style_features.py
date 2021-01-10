@@ -103,6 +103,7 @@ class HOG(FeatureExtractor):
         concat_mean=None,
         additive=None,
         multiplier=None,
+        filler_value=2,
     ):
         """Forward pass of a single image through the Histogram of Oriented
         Gradients for the style tasks.
@@ -168,6 +169,11 @@ class HOG(FeatureExtractor):
                 hog_descriptor[:, indices[i]:idx],
                 axis=1,
             ).ravel()
+
+            # If a NaN occurs, replace it with some number.
+            mask = np.logical_not(np.isfinite(next_mean_hog))
+            if mask.any():
+                next_mean_hog[mask] = filler_value
 
             if additive is not None:
                 # To avoid vectors whose elements are all near zero
