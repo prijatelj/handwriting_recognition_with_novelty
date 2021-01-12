@@ -67,81 +67,87 @@ if __name__ == '__main__':
     # Load the probs csvs
     prob_dfs = get_dfs(args.experiment_dir, args.models)
 
+    # exp, fold, split
+
     # Create a confusion matrix for each probs csv and save
     results = {}
     for dfs in prob_dfs:
-        tmp_res = []
-        tmp_nd = []
         splits = {}
 
         # Skip first since that is the model str.
         for split, path, df in dfs[1:]:
-            pred = df[df.columns[2:]].values.argmax(1)
-            pred = list(df.columns[pred])
+            tmp_res = []
+            tmp_nd = []
 
-            missed_labels = list(set(df['gt']) - set(df.columns[2:]))
-            labels = list(df.columns[2:]) + missed_labels
+            splits[split] = {}
 
-            cm = ConfusionMatrix(df['gt'], pred, labels)
-            cm.save(f'{path[:-4]}_confusion_matrix.csv')
+            for i, dat in enumerate(df):
+                pred = dat[dat.columns[2:]].values.argmax(1)
+                pred = list(dat.columns[pred])
 
-            # Calculate the Acc, NMI, and Novelty Detection CM
-            splits[split] = {
-                'accuracy': cm.accuracy(),
-                'mutual_info_arithmetic': cm.mutual_info('arithmetic'),
-                'mcc': cm.mcc(),
+                missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
+                labels = list(dat.columns[2:]) + missed_labels
+
+                cm = ConfusionMatrix(dat['gt'], pred, labels)
+                cm.save(f'{path[i][:-4]}_confusion_matrix.csv')
+
+                # Calculate the Acc, NMI, and Novelty Detection CM
+                splits[split][i] = {
+                    'accuracy': cm.accuracy(),
+                    'mutual_info_arithmetic': cm.mutual_info('arithmetic'),
+                    'mcc': cm.mcc(),
+                }
+
+                tmp_res.append([
+                    splits[split][i]['accuracy'],
+                    splits[split][i]['mutual_info_arithmetic'],
+                    splits[split][i]['mcc'],
+                ])
+
+                if args.unknowns is None:
+                    continue
+
+                # Novelty Detection CM
+                novelty_detect = cm.reduce(args.unknowns, 'unknown')
+                novelty_detect.save(
+                    f'{path[i][:-4]}_confusion_matrix_novelty_detection.csv',
+                )
+
+                # Novelty Detection, acc, NMI, MCC
+                splits[split][i]['novelty_detect'] = {
+                    'accuracy': novelty_detect.accuracy(),
+                    'mutual_info_arithmetic': novelty_detect.mutual_info(
+                        'arithmetic',
+                    ),
+                    'mcc': novelty_detect.mcc(),
+                }
+
+                tmp_nd.append([
+                    splits[split][i]['novelty_detect']['accuracy'],
+                    splits[split][i]['novelty_detect']['mutual_info_arithmetic'],
+                    splits[split][i]['novelty_detect']['mcc'],
+                ])
+
+            # For 5 splits calculate the error/variance, ignoring last expecting it
+            # to be benchmark one.
+            tmp_res = np.array(tmp_res)
+            splits_std = tmp_res[:-1].std(axis=0)
+            stats = {
+                'splits_mean': tmp_res[:-1].mean(axis=0),
+                'splits_std': splits_std,
+                'splits_var': tmp_res[:-1].var(axis=0),
+                'splits_stderr': splits_std / np.sqrt(len(tmp_res) - 1),
             }
 
-            tmp_res.append([
-                splits[split]['accuracy'],
-                splits[split]['mutual_info_arithmetic'],
-                splits[split]['mcc'],
-            ])
-
-            if args.unknowns is None:
-                continue
-
-            # Novelty Detection CM
-            novelty_detect = cm.reduce(args.unknowns, 'unknown')
-            novelty_detect.save(
-                f'{path[:-4]}_confusion_matrix_novelty_detection.csv',
-            )
-
-            # Novelty Detection, acc, NMI, MCC
-            splits[split]['novelty_detect'] = {
-                'accuracy': novelty_detect.accuracy(),
-                'mutual_info_arithmetic': novelty_detect.mutual_info(
-                    'arithmetic',
-                ),
-                'mcc': novelty_detect.mcc(),
-            }
-
-            tmp_nd.append([
-                splits[split]['novelty_detect']['accuracy'],
-                splits[split]['novelty_detect']['mutual_info_arithmetic'],
-                splits[split]['novelty_detect']['mcc'],
-            ])
-
-        # For 5 splits calculate the error/variance, ignoring last expecting it
-        # to be benchmark one.
-        tmp_res = np.array(tmp_res)
-        splits_std = tmp_res[:-1].std(axis=0)
-        stats = {
-            'splits_mean': tmp_res[:-1].mean(axis=0),
-            'splits_std': splits_std,
-            'splits_var': tmp_res[:-1].var(axis=0),
-            'splits_stderr': splits_std / np.sqrt(len(tmp_res) - 1),
-        }
-
-        if args.unknowns is not None:
-            tmp_nd = np.array(tmp_nd)
-            splits_nd_std = tmp_nd[:-1].std(axis=0)
-            stats['novelty_detect'] = {
-                'splits_mean': tmp_nd[:-1].mean(axis=0),
-                'splits_std': splits_nd_std,
-                'splits_var': tmp_nd[:-1].var(axis=0),
-                'splits_stderr': splits_nd_std / np.sqrt(len(tmp_nd) - 1),
-            }
+            if args.unknowns is not None:
+                tmp_nd = np.array(tmp_nd)
+                splits_nd_std = tmp_nd[:-1].std(axis=0)
+                stats['novelty_detect'] = {
+                    'splits_mean': tmp_nd[:-1].mean(axis=0),
+                    'splits_std': splits_nd_std,
+                    'splits_var': tmp_nd[:-1].var(axis=0),
+                    'splits_stderr': splits_nd_std / np.sqrt(len(tmp_nd) - 1),
+                }
 
         results[dfs.model] = {
             'splits': splits,
