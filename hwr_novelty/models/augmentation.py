@@ -515,12 +515,18 @@ class SplitAugmenters(Augmenter):
         for key, args in augmenters.items():
             if issubclass(type(args), Augmenter):
                 continue
-            if key not in class_members:
+            if 'Reflect' in key:
+                # Allow Reflect_0 and Reflect_1 to create Reflect Augs
+                if augmenters[key].axis == 0:
+                    augmenters[key] = class_members['Reflect'](**augmenters[key])
+                elif augmenters[key].axis == 1:
+                    augmenters[key] = class_members['Reflect'](**augmenters[key])
+            elif key not in class_members:
                 raise KeyError(
                     f'Given key for an augmenter that does not exist: {key}'
                 )
-
-            augmenters[key] = class_members[key](**augmenters[key])
+            else:
+                augmenters[key] = class_members[key](**augmenters[key])
 
         self.augmenters = list(augmenters.values())
 
