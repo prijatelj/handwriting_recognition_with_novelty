@@ -497,6 +497,12 @@ if __name__ == '__main__':
 
     # Load data and feature extract
     logging.info('Loading Data')
+    #if
+        # TODO LOAD CRNN pre-processed repr.
+        #return points, labels, paths + extra_neg_paths, \
+        #    extra_negatives, extra_neg_labels
+
+    #else:
     points, labels, paths, extra_negatives, extra_neg_labels = load_data(
         feature_extraction=args.hogs,
         **vars(args.data),
