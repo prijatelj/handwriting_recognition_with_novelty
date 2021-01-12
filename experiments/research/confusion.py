@@ -41,7 +41,7 @@ def get_dfs(experiment_dir, models):
     for model in models:
         path = os.path.join(experiment_dir, model)
         if os.path.isdir(path):
-            train = glob(f'{path}/*/*train.csv')
+            train = glob(f'{path}/*/*[!_points].csv')
             val = glob(f'{path}/*/*/val.csv')
             test = glob(f'{path}/*/*/test.csv')
 
