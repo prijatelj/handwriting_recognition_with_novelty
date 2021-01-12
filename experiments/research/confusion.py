@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 # Calculate the Acc, NMI, and Novelty Detection CM
                 splits[split][i] = {
                     'accuracy': cm.accuracy(),
-                    'mutual_info_arithmetic': cm.mutual_info('arithmetic'),
+                    'mutual_info_arithmetic': cm.mutual_information('arithmetic'),
                     'mcc': cm.mcc(),
                 }
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                 # Novelty Detection, acc, NMI, MCC
                 splits[split][i]['novelty_detect'] = {
                     'accuracy': novelty_detect.accuracy(),
-                    'mutual_info_arithmetic': novelty_detect.mutual_info(
+                    'mutual_info_arithmetic': novelty_detect.mutual_information(
                         'arithmetic',
                     ),
                     'mcc': novelty_detect.mcc(),
