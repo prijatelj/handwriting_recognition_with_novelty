@@ -375,6 +375,13 @@ def parse_args():
             # TODO Can ignore val and test for now. Necesary for eval.
             # keep the rest as dictionaries as SplitAugmenters expects it.
 
+            if args.data.datasplit in {'val', 'test'}:
+                args.data.augmentation.SplitAugmenters.train.update(config['data']['augmentation']['SplitAugmenters']['val'])
+
+            if args.data.datasplit == 'test':
+                # TODO the update will overwrite the Reflect 0 from eval...
+                args.data.augmentation.SplitAugmenters.train.update(config['data']['augmentation']['SplitAugmenters']['test'])
+
 
     # Parse and make HOG config
     if args.torch_extract is not None:
