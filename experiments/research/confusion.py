@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
             for i, dat in enumerate(df):
                 pred = dat[dat.columns[2:]].values.argmax(1)
-                pred = list(dat.columns[pred])
+                pred = list(dat.columns[pred + 2])
 
                 missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
                 labels = list(dat.columns[2:]) + missed_labels
@@ -108,7 +108,11 @@ if __name__ == '__main__':
                     continue
 
                 # Novelty Detection CM
-                novelty_detect = cm.reduce(args.unknowns, 'unknown')
+                novelty_detect = cm.reduce(args.unknowns, 'unknown').reduce(
+                    args.unknowns,
+                    'known',
+                    inverse=True,
+                )
                 novelty_detect.save(
                     f'{path[i][:-4]}_confusion_matrix_novelty_detection.csv',
                 )
