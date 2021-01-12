@@ -92,6 +92,10 @@ if __name__ == '__main__':
                 cm.save(f'{path[i][:-4]}_confusion_matrix.csv')
 
                 # Calculate the Acc, NMI, and Novelty Detection CM
+
+                # TODO reduce the known unknowns to unknown for the measures!
+                cm = cm.reduce(args.unknowns, 'unknown')
+
                 splits[split][i] = {
                     'accuracy': cm.accuracy(),
                     'mutual_info_arithmetic': cm.mutual_information('arithmetic'),
@@ -108,7 +112,7 @@ if __name__ == '__main__':
                     continue
 
                 # Novelty Detection CM
-                novelty_detect = cm.reduce(args.unknowns, 'unknown').reduce(
+                novelty_detect = cm.reduce(
                     args.unknowns,
                     'known',
                     inverse=True,
