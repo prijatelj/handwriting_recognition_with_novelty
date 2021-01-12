@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
                 # Novelty Detection CM
                 novelty_detect = cm.reduce(
-                    args.unknowns,
+                    args.unknowns + ['unknown'],
                     'known',
                     inverse=True,
                 )
