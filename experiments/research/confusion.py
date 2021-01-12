@@ -157,7 +157,7 @@ if __name__ == '__main__':
     # Save the measurements
     with open(create_filepath(
         os.path.join(args.experiment_dir, 'results.json')
-    )) as openf:
+    ), 'w') as openf:
         json.dump(
             results,
             openf,
