@@ -517,9 +517,9 @@ class SplitAugmenters(Augmenter):
                 continue
             if 'Reflect' in key:
                 # Allow Reflect_0 and Reflect_1 to create Reflect Augs
-                if augmenters[key].axis == 0:
+                if augmenters[key]['axis'] == 0:
                     augmenters[key] = class_members['Reflect'](**augmenters[key])
-                elif augmenters[key].axis == 1:
+                elif augmenters[key]['axis'] == 1:
                     augmenters[key] = class_members['Reflect'](**augmenters[key])
             elif key not in class_members:
                 raise KeyError(
