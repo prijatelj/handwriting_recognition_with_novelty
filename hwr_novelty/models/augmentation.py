@@ -521,6 +521,9 @@ class SplitAugmenters(Augmenter):
                     augmenters[key] = class_members['Reflect'](**augmenters[key])
                 elif augmenters[key]['axis'] == 1:
                     augmenters[key] = class_members['Reflect'](**augmenters[key])
+            elif key == 'InvertColor':
+                # InvertColor has no args, handling separately
+                    augmenters[key] = class_members[key]()
             elif key not in class_members:
                 raise KeyError(
                     f'Given key for an augmenter that does not exist: {key}'
