@@ -198,6 +198,8 @@ def load_crnn_data(
     rimes,
     augmentation=None,
     max_timestep=656,
+    *args,
+    **kwargs,
 ):
     """Loads the preprocessed CRNN embedding of the points."""
     with open(embed_filepath, 'rb') as openf:
