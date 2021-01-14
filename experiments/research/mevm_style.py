@@ -31,6 +31,7 @@ def load_data(
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
+import os
     logging.info('Loading RIMES')
     #   RIMES (known unknowns)
     rimes_data = HWR(rimes.path, datasplit, rimes.image_root_dir, image_height)
@@ -575,7 +576,6 @@ if __name__ == '__main__':
         # LOAD CRNN pre-processed repr.
         points, labels, paths, extra_negatives, extra_neg_labels = load_crnn_data(
             args.embed_filepath,
-            feature_extraction=args.hogs,
             **vars(args.data),
         )
     else:
