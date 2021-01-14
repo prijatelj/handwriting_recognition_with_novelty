@@ -8,6 +8,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from ruamel.yaml import YAML
+from sklearn.decomposition import PCA
 import torch
 
 from exputils import io
@@ -248,6 +249,22 @@ def load_crnn_data(
             ))
     points = torch.stack(points, dim=0).detach().cpu().numpy()
     extra_negatives = torch.stack(extra_negatives).detach().cpu().numpy()
+
+
+    # PCA using Maximum Likelihod Estimation via Minka
+    #"""
+    pca = PCA('mle')
+    #pca = PCA(10000)
+
+    # Fit PCA on ALL of the CRNN layer repr in train.
+    logging.info('PCA begin fitting.')
+    pca.fit(np.concatenate((points, extra_negatives)))
+
+    logging.info('PCA components: %d', pca.n_components_)
+
+    points = pca.transform(points)
+    extra_negatives = pca.transform(extra_negatives)
+    #"""
 
     return points, labels, paths + extra_neg_paths, \
         extra_negatives, extra_neg_labels
