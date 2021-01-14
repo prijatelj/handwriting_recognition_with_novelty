@@ -253,8 +253,8 @@ def load_crnn_data(
 
     # PCA using Maximum Likelihod Estimation via Minka
     #"""
-    pca = PCA('mle')
-    #pca = PCA(10000)
+    #pca = PCA('mle') # Unable to be done, we lack the amount of samples.
+    pca = PCA(100000)
 
     # Fit PCA on ALL of the CRNN layer repr in train.
     logging.info('PCA begin fitting.')
