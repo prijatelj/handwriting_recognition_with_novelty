@@ -2,6 +2,8 @@
 import argparse
 import json
 import logging
+import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -190,6 +192,65 @@ def load_data(
         extra_negatives, extra_neg_labels
 
 
+def load_crnn_data(
+    embed_filepath,
+    iam,
+    rimes,
+    augmentation=None,
+    max_timestep=656,
+):
+    """Loads the preprocessed CRNN embedding of the points."""
+    with open(embed_filepath, 'rb') as openf:
+        emb = pickle.load(openf)
+
+    points = []
+    labels = []
+    paths = []
+
+    extra_negatives = []
+    extra_neg_labels = []
+    extra_neg_paths = []
+
+    if hasattr(augmentation, 'SplitAugmenters'):
+        # TODO Exp 3 REPR/appearances augmentation
+        return
+
+    # Writer ID data loading:
+    # Transform CRNN RNN layer embeddings into points, padding timesetep w/ 0
+    # TODO Error if max_timestep - val.shape[0] < 0, or log info & cut to max
+    for key, val in emb.items():
+        # Extract the label from the keys, create paths, get points
+        if 'train2011-' in key or 'eval2011-' in key:
+            extra_negatives.append(
+                torch.flatten(torch.nn.functional.pad(
+                    torch.squeeze(val),
+                    (0, 0, 0, max_timestep - val.shape[0]),
+                ))
+            )
+            extra_neg_labels.append('rimes')
+            extra_neg_paths.append(os.path.join(
+                rimes.image_root_dir,
+                key[::-1].replace('-', os.path.sep, 1)[::-1],
+            ))
+        else:
+            points.append(
+                torch.flatten(torch.nn.functional.pad(
+                    torch.squeeze(val),
+                    (0, 0, 0, max_timestep - val.shape[0]),
+                ))
+            )
+            labels.append(key.split('-')[1])
+            paths.append(os.path.join(
+                iam.image_root_dir,
+                f'{key}.png',
+            ))
+    points = torch.cat(points)
+    extra_negatives = torch.cat(points)
+
+    return points, labels, paths + extra_neg_paths, \
+        extra_negatives, extra_neg_labels
+
+
 def script_args(parser):
     parser.add_argument(
         'config_path',
@@ -261,6 +322,12 @@ def script_args(parser):
         default=None,
         help='Datasplit to use.',
         dest='data.datasplit',
+    )
+
+    parser.add_argument(
+        '--embed_filepath',
+        default=None,
+        help='Filepath ro CRNN embeddings of points.',
     )
 
     parser.add_argument(
@@ -504,16 +571,18 @@ if __name__ == '__main__':
 
     # Load data and feature extract
     logging.info('Loading Data')
-    #if
-        # TODO LOAD CRNN pre-processed repr.
-        #return points, labels, paths + extra_neg_paths, \
-        #    extra_negatives, extra_neg_labels
-
-    #else:
-    points, labels, paths, extra_negatives, extra_neg_labels = load_data(
-        feature_extraction=args.hogs,
-        **vars(args.data),
-    )
+    if args.embed_filepath is not None:
+        # LOAD CRNN pre-processed repr.
+        points, labels, paths, extra_negatives, extra_neg_labels = load_crnn_data(
+            args.embed_filepath,
+            feature_extraction=args.hogs,
+            **vars(args.data),
+        )
+    else:
+        points, labels, paths, extra_negatives, extra_neg_labels = load_data(
+            feature_extraction=args.hogs,
+            **vars(args.data),
+        )
 
     if args.output.points is not None:
         df = pd.DataFrame(np.concatenate((points, extra_negatives)))
