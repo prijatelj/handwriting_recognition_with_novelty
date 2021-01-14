@@ -31,7 +31,6 @@ def load_data(
     #   IAM (known knowns)
     iam_data = HWR(iam.path, datasplit, iam.image_root_dir, image_height)
 
-import os
     logging.info('Loading RIMES')
     #   RIMES (known unknowns)
     rimes_data = HWR(rimes.path, datasplit, rimes.image_root_dir, image_height)
