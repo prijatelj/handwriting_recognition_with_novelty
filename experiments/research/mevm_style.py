@@ -246,8 +246,8 @@ def load_crnn_data(
                 iam.image_root_dir,
                 f'{key}.png',
             ))
-    points = torch.cat(points).detach().cpu().numpy()
-    extra_negatives = torch.cat(extra_negatives).detach().cpu().numpy()
+    points = torch.stack(points, dim=0).detach().cpu().numpy()
+    extra_negatives = torch.stack(extra_negatives).detach().cpu().numpy()
 
     return points, labels, paths + extra_neg_paths, \
         extra_negatives, extra_neg_labels
