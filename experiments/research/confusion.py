@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 pred = list(dat.columns[pred + 2])
 
                 pred = probs.argmax(1)
-                argmax[probs[np.arange(probs.shape[0]), argmax] < threshold[0]] = unk_idx
+                pred[probs[np.arange(probs.shape[0]), pred] < threshold[0]] = unk_idx
 
                 cm = ConfusionMatrix(dat['gt'], pred, labels)
                 cm.save(
