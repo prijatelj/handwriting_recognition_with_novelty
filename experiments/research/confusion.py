@@ -125,7 +125,7 @@ if __name__ == '__main__':
                     [0.5],
                     (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
                     method='TNC',
-                    bounds=(0,1),
+                    bounds=[(0,1)],
                 )
 
                 if not opt_result.success:
