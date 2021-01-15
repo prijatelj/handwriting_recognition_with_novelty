@@ -4,7 +4,9 @@ import json
 import logging
 import os
 import pickle
+import sys
 
+import h5py
 import numpy as np
 import pandas as pd
 from ruamel.yaml import YAML
@@ -574,16 +576,47 @@ if __name__ == '__main__':
 
     # Load data and feature extract
     logging.info('Loading Data')
-    if args.embed_filepath is not None:
+    if args.embed_filepath is not None and 'pkl' in args.embed_filepath:
         # LOAD CRNN pre-processed repr.
         points, labels, paths, extra_negatives, extra_neg_labels = load_crnn_data(
             args.embed_filepath,
             **vars(args.data),
         )
 
+        with h5py.File(
+            io.create_filepath(
+                f'{os.path.splitext(args.embed_filepath)[0]}.hdf5',
+            ),
+            'w',
+        ) as h5:
+            h5['points'] = points
+            h5.create_dataset(
+                'labels',
+                data=np.array(labels, dtype=object),
+                dtype=h5py.special_dtype(vlen=str),
+            )
+            del points
+            h5.create_dataset(
+                'paths',
+                data=np.array(paths, dtype=object),
+                dtype=h5py.special_dtype(vlen=str),
+            )
+            del paths
+
+            h5['extra_negatives'] = extra_negatives
+            del extra_negatives
+            h5.create_dataset(
+                'extra_neg_labels',
+                data=np.array(extra_neg_labels, dtype=object),
+                dtype=h5py.special_dtype(vlen=str),
+            )
+            del extra_neg_labels
+
+        # Above is hot patch.
+        sys.exit()
 
         # PCA using Maximum Likelihod Estimation via Minka
-        #"""
+        """
         #pca = PCA('mle') # Unable to be done, we lack the amount of samples.
         #pca = PCA(int(1e4))
         pca_size = 2000
@@ -609,12 +642,10 @@ if __name__ == '__main__':
         #        pca.partial_fit(all_points[i * pca_size:])
         #    else:
         #        pca.partial_fit(all_points[i * pca_size:(i + 1) * pca_size])
-
         logging.info('PCA components: %d', pca.n_components_)
 
         points = pca.transform(points)
         extra_negatives = pca.transform(extra_negatives)
-        #"""
 
         # TODO save the PCA fit on train to use in eval for val and test.
         with open(os.path.join(
@@ -622,6 +653,14 @@ if __name__ == '__main__':
             f'_PCA_{pca_size}.pkl',
         ), 'wb') as openf:
             pickle.dump(pca, openf)
+        """
+    elif args.embed_filepath is not None and 'hdf5' in args.embed_filepath:
+        raise NotImplementedError()
+        # TODO write the incremental loading and fitting of PCA.
+        # TODO Save the PCA pkl
+        # TODO Use the PCA to transform and save the points in a smaller dim hdf5
+
+        # TODO Load those smaller dim, transformed points to train/val MEVM
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
