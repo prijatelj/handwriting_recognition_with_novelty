@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
                 labels = np.array(list(dat.columns[2:]) + missed_labels)
 
-                unk_idx = np.where(labels == 'unknown')
+                unk_idx = np.where(labels == 'unknown')[0][0]
 
                 #nde = NominalDataEncoder(labels)
                 #actuals = nde.encode(dat['gt'])
