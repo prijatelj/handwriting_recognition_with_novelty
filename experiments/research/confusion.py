@@ -118,12 +118,12 @@ if __name__ == '__main__':
                 unk_idx = np.where(labels == 'unknown')
 
                 #nde = NominalDataEncoder(labels)
-                #actuals = nde.encode(df['gt'])
+                #actuals = nde.encode(dat['gt'])
 
                 opt_result = minimize(
                     crossover_error_rate_sq,
                     [0.5],
-                    (df['gt'].values, probs, labels, args.unknowns, unk_idx),
+                    (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
                     method='TNC',
                     bounds=(0,1),
                 )
