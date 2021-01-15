@@ -8,7 +8,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from ruamel.yaml import YAML
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 import torch
 
 from exputils import io
@@ -249,22 +249,6 @@ def load_crnn_data(
             ))
     points = torch.stack(points, dim=0).detach().cpu().numpy()
     extra_negatives = torch.stack(extra_negatives).detach().cpu().numpy()
-
-
-    # PCA using Maximum Likelihod Estimation via Minka
-    #"""
-    #pca = PCA('mle') # Unable to be done, we lack the amount of samples.
-    pca = PCA(100000)
-
-    # Fit PCA on ALL of the CRNN layer repr in train.
-    logging.info('PCA begin fitting.')
-    pca.fit(np.concatenate((points, extra_negatives)))
-
-    logging.info('PCA components: %d', pca.n_components_)
-
-    points = pca.transform(points)
-    extra_negatives = pca.transform(extra_negatives)
-    #"""
 
     return points, labels, paths + extra_neg_paths, \
         extra_negatives, extra_neg_labels
@@ -596,6 +580,48 @@ if __name__ == '__main__':
             args.embed_filepath,
             **vars(args.data),
         )
+
+
+        # PCA using Maximum Likelihod Estimation via Minka
+        #"""
+        #pca = PCA('mle') # Unable to be done, we lack the amount of samples.
+        #pca = PCA(int(1e4))
+        pca_size = 2000
+        pca = IncrementalPCA(pca_size, batch_size=pca_size)
+
+        # Fit PCA on ALL of the CRNN layer repr in train.
+        logging.info('PCA begin fitting.')
+
+        tmp = int(len(points) / 2)
+        pca.partial_fit(points[:tmp])
+        pca.partial_fit(points[tmp:])
+
+        logging.info('PCA fit on points done. Starting fit on extra negatives.')
+        tmp = int(len(extra_negatives) / 3)
+        pca.partial_fit(extra_negatives[:tmp])
+        pca.partial_fit(extra_negatives[tmp:tmp * 2])
+        pca.partial_fit(extra_negatives[tmp * 2:])
+
+        #partials = int(len(all_pts) / pca_size)
+        #for i in range(partials):
+        #    logging.info('PCA partial fitting, round : %d', i)
+        #    if i == partials - 1:
+        #        pca.partial_fit(all_points[i * pca_size:])
+        #    else:
+        #        pca.partial_fit(all_points[i * pca_size:(i + 1) * pca_size])
+
+        logging.info('PCA components: %d', pca.n_components_)
+
+        points = pca.transform(points)
+        extra_negatives = pca.transform(extra_negatives)
+        #"""
+
+        # TODO save the PCA fit on train to use in eval for val and test.
+        with open(os.path.join(
+            os.path.splitext(args.embed_filepath)[0],
+            f'_PCA_{pca_size}.pkl',
+        ), 'wb') as openf:
+            pickle.dump(pca, openf)
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
