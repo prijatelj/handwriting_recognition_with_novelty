@@ -332,7 +332,13 @@ def script_args(parser):
     parser.add_argument(
         '--embed_filepath',
         default=None,
-        help='Filepath ro CRNN embeddings of points.',
+        help='Filepath to CRNN embeddings of points.',
+    )
+
+    parser.add_argument(
+        '--pca_filepath',
+        default=None,
+        help='Filepath to PCA for crnn embeddings.',
     )
 
     parser.add_argument(
@@ -614,53 +620,66 @@ if __name__ == '__main__':
 
         # Above is hot patch.
         sys.exit()
-
-        # PCA using Maximum Likelihod Estimation via Minka
-        """
-        #pca = PCA('mle') # Unable to be done, we lack the amount of samples.
-        #pca = PCA(int(1e4))
-        pca_size = 2000
-        pca = IncrementalPCA(pca_size, batch_size=pca_size)
-
-        # Fit PCA on ALL of the CRNN layer repr in train.
-        logging.info('PCA begin fitting.')
-
-        tmp = int(len(points) / 2)
-        pca.partial_fit(points[:tmp])
-        pca.partial_fit(points[tmp:])
-
-        logging.info('PCA fit on points done. Starting fit on extra negatives.')
-        tmp = int(len(extra_negatives) / 3)
-        pca.partial_fit(extra_negatives[:tmp])
-        pca.partial_fit(extra_negatives[tmp:tmp * 2])
-        pca.partial_fit(extra_negatives[tmp * 2:])
-
-        #partials = int(len(all_pts) / pca_size)
-        #for i in range(partials):
-        #    logging.info('PCA partial fitting, round : %d', i)
-        #    if i == partials - 1:
-        #        pca.partial_fit(all_points[i * pca_size:])
-        #    else:
-        #        pca.partial_fit(all_points[i * pca_size:(i + 1) * pca_size])
-        logging.info('PCA components: %d', pca.n_components_)
-
-        points = pca.transform(points)
-        extra_negatives = pca.transform(extra_negatives)
-
-        # TODO save the PCA fit on train to use in eval for val and test.
-        with open(os.path.join(
-            os.path.splitext(args.embed_filepath)[0],
-            f'_PCA_{pca_size}.pkl',
-        ), 'wb') as openf:
-            pickle.dump(pca, openf)
-        """
     elif args.embed_filepath is not None and 'hdf5' in args.embed_filepath:
         raise NotImplementedError()
-        # TODO write the incremental loading and fitting of PCA.
-        # TODO Save the PCA pkl
-        # TODO Use the PCA to transform and save the points in a smaller dim hdf5
+        if 'PCA' not in args.embed_filepath:
+            # TODO Load those smaller dim, transformed points to train/val MEVM
+            # TODO write the incremental loading and fitting of PCA.
 
-        # TODO Load those smaller dim, transformed points to train/val MEVM
+            # TODO Save the PCA pkl
+
+            #"""
+            h5 = h5py.File(args.embed_filepath, 'r')
+
+            pca_size = 2000
+            pca = IncrementalPCA(pca_size, batch_size=pca_size)
+
+            # Fit PCA on ALL of the CRNN layer repr in train.
+            logging.info('PCA begin fitting.')
+
+            tmp = int(len(h5['points']) / 2)
+            pca.partial_fit(h5['points'][:tmp])
+            logging.info('PCA begin fitting 2nd half of points.')
+            pca.partial_fit(h5['points'][tmp:])
+
+            logging.info('PCA points fit. Start fit on extra negatives.')
+            tmp = int(len(h5['extra_negatives']) / 3)
+            pca.partial_fit(h5['extra_negatives'][:tmp])
+            logging.info('PCA begin fitting 2nd third of extra negatives.')
+            pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
+            logging.info('PCA begin fitting final third of extra negatives.')
+            pca.partial_fit(h5['extra_negatives'][tmp * 2:])
+
+            logging.info('PCA components: %d', pca.n_components_)
+
+            points = pca.transform(points)
+            extra_negatives = pca.transform(extra_negatives)
+
+            # Save the PCA fit on train to use in eval for val and test.
+            with open(os.path.join(
+                os.path.splitext(args.embed_filepath)[0],
+                f'_PCA_{pca_size}.pkl',
+            ), 'wb') as openf:
+                pickle.dump(pca, openf)
+            #"""
+
+            # Attempt to get points to train MEVM
+            points = pca.transform(h5['points'][:])
+            labels = h5['labels'][:].astype(str)
+            paths = h5['paths'][:].astype(str)
+
+            extra_negatives = pca.transform(h5['extra_negatives'][:])
+            extra_neg_labels = h5['extra_neg_labels'][:].astype(str)
+
+            h5.close()
+
+            # Above is hot patch.
+            #sys.exit()
+        else:
+            # TODO Use the PCA to transform the points
+            raise NotImplementedError()
+
+            # Perhaps, save the points in a smaller dim hdf5
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
