@@ -621,7 +621,6 @@ if __name__ == '__main__':
         # Above is hot patch.
         sys.exit()
     elif args.embed_filepath is not None and 'hdf5' in args.embed_filepath:
-        raise NotImplementedError()
         if 'PCA' not in args.embed_filepath:
             # TODO Load those smaller dim, transformed points to train/val MEVM
             # TODO write the incremental loading and fitting of PCA.
