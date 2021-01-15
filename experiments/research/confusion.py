@@ -2,13 +2,17 @@
 from collections import namedtuple
 from glob import glob
 import json
+import logging
 import os
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
+from sklearn.metrics import confusion_matrix
 
 from exputils.io import parse_args, create_filepath, NumpyJSONEncoder
 from exputils.data import ConfusionMatrix
+#from exputils.data.labels import NominalDataEncoder
 
 def script_args(parser):
     # Loading
@@ -57,6 +61,29 @@ def get_dfs(experiment_dir, models):
     return dfs
 
 
+def crossover_error_rate_sq(
+    threshold,
+    actuals,
+    probs,
+    labels,
+    unknowns,
+    unk_idx,
+):
+    """Calculates the squared difference between error rates."""
+    # TODO apply thresholding method: max prob < thresh then unknown
+    argmax = probs.argmax(1)
+    argmax[probs[np.arange(probs.shape[0]), argmax] < threshold[0]] = unk_idx
+
+    cm = ConfusionMatrix(
+        actuals,
+        labels[argmax],
+        labels,
+    ).reduce(unknowns, 'unknown')
+    fpr, fnr = cm.false_rates(unk_idx)
+
+    return (fpr - fnr)**2
+
+
 if __name__ == '__main__':
     args = parse_args(custom_args=script_args)
 
@@ -82,23 +109,56 @@ if __name__ == '__main__':
             splits[split] = {}
 
             for i, dat in enumerate(df):
+                probs = dat[dat.columns[2:]].values
+
+                # Get labels and the index of them
+                missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
+                labels = np.array(list(dat.columns[2:]) + missed_labels)
+
+                unk_idx = np.where(labels == 'unknown')
+
+                #nde = NominalDataEncoder(labels)
+                #actuals = nde.encode(df['gt'])
+
+                opt_result = minimize(
+                    crossover_error_rate_sq,
+                    [0.5],
+                    (df['gt'].values, probs, labels, args.unknowns, unk_idx),
+                    method='TNC',
+                    bounds=(0,1),
+                )
+
+                if not opt_result.success:
+                    raise ValueError(' '.join([
+                        'Unsuccessful threshold optimization! message:',
+                        f'{opt_result.message}',
+                    ]))
+
+                threshold = opt_result.x[0]
+
+                logging.info('Threshfold is `%d`for `%s`', threshold, path)
+
                 pred = dat[dat.columns[2:]].values.argmax(1)
                 pred = list(dat.columns[pred + 2])
 
-                missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
-                labels = list(dat.columns[2:]) + missed_labels
+                pred = probs.argmax(1)
+                argmax[probs[np.arange(probs.shape[0]), argmax] < threshold[0]] = unk_idx
 
                 cm = ConfusionMatrix(dat['gt'], pred, labels)
-                cm.save(f'{path[i][:-4]}_confusion_matrix.csv')
+                cm.save(
+                    f'{path[i][:-4]}_confusion_matrix_thresh-{threshold}.csv',
+                )
 
                 # Calculate the Acc, NMI, and Novelty Detection CM
 
-                # TODO reduce the known unknowns to unknown for the measures!
+                # Reduce the known unknowns to unknown for the measures!
                 cm = cm.reduce(args.unknowns, 'unknown')
 
                 splits[split][i] = {
                     'accuracy': cm.accuracy(),
-                    'mutual_info_arithmetic': cm.mutual_information('arithmetic'),
+                    'mutual_info_arithmetic': cm.mutual_information(
+                        'arithmetic',
+                    ),
                     'mcc': cm.mcc(),
                 }
 
@@ -113,7 +173,7 @@ if __name__ == '__main__':
 
                 # Novelty Detection CM
                 novelty_detect = cm.reduce(
-                    args.unknowns + ['unknown'],
+                    args.unknowns,
                     'known',
                     inverse=True,
                 )
