@@ -89,9 +89,10 @@ def crossover_error_rate_sq(
         labels[argmax],
         labels,
     ).reduce(unknowns, 'unknown')
-    fpr, fnr = cm.false_rates(unk_idx)
+    fpr = cm.false_rates(unk_idx)[0]
+    tpr = cm.true_rate(unk_idx)
 
-    return (fpr - fnr)**2
+    return -(tpr + fpr)
 
 
 if __name__ == '__main__':
@@ -134,7 +135,7 @@ if __name__ == '__main__':
                     [args.init_thresh],
                     (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
                     method='TNC',
-                    bounds=[(0,1)],
+                    bounds=[(0.0, 1.0)],
                 )
 
                 if not opt_result.success:
