@@ -1,6 +1,6 @@
 """Calculate the measures on the data and save the confusion matrices."""
 from collections import namedtuple
-from glob import glob
+import glob
 import json
 import logging
 import os
@@ -49,35 +49,23 @@ def script_args(parser):
         help='labels treated as unknown.',
     )
 
+    parser.add_argument(
+        '--train_suffix',
+        default='*_repr_aug_points.csv',
+        help='Ending filename of train csv',
+    )
 
-def get_dfs(experiment_dir, models):
-    paths = []
-    dfs = []
-    Probs = namedtuple('Probs', ['model', 'train', 'val', 'test'])
-    DFP = namedtuple('DFPath', ['split', 'path', 'df'])
+    parser.add_argument(
+        '--val_suffix',
+        default='*_eval/val.csv',
+        help='Ending filename of val csv',
+    )
 
-    for model in models:
-        path = os.path.join(experiment_dir, model)
-        if os.path.isdir(path):
-            train = [
-                g for g in glob(f'{path}/*/*[!_points].csv')
-                if 'confusion' not in g
-            ]
-            val = glob(f'{path}/*/*/val.csv')
-            test = glob(f'{path}/*/*/test.csv')
-
-            dfs.append(Probs(
-                model,
-                DFP('train', train, [pd.read_csv(path) for path in train]),
-                DFP('val', val, [pd.read_csv(path) for path in val]),
-                DFP('test', test, [pd.read_csv(path) for path in test]),
-            ))
-        else:
-            raise IOError(f'Filepath does not exist: {path}')
-
-    # TODO couple train and val together so the thresh can be found on them.
-
-    return dfs
+    parser.add_argument(
+        '--test_suffix',
+        default='*_eval/test.csv',
+        help='Ending filename of test csv',
+    )
 
 
 def crossover_error_rate_opt(
@@ -108,6 +96,41 @@ def crossover_error_rate_opt(
     #return -(tpr + fpr)
 
 
+def get_cm(actual, probs, labels, threshold, unk_idx, unknowns, base_path):
+    pred = probs.argmax(1)
+    pred[probs[np.arange(probs.shape[0]), pred] < threshold] = unk_idx
+    pred = labels[pred]
+
+    cm = ConfusionMatrix(actual, pred, labels)
+    if base_path is not None:
+        cm.save(f'{base_path}_confusion_matrix_thresh-{threshold}.csv')
+
+    # Reduce the known unknowns to unknown for the measures!
+    cm = cm.reduce(args.unknowns, 'unknown')
+
+    # Novelty Detection CM
+    novelty_detect_cm = cm.reduce(
+        unknowns,
+        'known',
+        inverse=True,
+    )
+    novelty_detect_cm.save(
+        f'{base_path}_confusion_matrix_thresh-{threshold}_novelty_detection.csv',
+    )
+
+    return cm, novelty_detect_cm
+
+
+def stat(arr):
+    std = np.std(arr)
+    return {
+        'mean': np.mean(arr),
+        'std': std,
+        'var': np.var(arr),
+        'stderr': std / np.sqrt(len(arr)),
+    }
+
+
 if __name__ == '__main__':
     args = parse_args(custom_args=script_args)
 
@@ -116,167 +139,189 @@ if __name__ == '__main__':
         args.unknowns = args.unknowns.split(' ')
         if 'unknown' not in args.unknowns:
             args.unknowns = args.unknowns + ['unknown']
+    else:
+        raise NotImplementedError('need unknowns')
 
-    # Load the probs csvs
-    prob_dfs = get_dfs(args.experiment_dir, args.models)
+    model_res = {}
+    for model in args.models:
+        model_path = os.path.join(args.experiment_dir, model)
+        model_res[model] = {'folds':{}}
 
-    # TODO load two at a time: train and val and assess threshold given them
+        for fold in glob.iglob(os.path.join(model_path, '*')):
+            fold_res = {}
+            fold_path = os.path.join(model_path, fold)
 
-    # Create a confusion matrix for each probs csv and save
-    results = {}
-    for dfs in prob_dfs:
-        splits = {}
+            train_path = os.path.join(fold_path, args.train_suffix)
+            train_df = pd.read_csv(train_path)
 
-        # Skip first since that is the model str.
-        for split, path, df in dfs[1:]:
-            tmp_res = []
-            tmp_nd = []
+            val_path = os.path.join(fold_path, args.val_suffix)
+            val_df = pd.read_csv(val_path)
 
-            splits[split] = {}
+            assert train_df.columns == val_df.columns
 
-            for i, dat in enumerate(df):
-                probs = dat[dat.columns[2:]].values
+            # Get labels and the index of them
+            missed_labels = list(
+                (set(train_df['gt']) | set(val_df['gt']))
+                - set(train_df.columns[2:])
+            )
+            labels = np.array(list(train_df.columns[2:]) + missed_labels)
 
-                # Get labels and the index of them
-                missed_labels = list(set(dat['gt']) - set(dat.columns[2:]))
-                labels = np.array(list(dat.columns[2:]) + missed_labels)
+            unk_idx = np.where(labels == 'unknown')[0][0]
 
-                unk_idx = np.where(labels == 'unknown')[0][0]
+            # Find the optimal threshold based on train and val
+            if args.min_opt is None:
+                logging.info(' '.join([
+                    'Not optimizing on this dataset, simply applying the',
+                    'threshold.',
+                ]))
 
-                if args.min_opt is None:
-                    logging.info(' '.join([
-                        'Not optimizing on this dataset, simply applying the',
-                        'threshold.',
-                    ]))
-                    threshold = args.init_thresh
-                elif args.min_opt == 'linspace':
-                    threshold = None
+                threshold = args.init_thresh
+            elif args.min_opt == 'linspace':
+                probs = np.concatenate((
+                    train_df[train_df.columns[2:]].values,
+                    val_df[val_df.columns[2:]].values,
+                ))
 
-                    min_val = np.inf
-                    for thresh in np.linspace(0, 1, 81):
-                        val = crossover_error_rate_opt(
-                            [thresh],
-                            dat['gt'].values,
-                            probs,
-                            labels,
-                            args.unknowns,
-                            unk_idx,
-                        )
+                actuals = np.concatenate((
+                    train_df['gt'].values,
+                    val_df['gt'].values,
+                ))
 
-                        logging.info('thres = %f; val = %f', thresh, val)
+                threshold = None
 
-                        if val <= min_val:
-                            min_val = val
-                            threshold = thresh
-                else:
-                    opt_result = minimize(
-                        crossover_error_rate_opt,
-                        [args.init_thresh],
-                        (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
-                        method=args.min_opt,
-                        bounds=[(0.0, 1.0)],
+                min_val = np.inf
+                for thresh in np.linspace(0, 1, 81):
+                    val = crossover_error_rate_opt(
+                        [thresh],
+                        actuals,
+                        probs,
+                        labels,
+                        args.unknowns,
+                        unk_idx,
                     )
 
-                    if not opt_result.success:
-                        raise ValueError(' '.join([
-                            'Unsuccessful threshold optimization! message:',
-                            f'{opt_result.message}',
-                        ]))
-                    else:
-                        logging.debug('opt results: %s', opt_result)
+                    logging.info('thres = %f; val = %f', thresh, val)
 
-                    threshold = opt_result.x[0]
+                    if val < min_val:
+                        min_val = val
+                        threshold = thresh
+            else:
+                raise NotImplementedError('does not work well for discrete.')
+                probs = np.concatenate((
+                    train_df[train_df.columns[2:]].values,
+                    val_df[val_df.columns[2:]].values,
+                ))
 
-                logging.info('Threshold is `%f` for `%s`', threshold, path[i])
+                actuals = np.concatenate((
+                    train_df['gt'].values,
+                    val_df['gt'].values,
+                ))
 
-                pred = probs.argmax(1)
-                pred[probs[np.arange(probs.shape[0]), pred] < threshold] = unk_idx
-                pred = list(dat.columns[pred + 2])
-
-                cm = ConfusionMatrix(dat['gt'], pred, labels)
-                cm.save(
-                    f'{path[i][:-4]}_confusion_matrix_thresh-{threshold}.csv',
+                opt_result = minimize(
+                    crossover_error_rate_opt,
+                    [args.init_thresh],
+                    (actuals, probs, labels, args.unknowns, unk_idx),
+                    method=args.min_opt,
+                    bounds=[(0.0, 1.0)],
                 )
 
-                # Calculate the Acc, NMI, and Novelty Detection CM
+                if not opt_result.success:
+                    raise ValueError(' '.join([
+                        'Unsuccessful threshold optimization! message:',
+                        f'{opt_result.message}',
+                    ]))
+                else:
+                    logging.debug('opt results: %s', opt_result)
 
-                # Reduce the known unknowns to unknown for the measures!
-                cm = cm.reduce(args.unknowns, 'unknown')
+                threshold = opt_result.x[0]
 
-                splits[split][i] = {
+            logging.info(
+                'Threshold is `%f` for fold `%s`',
+                threshold,
+                fold_path,
+            )
+
+            fold_res['threshold'] = threshold
+
+            # Load test probs
+            test_path = os.path.join(fold_path, args.test_suffix)
+            test_df = pd.read_csv()
+
+            # Save measures for train, val, and test
+            for split, df, path in (
+                ('train', train_df, train_path),
+                ('val', val_df, val_path),
+                ('test', test_df, test_path),
+            ):
+                cm, nd_cm = get_cm(
+                    df['gt'],
+                    df[df.columns[2:]].values,
+                    labels,
+                    threshold,
+                    args.unknowns,
+                    unk_idx,
+                    path[:-4],
+                )
+
+                fold_res[split] = {
                     'accuracy': cm.accuracy(),
                     'mutual_info_arithmetic': cm.mutual_information(
                         'arithmetic',
                     ),
                     'mcc': cm.mcc(),
+                    'novelty_detect': {
+                        'accuracy': nd_cm.accuracy(),
+                        'mutual_info_arithmetic': nd_cm.mutual_information(
+                            'arithmetic',
+                        ),
+                        'mcc': nd_cm.mcc(),
+                    }
                 }
 
-                tmp_res.append([
-                    splits[split][i]['accuracy'],
-                    splits[split][i]['mutual_info_arithmetic'],
-                    splits[split][i]['mcc'],
-                ])
+            model_res['folds'][os.path.basename(fold)] = fold_res
 
-                if args.unknowns is None:
-                    continue
+        # For 5 splits calculate the error/variance, ignoring benchmark set.
+        folds = [v for k, v in model_res['folds'].items() if 'split_' in k]
 
-                # Novelty Detection CM
-                novelty_detect = cm.reduce(
-                    args.unknowns,
-                    'known',
-                    inverse=True,
+        model_res['folds_stats'] = {}
+
+        for dsplit in ('train', 'val', 'test'):
+            accs = []
+            nmis = []
+            mccs = []
+
+            nd_accs = []
+            nd_nmis = []
+            nd_mccs = []
+
+            for fold in folds:
+                accs.append(fold[dsplit]['accuracy'])
+                nmis.append(fold[dsplit]['mutual_info_arithmetic'])
+                mccs.append(fold[dsplit]['mcc'])
+
+                nd_accs.append(fold[dsplit]['novelty_detect']['accuracy'])
+                nd_nmis.append(
+                    fold[dsplit]['novelty_detect']['mutual_info_arithmetic']
                 )
-                novelty_detect.save(
-                    f'{path[i][:-4]}_confusion_matrix_novelty_detection.csv',
-                )
+                nd_mccs.append(fold[dsplit]['novelty_detect']['mcc'])
 
-                # Novelty Detection, acc, NMI, MCC
-                splits[split][i]['novelty_detect'] = {
-                    'accuracy': novelty_detect.accuracy(),
-                    'mutual_info_arithmetic': novelty_detect.mutual_information(
-                        'arithmetic',
-                    ),
-                    'mcc': novelty_detect.mcc(),
-                }
-
-                tmp_nd.append([
-                    splits[split][i]['novelty_detect']['accuracy'],
-                    splits[split][i]['novelty_detect']['mutual_info_arithmetic'],
-                    splits[split][i]['novelty_detect']['mcc'],
-                ])
-
-            # For 5 splits calculate the error/variance, ignoring last expecting it
-            # to be benchmark one.
-            tmp_res = np.array(tmp_res)
-            splits_std = tmp_res[:-1].std(axis=0)
-            stats = {
-                'splits_mean': tmp_res[:-1].mean(axis=0),
-                'splits_std': splits_std,
-                'splits_var': tmp_res[:-1].var(axis=0),
-                'splits_stderr': splits_std / np.sqrt(len(tmp_res) - 1),
+            model_res['folds_stats'][dsplit] = {
+                'accuracy': stat(accs),
+                'mutual_info_arithmetic': stat(nmis),
+                'mcc': stat(mccs),
+                'novelty_detect': {
+                    'accuracy': stat(nd_mccs),
+                    'mutual_info_arithmetic': stat(nd_nmis),
+                    'mcc': stat(nd_mccs),
+                },
             }
-
-            if args.unknowns is not None:
-                tmp_nd = np.array(tmp_nd)
-                splits_nd_std = tmp_nd[:-1].std(axis=0)
-                stats['novelty_detect'] = {
-                    'splits_mean': tmp_nd[:-1].mean(axis=0),
-                    'splits_std': splits_nd_std,
-                    'splits_var': tmp_nd[:-1].var(axis=0),
-                    'splits_stderr': splits_nd_std / np.sqrt(len(tmp_nd) - 1),
-                }
-
-        results[dfs.model] = {
-            'splits': splits,
-            'splits_stats': stats,
-        }
 
     # Save the measurements
     with open(create_filepath(
         os.path.join(args.experiment_dir, 'results.json')
     ), 'w') as openf:
         json.dump(
-            results,
+            model_res,
             openf,
             indent=2,
             #sortkeys=True,
