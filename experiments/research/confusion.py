@@ -96,10 +96,12 @@ def crossover_error_rate_opt(
         labels[argmax],
         labels,
     ).reduce(unknowns, 'unknown')
-    fpr = cm.false_rates(unk_idx)[0]
-    tpr = cm.true_rate(unk_idx)
+    fpr, fnr = cm.false_rates(unk_idx)
 
-    return -(tpr + fpr)
+    return (fpr - fnr)**2
+
+    #tpr = cm.true_rate(unk_idx)
+    #return -(tpr + fpr)
 
 
 if __name__ == '__main__':
