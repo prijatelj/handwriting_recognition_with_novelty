@@ -139,7 +139,7 @@ if __name__ == '__main__':
         args.unknowns = args.unknowns.split(' ')
         if 'unknown' not in args.unknowns:
             args.unknowns = args.unknowns + ['unknown']
-    else:
+    elif 'writer_id' not in args.experiment_path:
         raise NotImplementedError('need unknowns')
 
     model_res = {}
@@ -163,12 +163,27 @@ if __name__ == '__main__':
 
             assert (train_df.columns == val_df.columns).all
 
-            # Get labels and the index of them
-            missed_labels = list(
-                (set(train_df['gt']) | set(val_df['gt']))
-                - set(train_df.columns[2:])
+            # Load test probs
+            test_path = glob.glob(os.path.join(fold_path, args.test_suffix))[0]
+            test_df = pd.read_csv(test_path)
+
+            all_gt_labels = (
+                set(train_df['gt'])
+                | set(val_df['gt'])
+                | set(test_df['gt'])
             )
+
+            # Get labels and the index of them
+            missed_labels = list(all_gt_labels - set(train_df.columns[2:]))
             labels = np.array(list(train_df.columns[2:]) + missed_labels)
+
+            # Set Unknowns
+            if 'writer_id' not in args.experiment_path:
+                # If writer id, then each fold has its own set of unknown
+                # writers in val and test
+                unknowns = list(set(missed_labels) + {'unknown'})
+            else:
+                unknowns = args.unkowns
 
             unk_idx = np.where(labels == 'unknown')[0][0]
 
@@ -200,7 +215,7 @@ if __name__ == '__main__':
                         actuals,
                         probs,
                         labels,
-                        args.unknowns,
+                        unknowns,
                         unk_idx,
                     )
 
@@ -224,7 +239,7 @@ if __name__ == '__main__':
                 opt_result = minimize(
                     crossover_error_rate_opt,
                     [args.init_thresh],
-                    (actuals, probs, labels, args.unknowns, unk_idx),
+                    (actuals, probs, labels, unknowns, unk_idx),
                     method=args.min_opt,
                     bounds=[(0.0, 1.0)],
                 )
@@ -247,10 +262,6 @@ if __name__ == '__main__':
 
             fold_res['threshold'] = threshold
 
-            # Load test probs
-            test_path = glob.glob(os.path.join(fold_path, args.test_suffix))[0]
-            test_df = pd.read_csv(test_path)
-
             # Save measures for train, val, and test
             for split, df, path in (
                 ('train', train_df, train_path),
@@ -262,7 +273,7 @@ if __name__ == '__main__':
                     df[df.columns[2:]].values,
                     labels,
                     threshold,
-                    args.unknowns,
+                    unknowns,
                     unk_idx,
                     path[:-4],
                 )
