@@ -178,7 +178,7 @@ if __name__ == '__main__':
             labels = np.array(list(train_df.columns[2:]) + missed_labels)
 
             # Set Unknowns
-            if 'writer_id' not in args.experiment_dir:
+            if 'writer_id' in args.experiment_dir:
                 # If writer id, then each fold has its own set of unknown
                 # writers in val and test
                 unknowns = list(set(missed_labels) + {'unknown'})
