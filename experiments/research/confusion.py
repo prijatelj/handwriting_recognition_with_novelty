@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 if args.min_opt == 'linspace':
                     threshold = min([
                         crossover_error_rate_opt(
-                            thresh,
+                            [thresh],
                             dat['gt'].values,
                             probs,
                             labels,
