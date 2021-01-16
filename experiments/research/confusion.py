@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
                         logging.info('thres = %f; val = %f', thresh, val)
 
-                        if val < min_val:
+                        if val <= min_val:
                             min_val = val
                             threshold = thresh
                 else:
