@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
                 threshold = opt_result.x[0]
 
-                logging.info('Threshfold is `%d`for `%s`', threshold, path)
+                logging.info('Threshold is `%d`for `%s`', threshold, path[i])
 
                 pred = probs.argmax(1)
                 pred[probs[np.arange(probs.shape[0]), pred] < threshold] = unk_idx
