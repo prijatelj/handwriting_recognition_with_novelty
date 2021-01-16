@@ -45,7 +45,7 @@ def script_args(parser):
     parser.add_argument(
         '--min_opt',
         default='TNC',
-        choices=['TNC', 'L-BFGS-B', 'SLSQP', 'Powell']
+        choices=['TNC', 'L-BFGS-B', 'SLSQP', 'Powell'],
         help='labels treated as unknown.',
     )
 
