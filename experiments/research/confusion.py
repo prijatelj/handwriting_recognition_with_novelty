@@ -151,10 +151,14 @@ if __name__ == '__main__':
             fold_res = {}
             #fold_path = os.path.join(model_path, fold)
 
-            train_path = os.path.join(fold_path, args.train_suffix)
+            train_path = glob.glob(
+                os.path.join(fold_path, args.train_suffix)
+            )[0]
             train_df = pd.read_csv(train_path)
 
-            val_path = os.path.join(fold_path, args.val_suffix)
+            val_path = glob.glob(
+                os.path.join(fold_path, args.val_suffix)
+            )[0]
             val_df = pd.read_csv(val_path)
 
             assert train_df.columns == val_df.columns
