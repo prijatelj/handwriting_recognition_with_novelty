@@ -136,7 +136,7 @@ if __name__ == '__main__':
                         f'{opt_result.message}',
                     ]))
                 else:
-                    logging.info('opt results: %s', opt_result)
+                    logging.debug('opt results: %s', opt_result)
 
                 threshold = opt_result.x[0]
 
