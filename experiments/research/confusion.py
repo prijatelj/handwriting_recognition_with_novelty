@@ -35,6 +35,13 @@ def script_args(parser):
         help='No labels in the probs dataframes.'
     )
 
+    parser.add_argument(
+        '--init_thresh',
+        default=0.5,
+        type=float,
+        help='Initial threshold of unknowns.',
+    )
+
 
 def get_dfs(experiment_dir, models):
     paths = []
@@ -124,7 +131,7 @@ if __name__ == '__main__':
 
                 opt_result = minimize(
                     crossover_error_rate_sq,
-                    [0.5],
+                    [args.init_thresh],
                     (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
                     method='TNC',
                     bounds=[(0,1)],
