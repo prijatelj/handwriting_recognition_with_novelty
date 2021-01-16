@@ -183,7 +183,7 @@ if __name__ == '__main__':
                 # writers in val and test
                 unknowns = list(set(missed_labels) + {'unknown'})
             else:
-                unknowns = args.unkowns
+                unknowns = args.unknowns
 
             unk_idx = np.where(labels == 'unknown')[0][0]
 
