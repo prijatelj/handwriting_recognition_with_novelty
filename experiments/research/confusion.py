@@ -138,8 +138,10 @@ if __name__ == '__main__':
                 unk_idx = np.where(labels == 'unknown')[0][0]
 
                 if args.min_opt == 'linspace':
-                    threshold = min([
-                        crossover_error_rate_opt(
+                    threshold = None
+                    min_val = np.inf
+                    for thresh in np.linspace(0, 1, 81):
+                        val = crossover_error_rate_opt(
                             [thresh],
                             dat['gt'].values,
                             probs,
@@ -147,8 +149,10 @@ if __name__ == '__main__':
                             args.unknowns,
                             unk_idx,
                         )
-                        for thresh in np.linspace(0, 1, 81)
-                    ])
+
+                        if val < min_val:
+                            min_val = val
+                            threshold = thresh
                 else:
                     opt_result = minimize(
                         crossover_error_rate_opt,
