@@ -181,7 +181,7 @@ if __name__ == '__main__':
             if 'writer_id' in args.experiment_dir:
                 # If writer id, then each fold has its own set of unknown
                 # writers in val and test
-                unknowns = list(set(missed_labels) + {'unknown'})
+                unknowns = list(set(missed_labels) | {'unknown'})
             else:
                 unknowns = args.unknowns
 
