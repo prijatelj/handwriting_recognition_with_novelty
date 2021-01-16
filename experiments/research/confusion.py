@@ -100,6 +100,8 @@ def crossover_error_rate_opt(
     ).reduce(unknowns, 'unknown')
     fpr, fnr = cm.false_rates(unk_idx)
 
+    logging.info('fpr = %f; fnr = %f', fpr, fnr)
+
     return (fpr - fnr)**2
 
     #tpr = cm.true_rate(unk_idx)
