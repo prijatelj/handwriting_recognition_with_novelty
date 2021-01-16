@@ -45,7 +45,7 @@ def script_args(parser):
     parser.add_argument(
         '--min_opt',
         default='TNC',
-        choices=['TNC', 'L-BFGS-B', 'SLSQP', 'Powell'],
+        choices=['linspace', 'TNC', 'L-BFGS-B', 'SLSQP', 'Powell'],
         help='labels treated as unknown.',
     )
 
@@ -78,7 +78,7 @@ def get_dfs(experiment_dir, models):
     return dfs
 
 
-def crossover_error_rate_sq(
+def crossover_error_rate_opt(
     threshold,
     actuals,
     probs,
@@ -137,23 +137,36 @@ if __name__ == '__main__':
 
                 unk_idx = np.where(labels == 'unknown')[0][0]
 
-                opt_result = minimize(
-                    crossover_error_rate_sq,
-                    [args.init_thresh],
-                    (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
-                    method=args.min_opt,
-                    bounds=[(0.0, 1.0)],
-                )
-
-                if not opt_result.success:
-                    raise ValueError(' '.join([
-                        'Unsuccessful threshold optimization! message:',
-                        f'{opt_result.message}',
-                    ]))
+                if args.min_opt == 'linspace':
+                    threshold = min([
+                        crossover_error_rate_opt(
+                            thresh,
+                            dat['gt'].values,
+                            probs,
+                            labels,
+                            args.unknowns,
+                            unk_idx,
+                        )
+                        for thresh in np.linspace(0, 1, 81)
+                    ])
                 else:
-                    logging.debug('opt results: %s', opt_result)
+                    opt_result = minimize(
+                        crossover_error_rate_opt,
+                        [args.init_thresh],
+                        (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
+                        method=args.min_opt,
+                        bounds=[(0.0, 1.0)],
+                    )
 
-                threshold = opt_result.x[0]
+                    if not opt_result.success:
+                        raise ValueError(' '.join([
+                            'Unsuccessful threshold optimization! message:',
+                            f'{opt_result.message}',
+                        ]))
+                    else:
+                        logging.debug('opt results: %s', opt_result)
+
+                    threshold = opt_result.x[0]
 
                 logging.info('Threshold is `%f` for `%s`', threshold, path[i])
 
