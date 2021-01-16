@@ -282,10 +282,12 @@ if __name__ == '__main__':
                     }
                 }
 
-            model_res['folds'][os.path.basename(fold_path)] = fold_res
+            model_res[model]['folds'][os.path.basename(fold_path)] = fold_res
 
         # For 5 splits calculate the error/variance, ignoring benchmark set.
-        folds = [v for k, v in model_res['folds'].items() if 'split_' in k]
+        folds = [
+            v for k, v in model_res[model]['folds'].items() if 'split_' in k
+        ]
 
         model_res['folds_stats'] = {}
 
