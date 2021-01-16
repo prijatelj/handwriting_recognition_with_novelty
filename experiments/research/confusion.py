@@ -42,6 +42,13 @@ def script_args(parser):
         help='Initial threshold of unknowns.',
     )
 
+    parser.add_argument(
+        '--min_opt',
+        default='TNC',
+        choices=['TNC', 'L-BFGS-B', 'SLSQP', 'Powell']
+        help='labels treated as unknown.',
+    )
+
 
 def get_dfs(experiment_dir, models):
     paths = []
@@ -134,7 +141,7 @@ if __name__ == '__main__':
                     crossover_error_rate_sq,
                     [args.init_thresh],
                     (dat['gt'].values, probs, labels, args.unknowns, unk_idx),
-                    method='TNC',
+                    method=args.min_opt,
                     bounds=[(0.0, 1.0)],
                 )
 
