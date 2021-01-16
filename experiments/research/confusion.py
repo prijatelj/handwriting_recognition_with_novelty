@@ -45,7 +45,10 @@ def get_dfs(experiment_dir, models):
     for model in models:
         path = os.path.join(experiment_dir, model)
         if os.path.isdir(path):
-            train = glob(f'{path}/*/*[!_confusion]*[!_points].csv')
+            train = [
+                g for g in glob(f'{path}/*/*[!_points].csv')
+                if 'confusion' not in g
+            ]
             val = glob(f'{path}/*/*/val.csv')
             test = glob(f'{path}/*/*/test.csv')
 
@@ -132,6 +135,8 @@ if __name__ == '__main__':
                         'Unsuccessful threshold optimization! message:',
                         f'{opt_result.message}',
                     ]))
+                else:
+                    logging.info('opt results: %s', opt_result)
 
                 threshold = opt_result.x[0]
 
