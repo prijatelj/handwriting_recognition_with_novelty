@@ -289,7 +289,7 @@ if __name__ == '__main__':
             v for k, v in model_res[model]['folds'].items() if 'split_' in k
         ]
 
-        model_res['folds_stats'] = {}
+        model_res['model']['folds_stats'] = {}
 
         for dsplit in ('train', 'val', 'test'):
             accs = []
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                 )
                 nd_mccs.append(fold[dsplit]['novelty_detect']['mcc'])
 
-            model_res['folds_stats'][dsplit] = {
+            model_res[model]['folds_stats'][dsplit] = {
                 'accuracy': stat(accs),
                 'mutual_info_arithmetic': stat(nmis),
                 'mcc': stat(mccs),
