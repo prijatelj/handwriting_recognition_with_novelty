@@ -161,7 +161,7 @@ if __name__ == '__main__':
             )[0]
             val_df = pd.read_csv(val_path)
 
-            assert train_df.columns == val_df.columns
+            assert (train_df.columns == val_df.columns).all
 
             # Get labels and the index of them
             missed_labels = list(
