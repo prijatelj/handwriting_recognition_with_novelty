@@ -90,6 +90,8 @@ if __name__ == '__main__':
     args.models = args.models.split(' ')
     if args.unknowns is not None:
         args.unknowns = args.unknowns.split(' ')
+        if 'unknown' not in args.unknowns:
+            args.unknowns = args.unknowns + ['unknown']
 
     # Load the probs csvs
     prob_dfs = get_dfs(args.experiment_dir, args.models)
