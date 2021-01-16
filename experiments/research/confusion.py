@@ -117,9 +117,6 @@ if __name__ == '__main__':
 
                 unk_idx = np.where(labels == 'unknown')[0][0]
 
-                #nde = NominalDataEncoder(labels)
-                #actuals = nde.encode(dat['gt'])
-
                 opt_result = minimize(
                     crossover_error_rate_sq,
                     [0.5],
@@ -138,11 +135,9 @@ if __name__ == '__main__':
 
                 logging.info('Threshfold is `%d`for `%s`', threshold, path)
 
-                pred = dat[dat.columns[2:]].values.argmax(1)
-                pred = list(dat.columns[pred + 2])
-
                 pred = probs.argmax(1)
                 pred[probs[np.arange(probs.shape[0]), pred] < threshold] = unk_idx
+                pred = list(dat.columns[pred + 2])
 
                 cm = ConfusionMatrix(dat['gt'], pred, labels)
                 cm.save(
