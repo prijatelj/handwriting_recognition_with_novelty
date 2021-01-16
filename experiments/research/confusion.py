@@ -96,7 +96,7 @@ def crossover_error_rate_opt(
     #return -(tpr + fpr)
 
 
-def get_cm(actual, probs, labels, threshold, unk_idx, unknowns, base_path):
+def get_cm(actual, probs, labels, threshold, unknowns, unk_idx, base_path):
     pred = probs.argmax(1)
     pred[probs[np.arange(probs.shape[0]), pred] < threshold] = unk_idx
     pred = labels[pred]
