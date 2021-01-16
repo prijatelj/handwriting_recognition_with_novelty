@@ -51,7 +51,7 @@ def script_args(parser):
 
     parser.add_argument(
         '--train_suffix',
-        default='*_repr_aug_points.csv',
+        default='*_repr_aug.csv',
         help='Ending filename of train csv',
     )
 
