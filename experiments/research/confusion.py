@@ -204,7 +204,7 @@ if __name__ == '__main__':
                         unk_idx,
                     )
 
-                    logging.info('thres = %f; val = %f', thresh, val)
+                    logging.debug('thres = %f; val = %f', thresh, val)
 
                     if val < min_val:
                         min_val = val
@@ -248,8 +248,8 @@ if __name__ == '__main__':
             fold_res['threshold'] = threshold
 
             # Load test probs
-            test_path = os.path.join(fold_path, args.test_suffix)
-            test_df = pd.read_csv(glob.glob(test_path)[0])
+            test_path = glob.glob(os.path.join(fold_path, args.test_suffix))[0]
+            test_df = pd.read_csv(test_path)
 
             # Save measures for train, val, and test
             for split, df, path in (
