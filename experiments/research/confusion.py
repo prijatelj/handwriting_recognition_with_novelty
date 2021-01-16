@@ -147,9 +147,9 @@ if __name__ == '__main__':
         model_path = os.path.join(args.experiment_dir, model)
         model_res[model] = {'folds':{}}
 
-        for fold in glob.iglob(os.path.join(model_path, '*')):
+        for fold_path in glob.iglob(os.path.join(model_path, '*')):
             fold_res = {}
-            fold_path = os.path.join(model_path, fold)
+            #fold_path = os.path.join(model_path, fold)
 
             train_path = os.path.join(fold_path, args.train_suffix)
             train_df = pd.read_csv(train_path)
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
             # Load test probs
             test_path = os.path.join(fold_path, args.test_suffix)
-            test_df = pd.read_csv()
+            test_df = pd.read_csv(glob.glob(test_path)[0])
 
             # Save measures for train, val, and test
             for split, df, path in (
@@ -278,7 +278,7 @@ if __name__ == '__main__':
                     }
                 }
 
-            model_res['folds'][os.path.basename(fold)] = fold_res
+            model_res['folds'][os.path.basename(fold_path)] = fold_res
 
         # For 5 splits calculate the error/variance, ignoring benchmark set.
         folds = [v for k, v in model_res['folds'].items() if 'split_' in k]
