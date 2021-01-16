@@ -44,7 +44,7 @@ def script_args(parser):
 
     parser.add_argument(
         '--min_opt',
-        default='TNC',
+        default=None,
         choices=['linspace', 'TNC', 'L-BFGS-B', 'SLSQP', 'Powell'],
         help='labels treated as unknown.',
     )
@@ -74,6 +74,8 @@ def get_dfs(experiment_dir, models):
             ))
         else:
             raise IOError(f'Filepath does not exist: {path}')
+
+    # TODO couple train and val together so the thresh can be found on them.
 
     return dfs
 
@@ -116,7 +118,7 @@ if __name__ == '__main__':
     # Load the probs csvs
     prob_dfs = get_dfs(args.experiment_dir, args.models)
 
-    # exp, fold, split
+    # TODO load two at a time: train and val and assess threshold given them
 
     # Create a confusion matrix for each probs csv and save
     results = {}
@@ -139,8 +141,15 @@ if __name__ == '__main__':
 
                 unk_idx = np.where(labels == 'unknown')[0][0]
 
-                if args.min_opt == 'linspace':
+                if args.min_opt is None:
+                    logging.info(' '.join([
+                        'Not optimizing on this dataset, simply applying the',
+                        'threshold.',
+                    ]))
+                    threshold = args.init_thresh
+                elif args.min_opt == 'linspace':
                     threshold = None
+
                     min_val = np.inf
                     for thresh in np.linspace(0, 1, 81):
                         val = crossover_error_rate_opt(
@@ -151,6 +160,8 @@ if __name__ == '__main__':
                             args.unknowns,
                             unk_idx,
                         )
+
+                        logging.info('thres = %f; val = %f', thresh, val)
 
                         if val < min_val:
                             min_val = val
