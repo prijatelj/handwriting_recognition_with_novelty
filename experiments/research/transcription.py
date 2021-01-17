@@ -68,6 +68,7 @@ if __name__ == '__main__':
         fold_res = {}
 
         for split in ['train', 'val', 'test']:
+            # TODO confirm this is the correct filename parsing
             pred_path = glob.glob(os.path.join(
                 args.experiment_dir, '*split*{fold}*{split}*transcription*.pkl'
             ))[0]
@@ -75,6 +76,7 @@ if __name__ == '__main__':
                 args.experiment_dir, '*split*{fold}*{split}*gt*.pkl'
             ))[0]
 
+            # Open the ground truth and the predicted transcriptions
             with open(gt_path, 'rb') as openf:
                 gt = pickle.load(openf)
 
