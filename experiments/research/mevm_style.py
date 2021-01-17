@@ -596,12 +596,13 @@ if __name__ == '__main__':
             'w',
         ) as h5:
             h5['points'] = points
+            del points
             h5.create_dataset(
                 'labels',
                 data=np.array(labels, dtype=object),
                 dtype=h5py.special_dtype(vlen=str),
             )
-            del points
+            del labels
             h5.create_dataset(
                 'paths',
                 data=np.array(paths, dtype=object),
@@ -638,31 +639,40 @@ if __name__ == '__main__':
 
             tmp = int(len(h5['points']) / 2)
             pca.partial_fit(h5['points'][:tmp])
+
             logging.info('PCA begin fitting 2nd half of points.')
             pca.partial_fit(h5['points'][tmp:])
 
             logging.info('PCA points fit. Start fit on extra negatives.')
             tmp = int(len(h5['extra_negatives']) / 3)
             pca.partial_fit(h5['extra_negatives'][:tmp])
+
             logging.info('PCA begin fitting 2nd third of extra negatives.')
             pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
+
             logging.info('PCA begin fitting final third of extra negatives.')
             pca.partial_fit(h5['extra_negatives'][tmp * 2:])
 
             logging.info('PCA components: %d', pca.n_components_)
 
-            points = pca.transform(points)
-            extra_negatives = pca.transform(extra_negatives)
-
             # Save the PCA fit on train to use in eval for val and test.
-            with open(os.path.join(
-                os.path.splitext(args.embed_filepath)[0],
-                f'_PCA_{pca_size}.pkl',
-            ), 'wb') as openf:
+            output_base = os.path.join(
+                args.output_path,
+                os.path.splitext(os.path.basename(args.embed_filepath))[0]
+                    + '_PCA_{pca_size}',
+            )
+            with open(
+                io.create_filepath(f'{output_base}.pkl'),
+                'wb',
+            ) as openf:
                 pickle.dump(pca, openf)
             #"""
 
-            # Attempt to get points to train MEVM
+            logging.info(
+                'PCA pickle saved. Attempting to transform data & save',
+            )
+
+            # Attempt to get points to save train MEVM
             points = pca.transform(h5['points'][:])
             labels = h5['labels'][:].astype(str)
             paths = h5['paths'][:].astype(str)
@@ -672,8 +682,38 @@ if __name__ == '__main__':
 
             h5.close()
 
+            with h5py.File(
+                io.create_filepath(f'{output_base}_points.hdf5'),
+                'w',
+            ) as h5:
+                h5['points'] = points
+                del points
+                h5.create_dataset(
+                    'labels',
+                    data=np.array(labels, dtype=object),
+                    dtype=h5py.special_dtype(vlen=str),
+                )
+                del labels
+                h5.create_dataset(
+                    'paths',
+                    data=np.array(paths, dtype=object),
+                    dtype=h5py.special_dtype(vlen=str),
+                )
+                del paths
+
+                h5['extra_negatives'] = extra_negatives
+                del extra_negatives
+                h5.create_dataset(
+                    'extra_neg_labels',
+                    data=np.array(extra_neg_labels, dtype=object),
+                    dtype=h5py.special_dtype(vlen=str),
+                )
+                del extra_neg_labels
+
+            logging.info('Finished saving the hdf5 of CRNN PCA points.')
+
             # Above is hot patch.
-            #sys.exit()
+            sys.exit()
         else:
             # TODO Use the PCA to transform the points
             raise NotImplementedError()
