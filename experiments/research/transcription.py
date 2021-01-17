@@ -70,10 +70,10 @@ if __name__ == '__main__':
         for split in ['train', 'val', 'test']:
             # TODO confirm this is the correct filename parsing
             pred_path = glob.glob(os.path.join(
-                args.experiment_dir, '*split*{fold}*{split}*transcription*.pkl'
+                args.experiment_dir, f'*split*{fold}*{split}*preds*.pkl'
             ))[0]
             gt_path = glob.glob(os.path.join(
-                args.experiment_dir, '*split*{fold}*{split}*gt*.pkl'
+                args.experiment_dir, f'*split*{fold}*{split}*gt*.pkl'
             ))[0]
 
             # Open the ground truth and the predicted transcriptions
