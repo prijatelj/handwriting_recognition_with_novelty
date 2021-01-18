@@ -137,6 +137,7 @@ if __name__ == '__main__':
 
             cer = cer_sum / len(gt)
             wer = wer_sum / len(gt)
+            unknown_chars = unique_chars - known_chars
 
             fold_res[split] = {
                 'cer': cer,
@@ -151,8 +152,10 @@ if __name__ == '__main__':
                     'mcc': nd_cm.mcc(),
                 },
                 'chars': {
+                    'total_unique_chars': len(unique_chars),
                     'unique_chars': unique_chars,
-                    'unknown_chars': unique_chars - known_chars,
+                    'total_unknown_chars': len(unique_chars),
+                    'unknown_chars': unknown_chars,
                 },
             }
         model_res[model]['folds'][f'fold_{fold}'] = fold_res
