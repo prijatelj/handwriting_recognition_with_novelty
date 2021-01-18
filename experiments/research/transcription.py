@@ -24,7 +24,6 @@ def script_args(parser):
     parser.add_argument(
         'output_path',
         help='output directory.',
-        dest='output_path',
     )
 
 
