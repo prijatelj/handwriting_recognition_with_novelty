@@ -106,7 +106,7 @@ def get_cm(actual, probs, labels, threshold, unknowns, unk_idx, base_path):
         cm.save(f'{base_path}_confusion_matrix_thresh-{threshold}.csv')
 
     # Reduce the known unknowns to unknown for the measures!
-    cm = cm.reduce(args.unknowns, 'unknown')
+    cm = cm.reduce(unknowns, 'unknown')
 
     # Novelty Detection CM
     novelty_detect_cm = cm.reduce(
@@ -174,13 +174,15 @@ if __name__ == '__main__':
             )
 
             # Get labels and the index of them
-            missed_labels = list(all_gt_labels - set(train_df.columns[2:]))
-            labels = np.array(list(train_df.columns[2:]) + missed_labels)
+            missed_labels = all_gt_labels - set(train_df.columns[2:])
+            labels = np.array(list(train_df.columns[2:]) + list(missed_labels))
 
             # Set Unknowns
             if 'writer_id' in args.experiment_dir:
                 # If writer id, then each fold has its own set of unknown
                 # writers in val and test
+                # NOTE must specify unknown and rimes in args.unknowns if use:
+                #unknowns = list(missed_labels | set(args.unknowns))
                 unknowns = list(set(missed_labels) | {'unknown'})
             else:
                 unknowns = args.unknowns
@@ -198,7 +200,7 @@ if __name__ == '__main__':
             elif args.min_opt == 'linspace':
                 probs = np.concatenate((
                     train_df[train_df.columns[2:]].values,
-                    val_df[val_df.columns[2:]].values,
+                    val_df[train_df.columns[2:]].values,
                 ))
 
                 actuals = np.concatenate((
