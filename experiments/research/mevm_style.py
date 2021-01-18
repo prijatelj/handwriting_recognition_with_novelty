@@ -657,7 +657,7 @@ if __name__ == '__main__':
 
             # Save the PCA fit on train to use in eval for val and test.
             output_base = os.path.join(
-                args.output_path,
+                args.output.path,
                 os.path.splitext(os.path.basename(args.embed_filepath))[0]
                     + '_PCA_{pca_size}',
             )
