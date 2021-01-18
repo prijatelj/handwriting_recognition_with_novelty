@@ -156,9 +156,9 @@ if __name__ == '__main__':
                 },
                 'chars': {
                     'total_unique_chars': len(unique_chars),
-                    'unique_chars': unique_chars,
+                    'unique_chars': list(unique_chars),
                     'total_unknown_chars': len(unique_chars),
-                    'unknown_chars': unknown_chars,
+                    'unknown_chars': list(unknown_chars),
                 },
             }
         model_res[model]['folds'][f'fold_{fold}'] = fold_res
