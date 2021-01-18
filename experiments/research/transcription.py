@@ -119,7 +119,10 @@ if __name__ == '__main__':
                     'unknown' if unknown_char in pred[key] else 'known'
                 )
                 # novelty exists when novel char in gt
-                if any([v not in known_chars for v in actual_char_set]):
+                if any([
+                    v == unknown_char or v not in known_chars
+                    for v in actual_char_set
+                ]):
                     actual_nd.append('unknown')
                 else:
                     actual_nd.append('known')
