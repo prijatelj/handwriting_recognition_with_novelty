@@ -177,8 +177,8 @@ if __name__ == '__main__':
         for fold in model_res[model]['folds'].values():
             cers.append(fold[dsplit]['cer'])
             wers.append(fold[dsplit]['wer'])
-            char_accs.append(fold[dsplit]['char_accs'])
-            word_accs.append(fold[dsplit]['word_accs'])
+            char_accs.append(fold[dsplit]['char_acc'])
+            word_accs.append(fold[dsplit]['word_acc'])
 
             nd_accs.append(fold[dsplit]['novelty_detect']['accuracy'])
             nd_nmis.append(
