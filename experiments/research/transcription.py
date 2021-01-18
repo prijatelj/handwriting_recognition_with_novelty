@@ -132,7 +132,7 @@ if __name__ == '__main__':
             )
             nd_cm.save(os.path.join(
                 output_path,
-                f'f{fold}-{split}_novel_char_detect_per_line_confusion_matrix.csv',
+                f'fold{fold}-{split}_novel_char_detect_per_line_confusion_matrix.csv',
             ))
 
             cer = cer_sum / len(gt)
