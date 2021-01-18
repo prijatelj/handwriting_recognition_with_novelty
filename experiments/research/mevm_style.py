@@ -20,6 +20,7 @@ from hwr_novelty.models.mevm import MEVM
 from hwr_novelty.models.style_features import HOG, TorchANNExtractor
 
 from experiments.data.iam import HWR
+from exputils.io import NumpyJSONEncoder
 
 
 def load_data(
@@ -387,6 +388,19 @@ def script_args(parser):
         help='The value to multiply with the hog means, after addition.',
     )
 
+    parser.add_argument(
+        '--max_timestep',
+        default=656,
+        type=int,
+        help='The length to set the CRNN timestep size to.',
+    )
+
+    parser.add_argument(
+        '--pca_comps',
+        default=2000,
+        type=int,
+        help='The number of PCA components.',
+    )
 
 
 def parse_args():
@@ -586,6 +600,7 @@ if __name__ == '__main__':
         # LOAD CRNN pre-processed repr.
         points, labels, paths, extra_negatives, extra_neg_labels = load_crnn_data(
             args.embed_filepath,
+            max_timestep=args.max_timestep,
             **vars(args.data),
         )
 
@@ -631,7 +646,7 @@ if __name__ == '__main__':
             #"""
             h5 = h5py.File(args.embed_filepath, 'r')
 
-            pca_size = 2000
+            pca_size = args.pca_comps
             pca = IncrementalPCA(pca_size, batch_size=pca_size)
 
             # Fit PCA on ALL of the CRNN layer repr in train.
@@ -661,15 +676,21 @@ if __name__ == '__main__':
                 os.path.splitext(os.path.basename(args.embed_filepath))[0]
                     + '_PCA_{pca_size}',
             )
+
             with open(
-                io.create_filepath(f'{output_base}.pkl'),
-                'wb',
+                io.create_filepath(f'{output_base}_PCA_state.json'),
+                'w',
             ) as openf:
-                pickle.dump(pca, openf)
+                #pickle.dump(pca, openf)
+                json.dump(
+                    vars(pca),
+                    openf,
+                    cls=NumpyJSONEncoder,
+                )
             #"""
 
             logging.info(
-                'PCA pickle saved. Attempting to transform data & save',
+                'PCA JSON saved. Attempting to transform data & save',
             )
 
             # Attempt to get points to save train MEVM
@@ -719,6 +740,39 @@ if __name__ == '__main__':
             raise NotImplementedError()
 
             # Perhaps, save the points in a smaller dim hdf5
+
+            # Load the PCA object from JSON
+            with open('filepatherino_PCA_state.json', 'w') as openf:
+                state = json.load(openf)
+
+                # Initialize
+                pca = IncrementalPCA(
+                    state['n_components'],
+                    state['whiten'],
+                    state['copy'],
+                    state['batch_size'],
+                )
+
+                # Set the attributes
+                pca.explained_variance_ = np.array(state['explained_variance_'])
+                pca.explained_variance_ratio_ = np.array(state['explained_variance_ratio_'])
+                pca.var_ = np.array(state['var_'])
+                pca.noise_variance_ = np.float64(state['noise_variance_'])
+
+                pca.singular_values_ = np.array(state['singular_values'])
+                pca.mean_ = np.array(state['mean_'])
+
+                pca.components_ = np.array(state['components_'])
+
+                pca.n_samples_seen_ = np.int64(state['n_samples_seen_'])
+                pca.n_features_in_ = int(state['n_features_in_'])
+
+                pca.n_components_ = int(state['n_components_'])
+                pca.batch_size_ = int(state['batch_size_'])
+
+            logging.info('Loaded the PCA object')
+
+            # TODO transform the points w/ loaded PCA object.
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
