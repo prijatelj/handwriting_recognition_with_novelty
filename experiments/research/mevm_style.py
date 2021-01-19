@@ -698,7 +698,7 @@ if __name__ == '__main__':
             else:
                 logging.info('Loading the PCA object')
                 # Load the PCA object from JSON
-                with open(args.pca_load, 'w') as openf:
+                with open(args.pca_load, 'r') as openf:
                     state = json.load(openf)
 
                 # Initialize
