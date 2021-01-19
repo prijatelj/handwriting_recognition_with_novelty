@@ -402,6 +402,12 @@ def script_args(parser):
         help='The number of PCA components.',
     )
 
+    parser.add_argument(
+        '--pca_load',
+        default=None,
+        help='The path to the JSON containing the PCA object setup.',
+    )
+
 
 def parse_args():
     args = io.parse_args(custom_args=script_args)
@@ -638,60 +644,95 @@ if __name__ == '__main__':
         sys.exit()
     elif args.embed_filepath is not None and 'hdf5' in args.embed_filepath:
         if 'PCA' not in args.embed_filepath:
-            # TODO Load those smaller dim, transformed points to train/val MEVM
-            # TODO write the incremental loading and fitting of PCA.
-
-            # TODO Save the PCA pkl
-
-            #"""
             h5 = h5py.File(args.embed_filepath, 'r')
 
-            pca_size = args.pca_comps
-            pca = IncrementalPCA(pca_size, batch_size=pca_size)
+            if args.pca_load is None:
+                pca_size = args.pca_comps
+                pca = IncrementalPCA(pca_size, batch_size=pca_size)
+                logging.info('Initialized the PCA object')
 
-            # Fit PCA on ALL of the CRNN layer repr in train.
-            logging.info('PCA begin fitting.')
+                # Fit PCA on ALL of the CRNN layer repr in train.
+                logging.info('PCA begin fitting.')
 
-            tmp = int(len(h5['points']) / 2)
-            pca.partial_fit(h5['points'][:tmp])
+                tmp = int(len(h5['points']) / 2)
+                pca.partial_fit(h5['points'][:tmp])
 
-            logging.info('PCA begin fitting 2nd half of points.')
-            pca.partial_fit(h5['points'][tmp:])
+                logging.info('PCA begin fitting 2nd half of points.')
+                pca.partial_fit(h5['points'][tmp:])
 
-            logging.info('PCA points fit. Start fit on extra negatives.')
-            tmp = int(len(h5['extra_negatives']) / 3)
-            pca.partial_fit(h5['extra_negatives'][:tmp])
+                logging.info('PCA points fit. Start fit on extra negatives.')
+                tmp = int(len(h5['extra_negatives']) / 3)
+                pca.partial_fit(h5['extra_negatives'][:tmp])
 
-            logging.info('PCA begin fitting 2nd third of extra negatives.')
-            pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
+                logging.info('PCA begin fitting 2nd third of extra negatives.')
+                pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
 
-            logging.info('PCA begin fitting final third of extra negatives.')
-            pca.partial_fit(h5['extra_negatives'][tmp * 2:])
-
-            logging.info('PCA components: %d', pca.n_components_)
-
-            # Save the PCA fit on train to use in eval for val and test.
-            output_base = os.path.join(
-                args.output.path,
-                os.path.splitext(os.path.basename(args.embed_filepath))[0]
-                    + f'_PCA_{pca_size}',
-            )
-
-            with open(
-                io.create_filepath(f'{output_base}_PCA_state.json'),
-                'w',
-            ) as openf:
-                #pickle.dump(pca, openf)
-                json.dump(
-                    vars(pca),
-                    openf,
-                    cls=NumpyJSONEncoder,
+                logging.info(
+                    'PCA begin fitting final third of extra negatives.'
                 )
-            #"""
+                pca.partial_fit(h5['extra_negatives'][tmp * 2:])
 
-            logging.info(
-                'PCA JSON saved. Attempting to transform data & save',
-            )
+                logging.info('PCA components: %d', pca.n_components_)
+
+                # Save the PCA fit on train to use in eval for val and test.
+                output_base = os.path.join(
+                    args.output.path,
+                    os.path.splitext(os.path.basename(args.embed_filepath))[0]
+                        + f'_PCA_{pca_size}',
+                )
+
+                with open(
+                    io.create_filepath(f'{output_base}_PCA_state.json'),
+                    'w',
+                ) as openf:
+                    #pickle.dump(pca, openf)
+                    json.dump(
+                        vars(pca),
+                        openf,
+                        cls=NumpyJSONEncoder,
+                    )
+
+                logging.info(
+                    'PCA JSON saved.',
+                )
+            else:
+                logging.info('Loading the PCA object')
+                # Load the PCA object from JSON
+                with open(args.pca_load, 'w') as openf:
+                    state = json.load(openf)
+
+                # Initialize
+                pca = IncrementalPCA(
+                    state['n_components'],
+                    state['whiten'],
+                    state['copy'],
+                    state['batch_size'],
+                )
+
+                # Set the attributes
+                pca.explained_variance_ = np.array(
+                    state['explained_variance_']
+                )
+                pca.explained_variance_ratio_ = np.array(
+                    state['explained_variance_ratio_']
+                )
+                pca.var_ = np.array(state['var_'])
+                pca.noise_variance_ = np.float64(state['noise_variance_'])
+
+                pca.singular_values_ = np.array(state['singular_values'])
+                pca.mean_ = np.array(state['mean_'])
+
+                pca.components_ = np.array(state['components_'])
+
+                pca.n_samples_seen_ = np.int64(state['n_samples_seen_'])
+                pca.n_features_in_ = int(state['n_features_in_'])
+
+                pca.n_components_ = int(state['n_components_'])
+                pca.batch_size_ = int(state['batch_size_'])
+
+                logging.info('Loaded the PCA object')
+
+            logging.info('Attempting to transform data & save')
 
             # Attempt to get points to save train MEVM
             points = pca.transform(h5['points'][:])
@@ -740,37 +781,6 @@ if __name__ == '__main__':
             raise NotImplementedError()
 
             # Perhaps, save the points in a smaller dim hdf5
-
-            # Load the PCA object from JSON
-            with open('filepatherino_PCA_state.json', 'w') as openf:
-                state = json.load(openf)
-
-                # Initialize
-                pca = IncrementalPCA(
-                    state['n_components'],
-                    state['whiten'],
-                    state['copy'],
-                    state['batch_size'],
-                )
-
-                # Set the attributes
-                pca.explained_variance_ = np.array(state['explained_variance_'])
-                pca.explained_variance_ratio_ = np.array(state['explained_variance_ratio_'])
-                pca.var_ = np.array(state['var_'])
-                pca.noise_variance_ = np.float64(state['noise_variance_'])
-
-                pca.singular_values_ = np.array(state['singular_values'])
-                pca.mean_ = np.array(state['mean_'])
-
-                pca.components_ = np.array(state['components_'])
-
-                pca.n_samples_seen_ = np.int64(state['n_samples_seen_'])
-                pca.n_features_in_ = int(state['n_features_in_'])
-
-                pca.n_components_ = int(state['n_components_'])
-                pca.batch_size_ = int(state['batch_size_'])
-
-            logging.info('Loaded the PCA object')
 
             # TODO transform the points w/ loaded PCA object.
     else:
@@ -833,16 +843,4 @@ if __name__ == '__main__':
             # did not, raise the error.
             raise ValueError('`NaN` exists in probs or extra_neg_probs!')
 
-        # TODO possibly set the value to 0 if None??? need to figure out why
-        # getting blank/empty probs values for benchmark faithful, split 1 and
-        # split 3...
-
-
-        # TODO eval metrics (this should be a generalized and separate script)
-
-        # TODO save argmax then ConfusionMatrix?
-        #argmax_probs = probs.argmax(1)
-        #conf_mat = ConfusionMatrix(targets, argmax_probs, mevm.labels)
-
-        # TODO calc NMI of on argmax
         # TODO calc k-cluster purity
