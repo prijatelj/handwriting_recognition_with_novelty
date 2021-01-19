@@ -674,7 +674,7 @@ if __name__ == '__main__':
             output_base = os.path.join(
                 args.output.path,
                 os.path.splitext(os.path.basename(args.embed_filepath))[0]
-                    + '_PCA_{pca_size}',
+                    + f'_PCA_{pca_size}',
             )
 
             with open(
