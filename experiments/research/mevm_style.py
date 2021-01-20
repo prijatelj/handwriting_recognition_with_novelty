@@ -651,6 +651,7 @@ if __name__ == '__main__':
         sys.exit()
     elif args.embed_filepath is not None and 'hdf5' in args.embed_filepath:
         if 'PCA' not in args.embed_filepath:
+            # Then a PCA needs to be fit or loaded to transform the points
             h5 = h5py.File(args.embed_filepath, 'r')
 
             if args.pca_load is None:
@@ -793,12 +794,15 @@ if __name__ == '__main__':
             # Above is hot patch.
             sys.exit()
         else:
-            # TODO Use the PCA to transform the points
-            raise NotImplementedError()
+            # If PCA in embed path then it is the points transformed.
+            with h5py.File(args.embed_filepath, 'r') as h5:
+                # Attempt to get points to save train MEVM
+                points = h5['points'][:]
+                labels = h5['labels'][:].astype(str)
+                paths = h5['paths'][:].astype(str)
 
-            # Perhaps, save the points in a smaller dim hdf5
-
-            # TODO transform the points w/ loaded PCA object.
+                extra_negatives = h5['extra_negatives'][:]
+                extra_neg_labels = h5['extra_neg_labels'][:].astype(str)
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
