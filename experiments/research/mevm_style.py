@@ -654,6 +654,7 @@ if __name__ == '__main__':
             # Then a PCA needs to be fit or loaded to transform the points
             h5 = h5py.File(args.embed_filepath, 'r')
 
+            pca_size = args.pca_comps
             # Save the PCA fit on train to use in eval for val and test.
             output_base = os.path.join(
                 args.output.path,
@@ -663,7 +664,6 @@ if __name__ == '__main__':
 
 
             if args.pca_load is None:
-                pca_size = args.pca_comps
                 pca = IncrementalPCA(pca_size, batch_size=pca_size)
                 logging.info('Initialized the PCA object')
 
