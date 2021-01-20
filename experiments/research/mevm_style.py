@@ -743,7 +743,7 @@ if __name__ == '__main__':
                 pca.components_ = np.array(state['components_'])
 
                 pca.n_samples_seen_ = np.int64(state['n_samples_seen_'])
-                pca.n_features_in_ = int(state['n_features_in_'])
+                #pca.n_features_in_ = int(state['n_features_in_'])
 
                 pca.n_components_ = int(state['n_components_'])
                 pca.batch_size_ = int(state['batch_size_'])
