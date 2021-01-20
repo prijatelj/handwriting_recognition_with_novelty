@@ -746,7 +746,7 @@ if __name__ == '__main__':
                 #pca.n_features_in_ = int(state['n_features_in_'])
 
                 pca.n_components_ = int(state['n_components_'])
-                pca.batch_size_ = int(state['batch_size_'])
+                #pca.batch_size_ = int(state['batch_size_'])
 
                 logging.info('Loaded the PCA object')
 
