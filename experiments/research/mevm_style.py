@@ -408,6 +408,13 @@ def script_args(parser):
         help='The path to the JSON containing the PCA object setup.',
     )
 
+    parser.add_argument(
+        '--pca_percent',
+        default=None,
+        type=float,
+        help='The percentage of data to us to train the PCA. Always 1/4 if given.',
+    )
+
 
 def parse_args():
     args = io.parse_args(custom_args=script_args)
@@ -654,23 +661,32 @@ if __name__ == '__main__':
                 # Fit PCA on ALL of the CRNN layer repr in train.
                 logging.info('PCA begin fitting.')
 
-                tmp = int(len(h5['points']) / 2)
-                pca.partial_fit(h5['points'][:tmp])
+                if args.pca_percent is None:
+                    tmp = int(len(h5['points']) / 2)
+                    pca.partial_fit(h5['points'][:tmp])
 
-                logging.info('PCA begin fitting 2nd half of points.')
-                pca.partial_fit(h5['points'][tmp:])
+                    logging.info('PCA begin fitting 2nd half of points.')
+                    pca.partial_fit(h5['points'][tmp:])
 
-                logging.info('PCA points fit. Start fit on extra negatives.')
-                tmp = int(len(h5['extra_negatives']) / 3)
-                pca.partial_fit(h5['extra_negatives'][:tmp])
+                    logging.info('PCA points fit. Start fit on extra negatives.')
+                    tmp = int(len(h5['extra_negatives']) / 3)
+                    pca.partial_fit(h5['extra_negatives'][:tmp])
 
-                logging.info('PCA begin fitting 2nd third of extra negatives.')
-                pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
+                    logging.info('PCA begin fitting 2nd third of extra negatives.')
+                    pca.partial_fit(h5['extra_negatives'][tmp:tmp * 2])
 
-                logging.info(
-                    'PCA begin fitting final third of extra negatives.'
-                )
-                pca.partial_fit(h5['extra_negatives'][tmp * 2:])
+                    logging.info(
+                        'PCA begin fitting final third of extra negatives.'
+                    )
+                    pca.partial_fit(h5['extra_negatives'][tmp * 2:])
+                else:
+                    logging.info('PCA fitting on 1/4th of the data.')
+                    tmp = int(len(h5['points']) / 4)
+                    pca.partial_fit(h5['points'][:tmp])
+
+                    logging.info('PCA points fit. Start fit on extra negatives.')
+                    tmp = int(len(h5['extra_negatives']) / 4)
+                    pca.partial_fit(h5['extra_negatives'][:tmp])
 
                 logging.info('PCA components: %d', pca.n_components_)
 
