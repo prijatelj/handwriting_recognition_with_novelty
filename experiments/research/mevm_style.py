@@ -737,7 +737,7 @@ if __name__ == '__main__':
                 pca.var_ = np.array(state['var_'])
                 pca.noise_variance_ = np.float64(state['noise_variance_'])
 
-                pca.singular_values_ = np.array(state['singular_values'])
+                pca.singular_values_ = np.array(state['singular_values_'])
                 pca.mean_ = np.array(state['mean_'])
 
                 pca.components_ = np.array(state['components_'])
