@@ -654,6 +654,14 @@ if __name__ == '__main__':
             # Then a PCA needs to be fit or loaded to transform the points
             h5 = h5py.File(args.embed_filepath, 'r')
 
+            # Save the PCA fit on train to use in eval for val and test.
+            output_base = os.path.join(
+                args.output.path,
+                os.path.splitext(os.path.basename(args.embed_filepath))[0]
+                    + f'_PCA_{pca_size}',
+            )
+
+
             if args.pca_load is None:
                 pca_size = args.pca_comps
                 pca = IncrementalPCA(pca_size, batch_size=pca_size)
@@ -690,13 +698,6 @@ if __name__ == '__main__':
                     pca.partial_fit(h5['extra_negatives'][:tmp])
 
                 logging.info('PCA components: %d', pca.n_components_)
-
-                # Save the PCA fit on train to use in eval for val and test.
-                output_base = os.path.join(
-                    args.output.path,
-                    os.path.splitext(os.path.basename(args.embed_filepath))[0]
-                        + f'_PCA_{pca_size}',
-                )
 
                 with open(
                     io.create_filepath(f'{output_base}_PCA_state.json'),
