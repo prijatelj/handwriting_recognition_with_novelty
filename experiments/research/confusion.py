@@ -153,12 +153,27 @@ if __name__ == '__main__':
 
             train_path = glob.glob(
                 os.path.join(fold_path, args.train_suffix)
-            )[0]
+            )
+
+            if len(train_path) == 0:
+                logging.info(
+                    f'nothing at {os.path.join(fold_path, args.train_suffix)}'
+                )
+                continue
+            train_path = train_path[0]
+
             train_df = pd.read_csv(train_path)
 
             val_path = glob.glob(
                 os.path.join(fold_path, args.val_suffix)
-            )[0]
+            )
+            if len(val_path) == 0:
+                logging.info(
+                    f'nothing at {os.path.join(fold_path, args.val_suffix)}'
+                )
+                continue
+            val_path = val_path[0]
+
             val_df = pd.read_csv(val_path)
 
             assert (train_df.columns == val_df.columns).all
