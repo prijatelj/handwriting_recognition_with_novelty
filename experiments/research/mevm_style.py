@@ -907,7 +907,7 @@ if __name__ == '__main__':
             columns=mevm.labels.tolist() + ['unknown'],
         )
 
-        if isinstance(labels, list) and isinstance(extra_neg_labels):
+        if isinstance(labels, list) and isinstance(extra_neg_labels, list):
             df['gt'] = labels + extra_neg_labels
         else:
             df['gt'] = np.concatenate((labels, extra_neg_labels))
