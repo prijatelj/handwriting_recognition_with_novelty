@@ -2,11 +2,11 @@
 
 #$ -pe smp 8
 #$ -N mevmRC
-#$ -q gpu@@cvrl
+#$ -q gpu
 #$ -l gpu=1
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/crnn/repr/train/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/mevm/crnn/repr/train/logs/
-#$ -t 12-16
+#$ -t 13-23
 
 BASE_PATH="$HOME/scratch_365/open_set/hwr/hwr_novelty"
 
@@ -43,6 +43,10 @@ else
 
     EMB_FP="$OUT_PATH/$DATASPLIT/config_rep$MODO"_"$DATASPLIT"_rep_embeddings_PCA_1000_points.hdf5
     OUT_PATH="$OUT_PATH"_eval
+
+    # --pickle_labels load repr labels from pickle, provide path
+    REPR_LABELS="/afs/crc.nd.edu/group/cvrl/scratch_28/openSetHWR/models/rep_models/"
+    REPR_LABELS="$REPR_LABELS/$MODO"$DATASPLIT"_labels.pkl"
 fi
 
 echo "$DATASPLIT"
@@ -59,7 +63,8 @@ if [ "$SGE_TASK_ID" -lt "12" ]; then
         --output_path "$OUT_PATH/$DATASPLIT".csv \
         --mevm_save "$MEVM" \
         --datasplit "$DATASPLIT" \
-        --embed_filepath "$EMB_FP"
+        --embed_filepath "$EMB_FP" \
+        --pickle_labels "$REPR_LABELS"
 else
     python3 "$BASE_PATH/experiments/research/mevm_style.py" \
         "$BASE_PATH/experiments/configs/paper_1/mevm_repr.yaml" \
@@ -69,5 +74,6 @@ else
         --output_path "$OUT_PATH/$DATASPLIT".csv \
         --mevm_load "$MEVM" \
         --datasplit "$DATASPLIT" \
-        --embed_filepath "$EMB_FP"
+        --embed_filepath "$EMB_FP" \
+        --pickle_labels "$REPR_LABELS"
 fi

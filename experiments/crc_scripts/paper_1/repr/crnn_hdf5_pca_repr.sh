@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#$ -pe smp 24
-#$ -N crnn_pca_repr
-#$ -q long@@cvrl
+#$ -pe smp 16
+#$ -N Dcrnn_pca_repr
+#$ -q debug
 #$ -o $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/crnn_pca/repr/logs/
 #$ -e $HOME/scratch_365/open_set/hwr/hwr_novelty/logs/paper/crnn_pca/repr/logs/
-#$ -t 12-12
+#$ -t 12-16
 
 # long@@cvrl
 #   8
@@ -58,7 +58,7 @@ else
 
     EMB_FP="$BASE_EMP/config_rep$MODO"_"$DATASPLIT"_rep_embeddings.hdf5
 
-    PCA_PATH="$BASE_SPLIT/paper_1/repr/mevm/crnn/pca/16/split_$MODO"/split_"$MODO"_crnn_pca
+    PCA_PATH="$BASE_OUT/split_$MODO"/split_"$MODO"_crnn_pca
     # the below was run... and so my issue is my repr EVMs are for writer id...
     #PCA_PATH="$BASE_SPLIT/paper_1/writer_id/mevm/crnn/pca/split_$MODO"/split_"$MODO"_crnn_pca
 fi
@@ -76,7 +76,7 @@ if [ "$SGE_TASK_ID" -lt "12" ]; then
         --pca_comps 1000 \
         --pca_percent .25
 else
-    PCA="$PCA_PATH/train/config$MODO"_train_embeddings_PCA_1000_PCA_state.json
+    PCA="$PCA_PATH/train/config_rep$MODO"_train_rep_embeddings_PCA_1000_PCA_state.json
 
     python3 "$BASE_PATH/experiments/research/mevm_style.py" \
         "$BASE_PATH/experiments/configs/paper_1/mevm_repr.yaml" \
