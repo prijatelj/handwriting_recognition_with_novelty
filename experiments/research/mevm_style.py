@@ -852,8 +852,8 @@ if __name__ == '__main__':
                             else:
                                 extra_neg_labels.append(lab)
                                 extra_negatives.append(all_points[i])
-                    points = np.concatenate(points, 0)
-                    extra_negatives = np.concatenate(extra_negatives, 0)
+                    points = np.vstack(points)
+                    extra_negatives = np.vstack(extra_negatives)
 
                 logging.info('type points = %s', type(points))
                 logging.info('type extra_negatives = %s', type(extra_negatives))
