@@ -823,7 +823,12 @@ if __name__ == '__main__':
 
                         labels = []
                         extra_neg_labels = []
-                        for path in paths:
+
+                        all_points = np.concatenate((points, extra_negatives))
+
+                        points = []
+                        extra_negatives = []
+                        for i, path in enumerate(paths):
                             if 'IAM' in path:
                                 iam_id = os.path.splitext(
                                     os.path.basename(path)
@@ -843,8 +848,11 @@ if __name__ == '__main__':
 
                             if lab in {'no_aug', 'Noise', 'Antique'}:
                                 labels.append(lab)
+                                points.append(all_points[i])
                             else:
                                 extra_neg_labels.append(lab)
+                                extra_negatives.append(all_points[i])
+
                 logging.info('type points = %s', type(points))
                 logging.info('type extra_negatives = %s', type(extra_negatives))
 
