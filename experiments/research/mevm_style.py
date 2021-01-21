@@ -802,6 +802,9 @@ if __name__ == '__main__':
             sys.exit()
         else:
             # If PCA in embed path then it is the points transformed.
+
+            logging.info('Loading HDF5 PCA points')
+
             with h5py.File(args.embed_filepath, 'r') as h5:
                 # Attempt to get points to save train MEVM
                 points = h5['points'][:]
@@ -813,6 +816,7 @@ if __name__ == '__main__':
                     labels = h5['labels'][:].astype(str)
                     extra_neg_labels = h5['extra_neg_labels'][:].astype(str)
                 else:
+                    logging.info('Loading pickle REPR labels')
                     # TODO HOT FIX: load repr labels
                     with open(args.pickle_labels, 'rb') as openf:
                         repr_labels = pickle.load(openf)
@@ -841,6 +845,12 @@ if __name__ == '__main__':
                                 labels.append(lab)
                             else:
                                 extra_neg_labels.append(lab)
+                logging.info('type points = %s', type(points))
+                logging.info('type extra_negatives = %s', type(extra_negatives))
+
+                logging.info('len points = %d', len(points))
+                logging.info('len extra_negatives = %d', len(extra_negatives))
+                logging.info('len labels = %d', len(labels))
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
