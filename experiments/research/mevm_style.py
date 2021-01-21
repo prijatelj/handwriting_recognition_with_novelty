@@ -415,6 +415,12 @@ def script_args(parser):
         help='The percentage of data to us to train the PCA. Always 1/4 if given.',
     )
 
+    parser.add_argument(
+        '--pickle_labels',
+        default=None,
+        help='The path to the pickle repr labels.',
+    )
+
 
 def parse_args():
     args = io.parse_args(custom_args=script_args)
@@ -799,11 +805,42 @@ if __name__ == '__main__':
             with h5py.File(args.embed_filepath, 'r') as h5:
                 # Attempt to get points to save train MEVM
                 points = h5['points'][:]
-                labels = h5['labels'][:].astype(str)
                 paths = h5['paths'][:].astype(str)
 
                 extra_negatives = h5['extra_negatives'][:]
-                extra_neg_labels = h5['extra_neg_labels'][:].astype(str)
+
+                if args.pickle_labels is None:
+                    labels = h5['labels'][:].astype(str)
+                    extra_neg_labels = h5['extra_neg_labels'][:].astype(str)
+                else:
+                    # TODO HOT FIX: load repr labels
+                    with open(args.pickle_labels, 'rb') as openf:
+                        repr_labels = pickle.load(openf)
+
+                        labels = []
+                        extra_neg_labels = []
+                        for path in paths:
+                            if 'IAM' in path:
+                                iam_id = os.path.splitext(
+                                    os.path.basename(path)
+                                )[0]
+
+                                lab = repr_labels[iam_id]
+
+                            else:
+                                rimes_id = path.rsplit(os.path.sep, 2)[1:]
+
+                                rimes_id = '-'.join([
+                                    rimes_id[0],
+                                    os.path.splitext(rimes_id[1])[0],
+                                ])
+
+                                lab = repr_labels[rimes_id]
+
+                            if lab in {'no_aug', 'Noise', 'Antique'}:
+                                labels.append(lab)
+                            else:
+                                extra_neg_labels.append(lab)
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
