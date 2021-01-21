@@ -852,6 +852,8 @@ if __name__ == '__main__':
                             else:
                                 extra_neg_labels.append(lab)
                                 extra_negatives.append(all_points[i])
+                    points = np.concatenate(points)
+                    extra_negatives = np.concatenate(extra_negatives)
 
                 logging.info('type points = %s', type(points))
                 logging.info('type extra_negatives = %s', type(extra_negatives))
@@ -859,6 +861,7 @@ if __name__ == '__main__':
                 logging.info('len points = %d', len(points))
                 logging.info('len extra_negatives = %d', len(extra_negatives))
                 logging.info('len labels = %d', len(labels))
+                logging.info('len extra_neg_labels = %d', len(extra_neg_labels))
     else:
         points, labels, paths, extra_negatives, extra_neg_labels = load_data(
             feature_extraction=args.hogs,
