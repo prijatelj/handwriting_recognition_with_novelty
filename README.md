@@ -1,6 +1,6 @@
 ## Handwriting Recognition with Novelty
 
-This repository contains the code for the [ICDAR 2021 paper][https://arxiv.org/abs/2105.06582], "Handwriting Recognition with Novelty" by Derek S. Prijatelj, Samuel Grieggs, Futoshi Yumoto, Eric Robertson, and Walter J. Scheirer.
+This repository contains the code for the [ICDAR 2021 paper](https://arxiv.org/abs/2105.06582), "Handwriting Recognition with Novelty" by Derek S. Prijatelj, Samuel Grieggs, Futoshi Yumoto, Eric Robertson, and Walter J. Scheirer.
 
 ### Diretory Structure
 
