@@ -1,39 +1,69 @@
-## Handwriting Recognition Novelty
+## Handwriting Recognition with Novelty
 
-Primary repository for DARPA funded project relating to novelty in handwriting recognition.
-Predictors will be the main content here.
+This repository contains the code for the [ICDAR 2021 paper][https://arxiv.org/abs/2105.06582], "Handwriting Recognition with Novelty" by Derek S. Prijatelj, Samuel Grieggs, Futoshi Yumoto, Eric Robertson, and Walter J. Scheirer.
 
-### TODO
+### Diretory Structure
 
-- Add: BanglaWriting scripts:
-    + Bangla lines script w/ func to obtain lines given image and metadata (annotations) and option to save the line images
-    + DataLoader for conversion of Bangla label files into tsv format.
-        + Index files
-- Debug: CRNN:
-    + setup Tensorboard w/ pytorch and compare Sam's model vs my model.
-        - Mine has consistently had worse performance than Sam's despite appearing to be the same model and able to load the same weights. Now, as of 2020-11-30, my version always predicts empty string when using Sam's config for training.
-        - Use tensorboad to figure out the difference in wiring, if any.
-    + setup legacy class that is Sam's model but interfaced w/ in API's expected way.
-    + move newer CRNN class to itself, making a parent class or loader to go between the two.
-- Add: Image representation modification: modular functions w/ optional saving
-    + Code the module function to change text images into different reprs
-    + add optional saving of the resulting images.
-    + Add DataLoaders to allow for doing this during training or eval.
-- Refactor: Get the guts of the transcriptor into `hwr_novelty/hwr_novelty/`
-    + Put eval / assessment code into `hwr_novelty/hwr_novelty/eval/`
-    + Make ANN transcriptor abstract
-        - CharacterEncoder
-        - fit()
-        - predict()
-    + Make the CRNN transcriptor class
-    + Config classes for models to streamline args and config parsing
-- Add: Data class and code in `hwr_novelty/experiments/data/`
-    + DataLoader
-    + Modular Config handler for each part of Data config. Handling labels wrt open set correctly
-        - Label specific config, more than just the list of labels
-        - Config classes for data to streamline args and config parsing
-- Add: Modular YAML Config files for ease of experimentation
-    + This avoid the issue of rewriting the same thing and attempts to allow reusable parts w/ the intention of write something only once and use multiple times.
-    + separate into basic components at least: data, model, eval
-    + add `refer:` for when relying on other part of config (e.g. model relying on labels defined in data as they the same w/ no differences in some occurrences.)
-    + log at least at debug level, if not info, the resulting config file after parsing all sources of configuaration, including defaults, config files, and args.
+When installing out code, we recommend using a virtual environment, such as venv or conda.
+The models used in experimentation are contained within `hwr_novelty`
+
+```
+hwr_novelty
+├── generate
+└── models
+    └── losses
+```
+
+Install using `python setup.py install`
+
+The code and scripts for the experiments are contained within `experiments`
+
+```
+experiments
+├── configs
+│   ├── m18_par
+│   ├── paper_1
+│   └── par_iam_round1
+│       ├── labels
+│       └── v2
+│           ├── crnn
+│           │   └── continue
+│           └── mevm
+├── crc_scripts
+│   ├── mevm
+│   └── paper_1
+│       ├── repr
+│       └── writer_id
+└── research
+    └── par_v1
+        └── grieggs
+```
+
+- `configs` : Configuration files for running the experiments
+- `crc_scripts` : Scripts used to run our code on our machines.
+- `research` : The research experiment specific code
+
+Install using `python setup_exp.py install`
+
+### License
+
+Our code contribution is released under the MIT License located in `LICENSE.txt`
+
+### Citations
+
+If you use our work, please use the following Bibtex to cite our paper:
+
+```
+@inproceedings{prijatelj_handwriting_2021,
+	title = {Handwriting {Recognition} with {Novelty}},
+	author = {Prijatelj, Derek S. and Grieggs, Samuel and Yumoto, Futoshi and Robertson, Eric and Scheirer, Walter J.},
+	year = {2021},
+	editor = {Lladós, Josep and Lopresti, Daniel and Uchida, Seiichi},
+	isbn = {978-3-030-86337-1},
+	doi = {10.1007/978-3-030-86337-1_33},
+	booktitle = {Document {Analysis} and {Recognition} – {ICDAR} 2021},
+	series = {Lecture {Notes} in {Computer} {Science}},
+	publisher = {Springer International Publishing},
+	pages = {494--509},
+}
+```
