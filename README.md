@@ -47,7 +47,7 @@ Install using `python setup_exp.py install`
 
 ### License
 
-Our code contribution is released under the MIT License located in `LICENSE.txt`
+Our code contributions within this repository are released under the MIT License located in `LICENSE.txt`
 
 ### Citations
 
