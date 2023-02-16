@@ -2,7 +2,8 @@
 
 This repository contains the code for the [ICDAR 2021 paper](https://arxiv.org/abs/2105.06582), "Handwriting Recognition with Novelty" by Derek S. Prijatelj, Samuel Grieggs, Futoshi Yumoto, Eric Robertson, and Walter J. Scheirer.
 
-The training and testing data augmentations used in the paper are provided at [darpa-sail-on/writer-recognition](https://github.com/darpa-sail-on/writer-recognition)
+The training and testing data augmentations used in the paper are provided at [darpa-sail-on/writer-recognition](https://github.com/darpa-sail-on/writer-recognition).
+That additional repository also contains the baseline agent and other code used in the supplementary material.
 
 ### Directory Structure
 
